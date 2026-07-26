@@ -68,13 +68,29 @@ if (($composer["type"] ?? null) !== "grav-plugin") throw new RuntimeException("I
 if (($composer["require"]["php"] ?? null) !== "^8.3") throw new RuntimeException("Invalid PHP requirement");
 $enabled = (bool) $grav["config"]->get("plugins.goosialize-leads.enabled");
 if ($enabled !== $expectedEnabled) throw new RuntimeException("Merged enabled state mismatch");
-if (GoosializeLeadsPlugin::getSubscribedEvents() !== []) throw new RuntimeException("Unexpected event subscriptions");
+$expectedSubscriptions = [
+    "onApiRegisterRoutes" => ["onApiRegisterRoutes", 0],
+    "onTwigTemplatePaths" => ["onTwigTemplatePaths", 0],
+];
+if (GoosializeLeadsPlugin::getSubscribedEvents() !== $expectedSubscriptions) throw new RuntimeException("Unexpected event subscriptions");
+foreach (array_keys($expectedSubscriptions) as $method) {
+    if (!method_exists($plugin, $method)) throw new RuntimeException("Missing inert listener: " . $method);
+}
 $grav["plugins"]->init();
 if ($expectedEnabled) {
     if (($plugin->config()["enabled"] ?? null) !== true) throw new RuntimeException("Enabled plugin was not initialized");
+    $before = $grav["twig"]->twig_paths;
+    $plugin->onTwigTemplatePaths();
+    if (array_slice($grav["twig"]->twig_paths, 0, count($before)) !== $before) throw new RuntimeException("Existing Twig paths changed");
+    if (end($grav["twig"]->twig_paths) !== $root . "/templates") throw new RuntimeException("Plugin Twig path was not appended");
+    $event = new RocketTheme\Toolbox\Event\Event(["routes" => new stdClass()]);
+    $routes = $event["routes"];
+    $plugin->onApiRegisterRoutes($event);
+    if ($event["routes"] !== $routes) throw new RuntimeException("Route entry point modified its event");
     echo "PASS_ENABLED_DISCOVERY_LOAD\n";
 } else {
     if ($plugin->config() !== []) throw new RuntimeException("Disabled plugin became active");
+    if (in_array($root . "/templates", $grav["twig"]->twig_paths, true)) throw new RuntimeException("Disabled plugin contributed a Twig path");
     echo "PASS_DISABLED_INACTIVE\n";
 }
 '

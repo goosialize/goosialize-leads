@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This test verifies that the standalone, event-free skeleton loads in isolated Grav CMS 2.0.12. It does not test Lead functionality.
+This test verifies that the current standalone skeleton loads in isolated Grav CMS 2.0.12. It does not test Lead functionality.
 
 ## Isolation model
 
@@ -32,7 +32,8 @@ The harness fails closed unless:
 - PHP, Symfony YAML, and strict JSON parsing pass;
 - metadata, the Grav dependency, and enabled default match;
 - `goosialize-leads.php` resolves as `Grav\Plugin\GoosializeLeadsPlugin`;
-- the skeleton declares no event subscriptions;
+- exactly the inert `onApiRegisterRoutes` and `onTwigTemplatePaths` subscriptions are declared, with no others;
+- route registration adds no route or HTTP surface, Twig adds only the plugin template directory, and disabled configuration leaves both contributions inactive;
 - no Goosialize theme is present or required;
 - API and Admin2 remain unmounted image content, without reference patches or compiled replacements; and
 - the deterministic repository digest covers each regular file outside `.git` using its repository-relative path, numeric permission mode, and content hash; stable ordering detects both content-only and permission-only changes without hashing timestamps, ownership, inode numbers, or other unstable metadata; and
@@ -72,4 +73,4 @@ PASS_CLEAN_GRAV_PLUGIN_LOAD
 
 This is a CLI bootstrap and lifecycle test, not an HTTP, installation, upgrade, removal, theme-rendering, API, permissions, or Admin2 UI test. Those remain subject to official verification and dedicated testing.
 
-No functional Lead capability exists yet: there is no capture, storage, delivery, API route, Admin2 page, or runtime Leads event behavior.
+No functional Lead capability exists: there is no capture, storage, delivery, functional API route, or Admin2 Leads management behavior.

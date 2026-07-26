@@ -47,7 +47,20 @@ from pathlib import Path, PurePosixPath
 import stat, sys, zipfile
 archive_path, manifest_path, root = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3]
 files = manifest_path.read_text(encoding="utf-8").splitlines()
+required = [
+    "CHANGELOG.md",
+    "README.md",
+    "admin-next/pages/goosialize-leads.js",
+    "blueprints.yaml",
+    "composer.json",
+    "goosialize-leads.php",
+    "goosialize-leads.yaml",
+    "languages/en.yaml",
+    "templates/phase-2d-skeleton.html.twig",
+]
+if files != required: raise SystemExit("manifest does not match the independent nine-file allowlist")
 expected = {root + "/", root + "/languages/"} | {f"{root}/{name}" for name in files}
+expected |= {root + "/admin-next/", root + "/admin-next/pages/", root + "/templates/"}
 with zipfile.ZipFile(archive_path) as archive:
     infos = archive.infolist(); names = [item.filename for item in infos]
     if len(names) != len(set(names)): raise SystemExit("duplicate ZIP entry")
@@ -64,7 +77,8 @@ print("PASS_PACKAGE_CONTENTS"); print("PASS_ZIP_SAFETY")
 PY
 
 fixture="${TEMP_ROOT}/fixture"
-mkdir -p "${fixture}/packaging" "${fixture}/scripts" "${fixture}/languages"
+mkdir -p "${fixture}/packaging" "${fixture}/scripts" "${fixture}/languages" \
+    "${fixture}/admin-next/pages" "${fixture}/templates"
 cp "${REPOSITORY_ROOT}/packaging/package-files.txt" "${fixture}/packaging/"
 cp "${REPOSITORY_ROOT}/scripts/build-plugin-package.sh" "${fixture}/scripts/"
 while IFS= read -r path; do cp "${REPOSITORY_ROOT}/${path}" "${fixture}/${path}"; done < "${REPOSITORY_ROOT}/packaging/package-files.txt"
@@ -103,9 +117,11 @@ for nested in "$root/goosialize-leads" "$root/grav-plugin-goosialize-leads"; do
 done
 test ! -d user/themes/goosialize
 test -f user/plugins/api/api.php; test -f user/plugins/admin2/admin2.php
-expected="CHANGELOG.md README.md blueprints.yaml composer.json goosialize-leads.php goosialize-leads.yaml languages/en.yaml"
+expected="CHANGELOG.md README.md admin-next/pages/goosialize-leads.js blueprints.yaml composer.json goosialize-leads.php goosialize-leads.yaml languages/en.yaml templates/phase-2d-skeleton.html.twig"
 actual="$(find "$root" -type f -printf "%P\n" | LC_ALL=C sort | tr "\n" " " | sed "s/ $//")"
 test "$actual" = "$expected"
+test -f "$root/templates/phase-2d-skeleton.html.twig"
+test -f "$root/admin-next/pages/goosialize-leads.js"
 php -r '\''
 $archivePrefix = "grav-plugin-goosialize-leads/";
 $installRoot = "/app/www/public/user/plugins/goosialize-leads";
@@ -148,8 +164,25 @@ $autoload=require "/app/www/public/vendor/autoload.php"; $grav=Grav\Common\Grav:
 $plugin=Grav\Common\Plugins::getPlugin("goosialize-leads");
 if (!$plugin || get_class($plugin)!=="Grav\\Plugin\\GoosializeLeadsPlugin") throw new RuntimeException("plugin discovery failed");
 if ($grav["config"]->get("plugins.goosialize-leads.enabled")!==true) throw new RuntimeException("plugin disabled");
-if (Grav\Plugin\GoosializeLeadsPlugin::getSubscribedEvents()!==[]) throw new RuntimeException("functional capability registered");
+if (Grav\Plugin\GoosializeLeadsPlugin::getSubscribedEvents()!==[
+    "onApiRegisterRoutes"=>["onApiRegisterRoutes",0],
+    "onTwigTemplatePaths"=>["onTwigTemplatePaths",0],
+]) throw new RuntimeException("unexpected plugin subscriptions");
 $grav["plugins"]->init(); if ($plugin->config()===[]) throw new RuntimeException("plugin did not initialize");
+$plugin->onTwigTemplatePaths();
+if (end($grav["twig"]->twig_paths)!=="/app/www/public/user/plugins/goosialize-leads/templates") throw new RuntimeException("Twig entry point inactive");
+$event=new RocketTheme\Toolbox\Event\Event(["routes"=>new stdClass()]); $routes=$event["routes"];
+$plugin->onApiRegisterRoutes($event); if ($event["routes"]!==$routes) throw new RuntimeException("route entry point mutated event");
+'\''
+mkdir -p user/config/plugins
+printf "enabled: false\n" > user/config/plugins/goosialize-leads.yaml
+php bin/grav cache --all >/dev/null
+php -r '\''
+define("GRAV_CLI",true); define("GRAV_REQUEST_TIME",microtime(true));
+$autoload=require "/app/www/public/vendor/autoload.php"; $grav=Grav\Common\Grav::instance(["loader"=>$autoload]); $grav->initializeCli();
+$plugin=Grav\Common\Plugins::getPlugin("goosialize-leads"); $grav["plugins"]->init();
+if (!$plugin || $grav["config"]->get("plugins.goosialize-leads.enabled") !== false) throw new RuntimeException("disabled installed plugin state mismatch");
+if (in_array("/app/www/public/user/plugins/goosialize-leads/templates",$grav["twig"]->twig_paths,true)) throw new RuntimeException("disabled installed plugin contributed Twig path");
 '\''
 printf "PASS_LOCAL_PACKAGE_INSTALL\nPASS_INSTALLED_PLUGIN_LOAD\n"
 '

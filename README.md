@@ -4,7 +4,7 @@ Goosialize Leads is planned as a standalone commercial plugin for Grav CMS 2.0.1
 
 ## Current status
 
-**Standalone skeleton.** This repository contains the minimum event-free plugin class, default configuration, metadata, Composer autoload mapping, Admin2 translations, official contract verification notes, and isolated Grav 2.0.12 load and deterministic clean-package installation tests that the skeleton passes. It does not contain lead functionality.
+**Standalone Phase 2 skeleton.** The plugin exposes only inert native entry points for API route registration with zero registered routes, Twig template-path registration, and Admin2 component-page discovery. It remains non-functional and contains no Lead capture, storage, functional API, management UI, Forms, Email, or delivery behavior.
 
 > Goosialize Leads is locally package-installable but remains non-functional, is not marketplace-ready, and is not production-ready.
 
@@ -57,7 +57,8 @@ The first release is planned to provide:
 ├── tests
 │   └── integration
 │       ├── clean-grav-plugin-load.sh
-│       └── installable-plugin-package.sh
+│       ├── installable-plugin-package.sh
+│       └── phase-2d-entry-points.sh
 └── docs
     ├── ARCHITECTURE_PRINCIPLES.md
     ├── CLEAN_GRAV_PLUGIN_LOAD_TEST.md
@@ -65,6 +66,7 @@ The first release is planned to provide:
     ├── DEPENDENCY_MAP.md
     ├── INSTALLABLE_PLUGIN_PACKAGE_TEST.md
     ├── OFFICIAL_VERIFICATION_LOG.md
+    ├── PHASE_2D_ENTRY_POINT_TEST.md
     ├── PROJECT_SCOPE.md
     ├── REFERENCE_IMPLEMENTATION_AUDIT.md
     ├── REUSE_MATRIX.md
@@ -76,6 +78,7 @@ The first release is planned to provide:
 ```bash
 scripts/build-plugin-package.sh /tmp/goosialize-leads-package
 GRAV_TEST_IMAGE=lscr.io/linuxserver/grav:2.0.12 tests/integration/installable-plugin-package.sh
+GRAV_TEST_IMAGE=lscr.io/linuxserver/grav:2.0.12 tests/integration/phase-2d-entry-points.sh
 ```
 
 The manifest is `packaging/package-files.txt`; the complete isolation and safety contract is documented in `docs/INSTALLABLE_PLUGIN_PACKAGE_TEST.md`. Build output must remain outside this repository.

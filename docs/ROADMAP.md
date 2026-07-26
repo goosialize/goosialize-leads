@@ -16,8 +16,10 @@
 - Create the minimum installable plugin structure and metadata.
 - Establish plugin-owned configuration, routes, templates, translations, and Admin2 extension entry points.
 - Verify clean activation and deactivation without theme dependencies or unrelated changes.
-- Checkpoint: the standalone event-free skeleton passes isolated Grav 2.0.12 enabled-load and disabled-configuration tests; Phase 2 remains in progress.
+- Checkpoint: the initial standalone skeleton passes isolated Grav 2.0.12 enabled-load and disabled-configuration tests; Phase 2 remains in progress.
 - Phase 2C checkpoint: the skeleton passes deterministic package generation and clean local ZIP installation into Grav 2.0.12; Phase 2 remains in progress, and licensing and marketplace publication are not complete.
+- Phase 2D checkpoint: inert route-provider, Twig template, and Admin2 component-mode entry points are implemented without Lead functionality; Phase 2 remains in progress.
+- A post-implementation Phase 2 completion review is still required.
 
 ## Phase 3: Secure capture and storage
 

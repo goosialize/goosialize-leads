@@ -27,11 +27,11 @@ scripts/build-plugin-package.sh /tmp/goosialize-leads-package
 GRAV_TEST_IMAGE=lscr.io/linuxserver/grav:2.0.12 tests/integration/installable-plugin-package.sh
 ```
 
-The output is `goosialize-leads-0.1.0-dev.zip`. No release artifact is committed.
+The output is `goosialize-leads-0.1.0-dev.zip`. The validated Phase 2D package SHA-256 is `87f4ffda0bb8ceaac09d79d696a7364dae8cb5fe7323b4f3fe16bfa6f823ae6b`; the obsolete seven-file hash is not current. No release artifact is committed.
 
 ## Package manifest and deterministic guarantees
 
-`packaging/package-files.txt` is the exact allowlist: `CHANGELOG.md`, `README.md`, `blueprints.yaml`, `composer.json`, `goosialize-leads.php`, `goosialize-leads.yaml`, and `languages/en.yaml`.
+`packaging/package-files.txt` is the exact allowlist: `CHANGELOG.md`, `README.md`, `admin-next/pages/goosialize-leads.js`, `blueprints.yaml`, `composer.json`, `goosialize-leads.php`, `goosialize-leads.yaml`, `languages/en.yaml`, and `templates/phase-2d-skeleton.html.twig`.
 
 The builder rejects missing files, directories, symlinks, duplicates, blank entries, absolute paths, traversal, unsorted entries, and metadata mismatches. It writes entries in lexical order, normalizes timestamps to `1980-01-01 00:00:00`, normalizes directories to mode `0755` and regular files to `0644`, uses fixed ZIP settings, and atomically renames a temporary output. Identical content therefore produces identical bytes. Content changes alter the hash; source permission-only changes are normalized.
 
@@ -45,7 +45,7 @@ Before invoking `php bin/gpm direct-install -y <local ZIP>`, the disposable runt
 
 After GPM installation, the test verifies the exact installed regular-file path set: every packaged file must exist, no unexpected regular file may exist, and each installed file's SHA-256 must match its corresponding ZIP entry. Mapping removes the `grav-plugin-goosialize-leads/` archive prefix and compares the remaining path beneath `user/plugins/goosialize-leads`. It also explicitly rejects both `user/plugins/goosialize-leads/goosialize-leads` and `user/plugins/goosialize-leads/grav-plugin-goosialize-leads` as incorrect nested destinations.
 
-It validates YAML with Grav's bundled Symfony YAML parser, strict JSON metadata, PHP syntax, exact installation destination and file shape, Grav bootstrap, plugin discovery, enablement, and the absence of event subscriptions or functional Lead capability. Repository-relative path, numeric mode, and content hash are compared before and after; Git status, branch, HEAD, and named-volume inventory must also remain unchanged. Cleanup traps remove the container and temporary directory on success or failure.
+It validates YAML with Grav's bundled Symfony YAML parser, strict JSON metadata, PHP syntax, exact installation destination and file shape, Grav bootstrap, plugin discovery, enablement, and exactly the inert `onApiRegisterRoutes` and `onTwigTemplatePaths` subscriptions, the installed Twig and Admin2 entry-point assets, disabled inactivity, zero functional routes, and the absence of functional Lead capability. Repository-relative path, numeric mode, and content hash are compared before and after; Git status, branch, HEAD, and named-volume inventory must also remain unchanged. Cleanup traps remove the container and temporary directory on success or failure.
 
 Expected markers are `PASS_LOCAL_IMAGE`, `PASS_PACKAGE_BUILD`, `PASS_DETERMINISTIC_PACKAGE`, `PASS_PACKAGE_CONTENTS`, `PASS_ZIP_SAFETY`, `PASS_LOCAL_PACKAGE_INSTALL`, `PASS_INSTALLED_PLUGIN_LOAD`, `PASS_REPOSITORY_UNCHANGED`, and `PASS_INSTALLABLE_PLUGIN_PACKAGE`.
 

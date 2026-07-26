@@ -1,7 +1,9 @@
 CHANGELOG.md
 README.md
+admin-next/pages/goosialize-leads.js
 blueprints.yaml
 composer.json
 goosialize-leads.php
 goosialize-leads.yaml
 languages/en.yaml
+templates/phase-2d-skeleton.html.twig
