@@ -11,15 +11,19 @@
 - Identify supported plugin lifecycle, routing, storage, permissions, and native Admin2 extension points.
 - Record verified constraints and testable architectural decisions.
 
-## Phase 2: Standalone plugin skeleton — In progress
+## Phase 2: Standalone plugin skeleton — Complete
 
 - Create the minimum installable plugin structure and metadata.
 - Establish plugin-owned configuration, routes, templates, translations, and Admin2 extension entry points.
 - Verify clean activation and deactivation without theme dependencies or unrelated changes.
-- Checkpoint: the initial standalone skeleton passes isolated Grav 2.0.12 enabled-load and disabled-configuration tests; Phase 2 remains in progress.
-- Phase 2C checkpoint: the skeleton passes deterministic package generation and clean local ZIP installation into Grav 2.0.12; Phase 2 remains in progress, and licensing and marketplace publication are not complete.
-- Phase 2D checkpoint: inert route-provider, Twig template, and Admin2 component-mode entry points are implemented without Lead functionality; Phase 2 remains in progress.
-- A post-implementation Phase 2 completion review is still required.
+- Phase 2A — Complete: the standalone plugin skeleton and plugin-owned metadata, configuration, and translations are established.
+- Phase 2B — Complete: clean enabled and disabled loading passes in isolated Grav 2.0.12.
+- Phase 2C — Complete: the deterministic nine-file package build and genuine offline GPM direct installation pass; the package SHA-256 is `87f4ffda0bb8ceaac09d79d696a7364dae8cb5fe7323b4f3fe16bfa6f823ae6b`.
+- Phase 2D — Complete: exactly the inert `onApiRegisterRoutes` and `onTwigTemplatePaths` subscriptions exist, zero functional HTTP routes are registered, and the plugin-owned Twig and native Admin2 component entry points pass.
+- Real `GpmController` component discovery and page-script serving pass. Disabled route and Twig runtime inactivity pass, while installed Admin2 filesystem discovery remains available as documented.
+- Phase 2B, Phase 2C, and Phase 2D regression suites pass. All Phase 2 implementation acceptance criteria were accepted at main commit `4170a1f267221f9ddb4e0317207264b9805e9d48`.
+- Phase 2 remains non-functional by design: it adds no Lead capture, functional API route, controller, Lead model or entity, persistence, storage schema, migration, Forms or Email processing, delivery or session behavior, permissions, Admin2 Leads management or sidebar item, theme dependency, Grav core, API plugin, or compiled Admin2 modification, Shadow DOM, imitation Admin2 controls, licensing, or marketplace publication.
+- Phase 3 — Secure capture and storage is the next main Phase; all functional Lead behavior and later lifecycle, security, management, delivery, packaging, and release work remain assigned to Phase 3 or later.
 
 ## Phase 3: Secure capture and storage
 
