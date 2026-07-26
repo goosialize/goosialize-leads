@@ -1,0 +1,7 @@
+CHANGELOG.md
+README.md
+blueprints.yaml
+composer.json
+goosialize-leads.php
+goosialize-leads.yaml
+languages/en.yaml

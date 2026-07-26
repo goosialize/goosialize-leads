@@ -4,9 +4,9 @@ Goosialize Leads is planned as a standalone commercial plugin for Grav CMS 2.0.1
 
 ## Current status
 
-**Standalone skeleton.** This repository contains the minimum event-free plugin class, default configuration, metadata, Composer autoload mapping, Admin2 translations, official contract verification notes, and an isolated Grav 2.0.12 load test that the skeleton passes. It does not contain lead functionality.
+**Standalone skeleton.** This repository contains the minimum event-free plugin class, default configuration, metadata, Composer autoload mapping, Admin2 translations, official contract verification notes, and isolated Grav 2.0.12 load and deterministic clean-package installation tests that the skeleton passes. It does not contain lead functionality.
 
-> Goosialize Leads is not yet installable or functional.
+> Goosialize Leads is locally package-installable but remains non-functional, is not marketplace-ready, and is not production-ready.
 
 ## Planned MVP
 
@@ -50,17 +50,32 @@ The first release is planned to provide:
 ├── goosialize-leads.yaml
 ├── languages
 │   └── en.yaml
+├── packaging
+│   └── package-files.txt
+├── scripts
+│   └── build-plugin-package.sh
 ├── tests
 │   └── integration
-│       └── clean-grav-plugin-load.sh
+│       ├── clean-grav-plugin-load.sh
+│       └── installable-plugin-package.sh
 └── docs
     ├── ARCHITECTURE_PRINCIPLES.md
     ├── CLEAN_GRAV_PLUGIN_LOAD_TEST.md
     ├── DECOUPLING_PLAN.md
     ├── DEPENDENCY_MAP.md
+    ├── INSTALLABLE_PLUGIN_PACKAGE_TEST.md
     ├── OFFICIAL_VERIFICATION_LOG.md
     ├── PROJECT_SCOPE.md
     ├── REFERENCE_IMPLEMENTATION_AUDIT.md
     ├── REUSE_MATRIX.md
     └── ROADMAP.md
 ```
+
+## Local package build and clean-install test
+
+```bash
+scripts/build-plugin-package.sh /tmp/goosialize-leads-package
+GRAV_TEST_IMAGE=lscr.io/linuxserver/grav:2.0.12 tests/integration/installable-plugin-package.sh
+```
+
+The manifest is `packaging/package-files.txt`; the complete isolation and safety contract is documented in `docs/INSTALLABLE_PLUGIN_PACKAGE_TEST.md`. Build output must remain outside this repository.

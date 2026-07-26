@@ -17,6 +17,7 @@
 - Establish plugin-owned configuration, routes, templates, translations, and Admin2 extension entry points.
 - Verify clean activation and deactivation without theme dependencies or unrelated changes.
 - Checkpoint: the standalone event-free skeleton passes isolated Grav 2.0.12 enabled-load and disabled-configuration tests; Phase 2 remains in progress.
+- Phase 2C checkpoint: the skeleton passes deterministic package generation and clean local ZIP installation into Grav 2.0.12; Phase 2 remains in progress, and licensing and marketplace publication are not complete.
 
 ## Phase 3: Secure capture and storage
 
