@@ -4,7 +4,7 @@ Goosialize Leads is planned as a standalone commercial plugin for Grav CMS 2.0.1
 
 ## Current status
 
-**Standalone skeleton.** This repository now contains the minimum event-free plugin class, default configuration, metadata, Composer autoload mapping, Admin2 translations, and official contract verification notes. It does not contain lead functionality.
+**Standalone skeleton.** This repository contains the minimum event-free plugin class, default configuration, metadata, Composer autoload mapping, Admin2 translations, official contract verification notes, and an isolated Grav 2.0.12 load test that the skeleton passes. It does not contain lead functionality.
 
 > Goosialize Leads is not yet installable or functional.
 
@@ -50,8 +50,12 @@ The first release is planned to provide:
 ├── goosialize-leads.yaml
 ├── languages
 │   └── en.yaml
+├── tests
+│   └── integration
+│       └── clean-grav-plugin-load.sh
 └── docs
     ├── ARCHITECTURE_PRINCIPLES.md
+    ├── CLEAN_GRAV_PLUGIN_LOAD_TEST.md
     ├── DECOUPLING_PLAN.md
     ├── DEPENDENCY_MAP.md
     ├── OFFICIAL_VERIFICATION_LOG.md

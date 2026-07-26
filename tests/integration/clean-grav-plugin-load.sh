@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly PLUGIN_MOUNT='/app/www/public/user/plugins/goosialize-leads'
+readonly EXPECTED_IMAGE_ID='sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351'
+readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+readonly REPOSITORY_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd -P)"
+readonly ENABLED_CONTAINER="goosialize-leads-enabled-$$"
+readonly DISABLED_CONTAINER="goosialize-leads-disabled-$$"
+
+fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
+cleanup() { docker rm -f "${ENABLED_CONTAINER}" "${DISABLED_CONTAINER}" >/dev/null 2>&1 || true; }
+trap cleanup EXIT HUP INT TERM
+
+for tool in docker git sha256sum; do command -v "${tool}" >/dev/null 2>&1 || fail "${tool} is not available"; done
+[[ -n "${GRAV_TEST_IMAGE:-}" ]] || fail 'GRAV_TEST_IMAGE must name an already-local Docker image'
+docker image inspect "${GRAV_TEST_IMAGE}" >/dev/null 2>&1 || fail "Docker image is not available locally: ${GRAV_TEST_IMAGE}"
+readonly ACTUAL_IMAGE_ID="$(docker image inspect --format '{{.Id}}' "${GRAV_TEST_IMAGE}")"
+[[ "${ACTUAL_IMAGE_ID}" == "${EXPECTED_IMAGE_ID}" ]] \
+    || fail "Docker image ID mismatch: expected ${EXPECTED_IMAGE_ID}, actual ${ACTUAL_IMAGE_ID}"
+
+repository_digest() {
+    (
+        cd "${REPOSITORY_ROOT}"
+        find . -path './.git' -prune -o -type f -printf '%P\0' \
+            | LC_ALL=C sort -z \
+            | while IFS= read -r -d '' path; do
+                printf '%s\0%s\0%s\0' \
+                    "${path}" \
+                    "$(stat -c '%a' -- "${path}")" \
+                    "$(sha256sum -- "${path}" | awk '{print $1}')"
+            done \
+            | sha256sum \
+            | awk '{print $1}'
+    )
+}
+readonly CONTENT_BEFORE="$(repository_digest)"
+readonly GIT_BEFORE="$(git -C "${REPOSITORY_ROOT}" status --porcelain=v1 -z | sha256sum | awk '{print $1}')"
+readonly HEAD_BEFORE="$(git -C "${REPOSITORY_ROOT}" rev-parse HEAD)"
+readonly BRANCH_BEFORE="$(git -C "${REPOSITORY_ROOT}" branch --show-current)"
+
+readonly PHP_PROBE='
+use Grav\Common\Grav;
+use Grav\Common\Plugins;
+use Grav\Plugin\GoosializeLeadsPlugin;
+use Symfony\Component\Yaml\Yaml;
+define("GRAV_CLI", true);
+define("GRAV_REQUEST_TIME", microtime(true));
+$expectedEnabled = getenv("EXPECT_ENABLED") === "1";
+$root = "/app/www/public/user/plugins/goosialize-leads";
+$autoload = require "/app/www/public/vendor/autoload.php";
+$grav = Grav::instance(["loader" => $autoload]);
+$grav->initializeCli();
+$plugin = Plugins::getPlugin("goosialize-leads");
+if (!$plugin) throw new RuntimeException("goosialize-leads.php was not discovered");
+if (get_class($plugin) !== "Grav\\Plugin\\GoosializeLeadsPlugin") throw new RuntimeException("Unexpected plugin class");
+if (!class_exists(GoosializeLeadsPlugin::class, false)) throw new RuntimeException("Plugin class was not loaded");
+foreach (["blueprints.yaml", "goosialize-leads.yaml", "languages/en.yaml"] as $file) {
+    if (!is_array(Yaml::parseFile($root . "/" . $file))) throw new RuntimeException("Invalid YAML: " . $file);
+}
+$metadata = Yaml::parseFile($root . "/blueprints.yaml");
+if (($metadata["slug"] ?? null) !== "goosialize-leads") throw new RuntimeException("Invalid metadata slug");
+if (($metadata["dependencies"][0]["version"] ?? null) !== ">=2.0.12 <2.1.0") throw new RuntimeException("Invalid Grav dependency");
+$defaults = Yaml::parseFile($root . "/goosialize-leads.yaml");
+if (($defaults["enabled"] ?? null) !== true) throw new RuntimeException("Default configuration is not enabled");
+$composer = json_decode(file_get_contents($root . "/composer.json"), true, 512, JSON_THROW_ON_ERROR);
+if (($composer["type"] ?? null) !== "grav-plugin") throw new RuntimeException("Invalid package type");
+if (($composer["require"]["php"] ?? null) !== "^8.3") throw new RuntimeException("Invalid PHP requirement");
+$enabled = (bool) $grav["config"]->get("plugins.goosialize-leads.enabled");
+if ($enabled !== $expectedEnabled) throw new RuntimeException("Merged enabled state mismatch");
+if (GoosializeLeadsPlugin::getSubscribedEvents() !== []) throw new RuntimeException("Unexpected event subscriptions");
+$grav["plugins"]->init();
+if ($expectedEnabled) {
+    if (($plugin->config()["enabled"] ?? null) !== true) throw new RuntimeException("Enabled plugin was not initialized");
+    echo "PASS_ENABLED_DISCOVERY_LOAD\n";
+} else {
+    if ($plugin->config() !== []) throw new RuntimeException("Disabled plugin became active");
+    echo "PASS_DISABLED_INACTIVE\n";
+}
+'
+
+run_case() {
+    local name="$1" expected="$2" setup="$3"
+    docker run --rm --name "${name}" --network none \
+        --mount "type=bind,src=${REPOSITORY_ROOT},dst=${PLUGIN_MOUNT},readonly" \
+        --entrypoint /bin/sh --env "EXPECT_ENABLED=${expected}" "${GRAV_TEST_IMAGE}" \
+        -c '
+            set -eu
+            cd /app/www/public
+            test "$(php bin/grav --version)" = "Grav CLI Application 2.0.12"
+            php -r "exit(PHP_VERSION_ID >= 80300 && PHP_VERSION_ID < 90000 ? 0 : 1);"
+            awk '\''
+                $5 == "/app/www/public/user/plugins/goosialize-leads" && $6 ~ /(^|,)ro(,|$)/ { ro = 1 }
+                $5 ~ "^/app/www/public/" && $5 != "/app/www/public/user/plugins/goosialize-leads" { extra = 1 }
+                END { exit ro && !extra ? 0 : 1 }
+            '\'' /proc/self/mountinfo
+            test ! -d user/themes/goosialize
+            test -f user/plugins/api/api.php
+            test -f user/plugins/admin2/admin2.php
+            test -f user/plugins/goosialize-leads/goosialize-leads.php
+            '"${setup}"'
+            output="$(find user/plugins/goosialize-leads -type f -name "*.php" -exec php -l {} \;)"
+            printf "%s\n" "$output" | grep -qv "No syntax errors detected" && exit 1 || true
+            php -d display_errors=1 -d error_reporting=E_ALL -r "$1"
+        ' sh "${PHP_PROBE}"
+}
+
+printf 'PASS_LOCAL_IMAGE image=%s id=%s\n' "${GRAV_TEST_IMAGE}" "${ACTUAL_IMAGE_ID}"
+run_case "${ENABLED_CONTAINER}" 1 ':'
+run_case "${DISABLED_CONTAINER}" 0 'mkdir -p user/config/plugins; printf "enabled: false\n" > user/config/plugins/goosialize-leads.yaml'
+
+[[ "$(repository_digest)" == "${CONTENT_BEFORE}" ]] || fail 'repository content changed during testing'
+[[ "$(git -C "${REPOSITORY_ROOT}" status --porcelain=v1 -z | sha256sum | awk '{print $1}')" == "${GIT_BEFORE}" ]] || fail 'Git status changed during testing'
+[[ "$(git -C "${REPOSITORY_ROOT}" rev-parse HEAD)" == "${HEAD_BEFORE}" ]] || fail 'HEAD changed during testing'
+[[ "$(git -C "${REPOSITORY_ROOT}" branch --show-current)" == "${BRANCH_BEFORE}" ]] || fail 'branch changed during testing'
+printf 'PASS_REPOSITORY_UNCHANGED digest=%s\n' "${CONTENT_BEFORE}"
+printf 'PASS_CLEAN_GRAV_PLUGIN_LOAD\n'

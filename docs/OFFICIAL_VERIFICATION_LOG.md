@@ -4,6 +4,8 @@ Verification date: 2026-07-26
 
 This log records only contracts checked against the approved Grav 2.0 documentation and the exact local Grav CMS 2.0.12 installation. The local runtime reported Grav `2.0.12` and its root `composer.json` requires PHP `^8.3`.
 
+The isolated checkpoint used local image `lscr.io/linuxserver/grav:2.0.12`, image ID `sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351`, Grav root `/app/www/public`, and PHP `8.5.8`. The standalone repository was the only bind mount below the Grav root and was read-only at `user/plugins/goosialize-leads`.
+
 ## Verified contracts
 
 | Area | Official URL or exact local source path | Verified contract | Effect on the skeleton | Further verification required |
@@ -16,6 +18,9 @@ This log records only contracts checked against the approved Grav 2.0 documentat
 | Blueprint configuration form | `https://learn.getgrav.org/20/plugins/plugin-tutorial`; exact installed API and Admin2 plugin blueprints | A native `toggle` field with boolean validation represents the `enabled` setting. | Added one native toggle and used strict form validation because every default setting has a field. | No |
 | Grav 2.0 compatibility | `https://learn.getgrav.org/20/plugins/plugin-compatibility`; `https://learn.getgrav.org/20/plugins/admin-translations` | Grav 2.0-only plugins explicitly list `'2.0'` under `compatibility.grav` and declare a Grav 2 dependency. Compatibility entries use major.minor versions. | Declared compatibility only with Grav `2.0` and constrained the dependency to `>=2.0.12 <2.1.0`. | No |
 | PHP compatibility | `/app/www/public/composer.json` lines 14–16 and 116–121 in the exact Grav 2.0.12 container | Grav CMS 2.0.12 requires PHP `^8.3`. | Declared `"php": "^8.3"` and used syntax compatible with that requirement. | No |
+| Clean CLI bootstrap | `/app/www/public/bin/grav`; `/app/www/public/system/src/Grav/Console/ConsoleTrait.php` lines 125–184 in isolated image `sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351` | `php bin/grav --version` reports exactly `2.0.12`; CLI initialization discovers plugins and initialization registers only enabled plugins. | The class is discovered and the enabled default initializes without PHP errors. | No |
+| Plugin discovery and activation | `/app/www/public/system/src/Grav/Common/Plugins.php` lines 125–157 and 278–342 in the same image | The entry point resolves to `Grav\Plugin\GoosializeLeadsPlugin`; `enabled: false` prevents configuration injection and activation. | Enabled and disabled cases pass without repository writes or event subscriptions. | No |
+| Isolated dependency boundaries | Local disposable-container test using the same image ID | Grav bootstraps with no Goosialize theme, reference mount, API patch, or Admin2 compiled application mount. | The skeleton has no such dependency. | `OFFICIAL_VERIFICATION_REQUIRED` for future HTTP, installation, Admin2, API, and runtime behavior. |
 | Composer package type | `/config/www/user/plugins/api/composer.json` lines 1–4 in the exact reference installation | The installed official API plugin declares Composer type `grav-plugin`. | Declared package type `grav-plugin`. | No |
 | PSR-4 structure | `https://learn.getgrav.org/20/plugins/plugin-api-integration`; `/config/www/user/plugins/api/composer.json` lines 33–39 in the exact reference installation | Plugin-owned classes can be mapped from a plugin namespace to a `classes/` directory through Composer PSR-4 autoloading. | Mapped `Grav\Plugin\GoosializeLeads\` to `classes/`; no classes or dependencies are added yet. | `OFFICIAL_VERIFICATION_REQUIRED` before adding runtime classes or a distributable autoloader. |
 | Admin2 translations | `https://learn.getgrav.org/20/plugins/admin-translations` | Admin2 automatically merges `languages/<lang>.yaml`; Grav 2.0-only plugins use the top-level `ICU` namespace while blueprints reference the unprefixed translation key. | Added `languages/en.yaml` with only ICU strings referenced by the skeleton blueprint. | No |
@@ -29,6 +34,7 @@ This log records only contracts checked against the approved Grav 2.0 documentat
 - `OFFICIAL_VERIFICATION_REQUIRED`: determine the supported distributable autoload strategy before plugin-owned classes are introduced; Composer install was intentionally not run.
 - `OFFICIAL_VERIFICATION_REQUIRED`: verify the complete permission and request contract before adding any API route.
 - `OFFICIAL_VERIFICATION_REQUIRED`: verify the official native Admin2 page/component path before adding management UI.
+- `OFFICIAL_VERIFICATION_REQUIRED`: verify installation, upgrade, removal, HTTP bootstrap, and runtime behavior before lifecycle claims.
 
 ## Explicitly excluded from this skeleton
 
