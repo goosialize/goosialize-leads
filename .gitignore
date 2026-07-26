@@ -1,0 +1,39 @@
+# Operating systems and editors
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# PHP dependencies and tooling output
+/vendor/
+/.phpunit.cache/
+/.phpunit.result.cache
+/.php-cs-fixer.cache
+/coverage/
+
+# Node dependencies and tooling output
+/node_modules/
+/npm-debug.log*
+/yarn-debug.log*
+/yarn-error.log*
+/pnpm-debug.log*
+
+# Generated frontend output and caches
+/.cache/
+/.parcel-cache/
+/.sass-cache/
+
+# Grav runtime data when testing locally
+/cache/
+/logs/
+/tmp/
+/backup/
