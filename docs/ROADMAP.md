@@ -1,17 +1,17 @@
 # Roadmap
 
-## Phase 0: Foundation
+## Phase 0: Foundation — Complete
 
 - Establish repository guidance, product scope, architectural principles, and roadmap.
 - Confirm compatibility and non-goals before implementation.
 
-## Phase 1: Reference implementation audit
+## Phase 1: Reference implementation audit — Complete
 
 - Review official Grav 2.0 documentation and the official Grav 2.0.12 source.
 - Identify supported plugin lifecycle, routing, storage, permissions, and native Admin2 extension points.
 - Record verified constraints and testable architectural decisions.
 
-## Phase 2: Standalone plugin skeleton
+## Phase 2: Standalone plugin skeleton — In progress
 
 - Create the minimum installable plugin structure and metadata.
 - Establish plugin-owned configuration, routes, templates, translations, and Admin2 extension entry points.

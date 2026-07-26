@@ -1,0 +1,7 @@
+ICU:
+  PLUGIN_GOOSIALIZE_LEADS:
+    DESCRIPTION: "Standalone lead management for Grav CMS 2.0."
+    ENABLED: "Plugin enabled"
+    ENABLED_HELP: "Enable or disable Goosialize Leads."
+    OPTION_ENABLED: "Enabled"
+    OPTION_DISABLED: "Disabled"

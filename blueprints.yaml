@@ -1,0 +1,33 @@
+name: Goosialize Leads
+slug: goosialize-leads
+type: plugin
+version: 0.1.0-dev
+description: PLUGIN_GOOSIALIZE_LEADS.DESCRIPTION
+author:
+  name: Goosialize Ltd
+  email: agency@goosialize.com
+
+# LICENSING_DECISION_REQUIRED
+
+dependencies:
+  - name: grav
+    version: '>=2.0.12 <2.1.0'
+
+compatibility:
+  grav:
+    - '2.0'
+
+form:
+  validation: strict
+  fields:
+    enabled:
+      type: toggle
+      label: PLUGIN_GOOSIALIZE_LEADS.ENABLED
+      help: PLUGIN_GOOSIALIZE_LEADS.ENABLED_HELP
+      highlight: 1
+      default: 1
+      options:
+        1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
+        0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
+      validate:
+        type: bool

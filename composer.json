@@ -1,0 +1,12 @@
+{
+    "name": "goosialize/goosialize-leads",
+    "type": "grav-plugin",
+    "require": {
+        "php": "^8.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "Grav\\Plugin\\GoosializeLeads\\": "classes/"
+        }
+    }
+}

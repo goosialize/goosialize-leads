@@ -1,0 +1,35 @@
+# Official Verification Log
+
+Verification date: 2026-07-26
+
+This log records only contracts checked against the approved Grav 2.0 documentation and the exact local Grav CMS 2.0.12 installation. The local runtime reported Grav `2.0.12` and its root `composer.json` requires PHP `^8.3`.
+
+## Verified contracts
+
+| Area | Official URL or exact local source path | Verified contract | Effect on the skeleton | Further verification required |
+|---|---|---|---|---|
+| Required plugin files | `https://learn.getgrav.org/20/plugins/plugin-tutorial` | A functional plugin uses a slug-named PHP entry point, a matching default YAML configuration file, and `blueprints.yaml`. | Created `goosialize-leads.php`, `goosialize-leads.yaml`, and `blueprints.yaml`. | No |
+| Main namespace and class naming | `https://learn.getgrav.org/20/plugins/plugin-tutorial`; `/app/www/public/system/src/Grav/Common/Plugins.php` lines 305–342 in the exact container | Main plugin classes use namespace `Grav\Plugin`, a title-cased slug plus `Plugin`, and extend `Grav\Common\Plugin`. The local loader resolves `GoosializeLeadsPlugin` for slug `goosialize-leads`. | Added the event-free `Grav\Plugin\GoosializeLeadsPlugin` class extending `Plugin`. | No |
+| Plugin base class | `/app/www/public/system/src/Grav/Common/Plugin.php` lines 27–64 in the exact container | `Grav\Common\Plugin` implements the event-subscriber contract and supplies an inherited event-discovery method. | The empty skeleton class is loadable without speculative subscriptions. | No |
+| Default configuration | `https://learn.getgrav.org/20/plugins/plugin-tutorial`; `/app/www/public/system/src/Grav/Common/Plugins.php` lines 81–84 in the exact container | `enabled` is required and controls plugin initialization. The documentation also defines `active` for page-level activation. | Added only `enabled: true`; omitted `active` because this skeleton has no page-level activation behavior. | No |
+| Blueprint metadata | `https://learn.getgrav.org/20/plugins/plugin-tutorial`; `/config/www/user/plugins/api/blueprints.yaml` and `/config/www/user/plugins/admin2/blueprints.yaml` at the reference commit | Grav plugin blueprints identify name, slug, type, version, description, author, dependencies, compatibility, and optional configuration forms. | Added only metadata needed for the identified product and current skeleton. | No |
+| Blueprint configuration form | `https://learn.getgrav.org/20/plugins/plugin-tutorial`; exact installed API and Admin2 plugin blueprints | A native `toggle` field with boolean validation represents the `enabled` setting. | Added one native toggle and used strict form validation because every default setting has a field. | No |
+| Grav 2.0 compatibility | `https://learn.getgrav.org/20/plugins/plugin-compatibility`; `https://learn.getgrav.org/20/plugins/admin-translations` | Grav 2.0-only plugins explicitly list `'2.0'` under `compatibility.grav` and declare a Grav 2 dependency. Compatibility entries use major.minor versions. | Declared compatibility only with Grav `2.0` and constrained the dependency to `>=2.0.12 <2.1.0`. | No |
+| PHP compatibility | `/app/www/public/composer.json` lines 14–16 and 116–121 in the exact Grav 2.0.12 container | Grav CMS 2.0.12 requires PHP `^8.3`. | Declared `"php": "^8.3"` and used syntax compatible with that requirement. | No |
+| Composer package type | `/config/www/user/plugins/api/composer.json` lines 1–4 in the exact reference installation | The installed official API plugin declares Composer type `grav-plugin`. | Declared package type `grav-plugin`. | No |
+| PSR-4 structure | `https://learn.getgrav.org/20/plugins/plugin-api-integration`; `/config/www/user/plugins/api/composer.json` lines 33–39 in the exact reference installation | Plugin-owned classes can be mapped from a plugin namespace to a `classes/` directory through Composer PSR-4 autoloading. | Mapped `Grav\Plugin\GoosializeLeads\` to `classes/`; no classes or dependencies are added yet. | `OFFICIAL_VERIFICATION_REQUIRED` before adding runtime classes or a distributable autoloader. |
+| Admin2 translations | `https://learn.getgrav.org/20/plugins/admin-translations` | Admin2 automatically merges `languages/<lang>.yaml`; Grav 2.0-only plugins use the top-level `ICU` namespace while blueprints reference the unprefixed translation key. | Added `languages/en.yaml` with only ICU strings referenced by the skeleton blueprint. | No |
+| Plugin-owned API routes | `https://learn.getgrav.org/20/plugins/plugin-api-integration`; `https://learn.getgrav.org/20/api/developer-guide` | An enabled plugin can later subscribe to `onApiRegisterRoutes` and register controllers extending the API plugin's `AbstractApiController`; PSR-4 autoloading is a prerequisite. | Recorded the supported future direction only. No route, controller, dependency, or event subscription was added. | `OFFICIAL_VERIFICATION_REQUIRED` before implementing authentication, permissions, controllers, or routes. |
+| Plugin-owned Admin2 field discovery | `https://learn.getgrav.org/20/api/endpoints/admin-integration`; `/config/www/user/plugins/api/classes/Api/Controllers/GpmController.php` lines 1240–1270 in the exact reference installation | Admin2 discovers enabled-package custom field scripts at `admin-next/fields/*.js` through the API plugin registry. | Recorded the official discovery contract for later evaluation. No custom field or Admin2 component was created; native standard fields remain mandatory. | `OFFICIAL_VERIFICATION_REQUIRED` before choosing any Admin2 page or component architecture. |
+| GPM behavior | `https://learn.getgrav.org/20/api/endpoints/gpm` | Admin2/GPM exposes package inspection, installation, removal, and update endpoints, and reports enablement and symlink status. | No GPM integration was added. Installation, removal, and upgrade behavior still require dedicated clean-install testing. | `OFFICIAL_VERIFICATION_REQUIRED` before packaging or lifecycle claims. |
+
+## Unresolved decisions
+
+- `LICENSING_DECISION_REQUIRED`: no final license is declared until the commercial licensing decision is approved.
+- `OFFICIAL_VERIFICATION_REQUIRED`: determine the supported distributable autoload strategy before plugin-owned classes are introduced; Composer install was intentionally not run.
+- `OFFICIAL_VERIFICATION_REQUIRED`: verify the complete permission and request contract before adding any API route.
+- `OFFICIAL_VERIFICATION_REQUIRED`: verify the official native Admin2 page/component path before adding management UI.
+
+## Explicitly excluded from this skeleton
+
+No lead capture, storage, API route, Admin2 page or component, Forms integration, Email integration, session behavior, template, data access, migration, or lifecycle event behavior is implemented in Phase 2A.
