@@ -51,16 +51,25 @@ required = [
     "CHANGELOG.md",
     "README.md",
     "admin-next/pages/goosialize-leads.js",
+    "autoload.php",
     "blueprints.yaml",
+    "classes/Application/CaptureCommand.php",
+    "classes/Domain/LeadIdGenerator.php",
+    "classes/Domain/LeadRecord.php",
+    "classes/Validation/LeadInputValidator.php",
+    "classes/Validation/LeadNormalizer.php",
+    "classes/Validation/ValidationError.php",
+    "classes/Validation/ValidationResult.php",
     "composer.json",
     "goosialize-leads.php",
     "goosialize-leads.yaml",
     "languages/en.yaml",
     "templates/phase-2d-skeleton.html.twig",
 ]
-if files != required: raise SystemExit("manifest does not match the independent nine-file allowlist")
+if files != required: raise SystemExit("manifest does not match the independent 17-file allowlist")
 expected = {root + "/", root + "/languages/"} | {f"{root}/{name}" for name in files}
 expected |= {root + "/admin-next/", root + "/admin-next/pages/", root + "/templates/"}
+expected |= {root + "/classes/", root + "/classes/Application/", root + "/classes/Domain/", root + "/classes/Validation/"}
 with zipfile.ZipFile(archive_path) as archive:
     infos = archive.infolist(); names = [item.filename for item in infos]
     if len(names) != len(set(names)): raise SystemExit("duplicate ZIP entry")
@@ -78,7 +87,8 @@ PY
 
 fixture="${TEMP_ROOT}/fixture"
 mkdir -p "${fixture}/packaging" "${fixture}/scripts" "${fixture}/languages" \
-    "${fixture}/admin-next/pages" "${fixture}/templates"
+    "${fixture}/admin-next/pages" "${fixture}/templates" \
+    "${fixture}/classes/Application" "${fixture}/classes/Domain" "${fixture}/classes/Validation"
 cp "${REPOSITORY_ROOT}/packaging/package-files.txt" "${fixture}/packaging/"
 cp "${REPOSITORY_ROOT}/scripts/build-plugin-package.sh" "${fixture}/scripts/"
 while IFS= read -r path; do cp "${REPOSITORY_ROOT}/${path}" "${fixture}/${path}"; done < "${REPOSITORY_ROOT}/packaging/package-files.txt"
@@ -117,7 +127,7 @@ for nested in "$root/goosialize-leads" "$root/grav-plugin-goosialize-leads"; do
 done
 test ! -d user/themes/goosialize
 test -f user/plugins/api/api.php; test -f user/plugins/admin2/admin2.php
-expected="CHANGELOG.md README.md admin-next/pages/goosialize-leads.js blueprints.yaml composer.json goosialize-leads.php goosialize-leads.yaml languages/en.yaml templates/phase-2d-skeleton.html.twig"
+expected="CHANGELOG.md README.md admin-next/pages/goosialize-leads.js autoload.php blueprints.yaml classes/Application/CaptureCommand.php classes/Domain/LeadIdGenerator.php classes/Domain/LeadRecord.php classes/Validation/LeadInputValidator.php classes/Validation/LeadNormalizer.php classes/Validation/ValidationError.php classes/Validation/ValidationResult.php composer.json goosialize-leads.php goosialize-leads.yaml languages/en.yaml templates/phase-2d-skeleton.html.twig"
 actual="$(find "$root" -type f -printf "%P\n" | LC_ALL=C sort | tr "\n" " " | sed "s/ $//")"
 test "$actual" = "$expected"
 test -f "$root/templates/phase-2d-skeleton.html.twig"
@@ -169,6 +179,18 @@ if (Grav\Plugin\GoosializeLeadsPlugin::getSubscribedEvents()!==[
     "onTwigTemplatePaths"=>["onTwigTemplatePaths",0],
 ]) throw new RuntimeException("unexpected plugin subscriptions");
 $grav["plugins"]->init(); if ($plugin->config()===[]) throw new RuntimeException("plugin did not initialize");
+$plugin->autoload();
+$classes=[
+    "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureCommand",
+    "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadIdGenerator",
+    "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadRecord",
+    "Grav\\Plugin\\GoosializeLeads\\Validation\\LeadInputValidator",
+    "Grav\\Plugin\\GoosializeLeads\\Validation\\LeadNormalizer",
+    "Grav\\Plugin\\GoosializeLeads\\Validation\\ValidationError",
+    "Grav\\Plugin\\GoosializeLeads\\Validation\\ValidationResult",
+];
+foreach($classes as $class){if(!class_exists($class)||!(new ReflectionClass($class))->isFinal())throw new RuntimeException("Phase 3A reflection failed: ".$class);}
+if(is_dir("/app/www/public/user/plugins/goosialize-leads/vendor"))throw new RuntimeException("vendor directory must not exist");
 $plugin->onTwigTemplatePaths();
 if (end($grav["twig"]->twig_paths)!=="/app/www/public/user/plugins/goosialize-leads/templates") throw new RuntimeException("Twig entry point inactive");
 $event=new RocketTheme\Toolbox\Event\Event(["routes"=>new stdClass()]); $routes=$event["routes"];
@@ -193,4 +215,5 @@ printf "PASS_LOCAL_PACKAGE_INSTALL\nPASS_INSTALLED_PLUGIN_LOAD\n"
 [[ "$(git -C "${REPOSITORY_ROOT}" branch --show-current)" == "${BRANCH_BEFORE}" ]] || fail 'branch changed'
 [[ "$(docker volume ls -q | LC_ALL=C sort | sha256sum | awk '{print $1}')" == "${VOLUMES_BEFORE}" ]] || fail 'named volume set changed'
 printf 'PASS_REPOSITORY_UNCHANGED digest=%s\n' "${CONTENT_BEFORE}"
+printf 'PASS_PHASE_3A_PACKAGE\n'
 printf 'PASS_INSTALLABLE_PLUGIN_PACKAGE\n'

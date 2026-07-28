@@ -38,7 +38,7 @@ readonly STATUS_BEFORE="$(git -C "${REPOSITORY_ROOT}" status --porcelain=v1 -z |
 readonly HEAD_BEFORE="$(git -C "${REPOSITORY_ROOT}" rev-parse HEAD)"
 readonly BRANCH_BEFORE="$(git -C "${REPOSITORY_ROOT}" branch --show-current)"
 
-readonly EXPECTED_MANIFEST=$'CHANGELOG.md\nREADME.md\nadmin-next/pages/goosialize-leads.js\nblueprints.yaml\ncomposer.json\ngoosialize-leads.php\ngoosialize-leads.yaml\nlanguages/en.yaml\ntemplates/phase-2d-skeleton.html.twig'
+readonly EXPECTED_MANIFEST=$'CHANGELOG.md\nREADME.md\nadmin-next/pages/goosialize-leads.js\nautoload.php\nblueprints.yaml\nclasses/Application/CaptureCommand.php\nclasses/Domain/LeadIdGenerator.php\nclasses/Domain/LeadRecord.php\nclasses/Validation/LeadInputValidator.php\nclasses/Validation/LeadNormalizer.php\nclasses/Validation/ValidationError.php\nclasses/Validation/ValidationResult.php\ncomposer.json\ngoosialize-leads.php\ngoosialize-leads.yaml\nlanguages/en.yaml\ntemplates/phase-2d-skeleton.html.twig'
 [[ "$(<"${REPOSITORY_ROOT}/packaging/package-files.txt")" == "${EXPECTED_MANIFEST}" ]] || fail 'package manifest mismatch'
 [[ "$(<"${REPOSITORY_ROOT}/templates/phase-2d-skeleton.html.twig")" == 'Goosialize Leads Phase 2 skeleton.' ]] || fail 'template content mismatch'
 node --check "${REPOSITORY_ROOT}/admin-next/pages/goosialize-leads.js"
@@ -97,6 +97,18 @@ $plugin = Grav\Common\Plugins::getPlugin("goosialize-leads");
 if (!$plugin || !$grav["config"]->get("plugins.goosialize-leads.enabled")) throw new RuntimeException("enabled plugin unavailable");
 $expected = ["onApiRegisterRoutes" => ["onApiRegisterRoutes", 0], "onTwigTemplatePaths" => ["onTwigTemplatePaths", 0]];
 if ($plugin::getSubscribedEvents() !== $expected) throw new RuntimeException("subscription allowlist mismatch");
+$plugin->autoload();
+foreach ([
+    "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureCommand",
+    "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadIdGenerator",
+    "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadRecord",
+    "Grav\\Plugin\\GoosializeLeads\\Validation\\LeadInputValidator",
+    "Grav\\Plugin\\GoosializeLeads\\Validation\\LeadNormalizer",
+    "Grav\\Plugin\\GoosializeLeads\\Validation\\ValidationError",
+    "Grav\\Plugin\\GoosializeLeads\\Validation\\ValidationResult",
+] as $class) {
+    if (!class_exists($class) || !(new ReflectionClass($class))->isFinal()) throw new RuntimeException("Phase 3A class mismatch: " . $class);
+}
 $routeMethod = new ReflectionMethod($plugin, "onApiRegisterRoutes");
 $parameters = $routeMethod->getParameters();
 if (count($parameters) !== 1 || (string) $parameters[0]->getType() !== "RocketTheme\\Toolbox\\Event\\Event" || (string) $routeMethod->getReturnType() !== "void") throw new RuntimeException("route listener signature mismatch");
@@ -187,6 +199,7 @@ printf '%s\n' "${phase_2c_output}"
 grep -q '^PASS_PACKAGE_BUILD$' <<<"${phase_2c_output}" || fail 'updated package build marker missing'
 grep -q '^PASS_LOCAL_PACKAGE_INSTALL$' <<<"${phase_2c_output}" || fail 'updated package install marker missing'
 grep -q '^PASS_INSTALLABLE_PLUGIN_PACKAGE$' <<<"${phase_2c_output}" || fail 'Phase 2C regression marker missing'
+grep -q '^PASS_PHASE_3A_PACKAGE$' <<<"${phase_2c_output}" || fail 'Phase 3A package marker missing'
 printf 'PASS_UPDATED_PACKAGE_BUILD\nPASS_UPDATED_PACKAGE_INSTALL\nPASS_PHASE_2C_REGRESSION\n'
 
 if command -v chromium >/dev/null 2>&1 || command -v chromium-browser >/dev/null 2>&1 \
@@ -201,4 +214,5 @@ fi
 [[ "$(git -C "${REPOSITORY_ROOT}" rev-parse HEAD)" == "${HEAD_BEFORE}" ]] || fail 'HEAD changed during testing'
 [[ "$(git -C "${REPOSITORY_ROOT}" branch --show-current)" == "${BRANCH_BEFORE}" ]] || fail 'branch changed during testing'
 printf 'PASS_REPOSITORY_UNCHANGED digest=%s\n' "${CONTENT_BEFORE}"
+printf 'PASS_PHASE_2D_REGRESSION\n'
 printf 'PASS_PHASE_2D_NATIVE_ENTRY_POINTS\n'

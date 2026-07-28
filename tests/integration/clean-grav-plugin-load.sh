@@ -66,6 +66,7 @@ if (($defaults["enabled"] ?? null) !== true) throw new RuntimeException("Default
 $composer = json_decode(file_get_contents($root . "/composer.json"), true, 512, JSON_THROW_ON_ERROR);
 if (($composer["type"] ?? null) !== "grav-plugin") throw new RuntimeException("Invalid package type");
 if (($composer["require"]["php"] ?? null) !== "^8.3") throw new RuntimeException("Invalid PHP requirement");
+if (($composer["require"]["ext-intl"] ?? null) !== "*") throw new RuntimeException("Invalid ext-intl requirement");
 $enabled = (bool) $grav["config"]->get("plugins.goosialize-leads.enabled");
 if ($enabled !== $expectedEnabled) throw new RuntimeException("Merged enabled state mismatch");
 $expectedSubscriptions = [
@@ -87,6 +88,24 @@ if ($expectedEnabled) {
     $routes = $event["routes"];
     $plugin->onApiRegisterRoutes($event);
     if ($event["routes"] !== $routes) throw new RuntimeException("Route entry point modified its event");
+    $autoloadMethod = new ReflectionMethod($plugin, "autoload");
+    if (!$autoloadMethod->isPublic() || $autoloadMethod->isStatic() || (string) $autoloadMethod->getReturnType() !== "void") throw new RuntimeException("autoload signature mismatch");
+    $plugin->autoload();
+    $plugin->autoload();
+    $classes = [
+        "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureCommand",
+        "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadIdGenerator",
+        "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadRecord",
+        "Grav\\Plugin\\GoosializeLeads\\Validation\\LeadInputValidator",
+        "Grav\\Plugin\\GoosializeLeads\\Validation\\LeadNormalizer",
+        "Grav\\Plugin\\GoosializeLeads\\Validation\\ValidationError",
+        "Grav\\Plugin\\GoosializeLeads\\Validation\\ValidationResult",
+    ];
+    foreach ($classes as $class) {
+        if (!class_exists($class) || !(new ReflectionClass($class))->isFinal()) throw new RuntimeException("Phase 3A class mismatch: " . $class);
+    }
+    if (is_dir($root . "/vendor")) throw new RuntimeException("Packaged vendor directory exists");
+    echo "PASS_PHASE_3A_AUTOLOAD\n";
     echo "PASS_ENABLED_DISCOVERY_LOAD\n";
 } else {
     if ($plugin->config() !== []) throw new RuntimeException("Disabled plugin became active");
@@ -124,6 +143,13 @@ run_case() {
 printf 'PASS_LOCAL_IMAGE image=%s id=%s\n' "${GRAV_TEST_IMAGE}" "${ACTUAL_IMAGE_ID}"
 run_case "${ENABLED_CONTAINER}" 1 ':'
 run_case "${DISABLED_CONTAINER}" 0 'mkdir -p user/config/plugins; printf "enabled: false\n" > user/config/plugins/goosialize-leads.yaml'
+unit_output="$(docker run --rm --network none \
+    --mount "type=bind,src=${REPOSITORY_ROOT},dst=/plugin,readonly" \
+    --entrypoint php "${GRAV_TEST_IMAGE}" /plugin/tests/unit/phase-3a-lead-data-validation.php)"
+printf '%s\n' "${unit_output}"
+for marker in PASS_PHASE_3A_AUTOLOAD PASS_PHASE_3A_SCHEMA PASS_PHASE_3A_VALIDATION PASS_PHASE_3A_UNICODE; do
+    grep -q "^${marker}$" <<<"${unit_output}" || fail "missing unit marker: ${marker}"
+done
 
 [[ "$(repository_digest)" == "${CONTENT_BEFORE}" ]] || fail 'repository content changed during testing'
 [[ "$(git -C "${REPOSITORY_ROOT}" status --porcelain=v1 -z | sha256sum | awk '{print $1}')" == "${GIT_BEFORE}" ]] || fail 'Git status changed during testing'

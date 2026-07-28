@@ -4,7 +4,7 @@ Goosialize Leads is planned as a standalone commercial plugin for Grav CMS 2.0.1
 
 ## Current status
 
-**Standalone Phase 2 skeleton.** The plugin exposes only inert native entry points for API route registration with zero registered routes, Twig template-path registration, and Admin2 component-page discovery. It remains non-functional and contains no Lead capture, storage, functional API, management UI, Forms, Email, or delivery behavior.
+**Phase 3A validation primitives.** The plugin includes a handwritten package loader and pure, immutable Lead command, validation, ID, record, and canonical-serialization primitives. It still exposes only inert native entry points and contains no capture adapter, storage, functional API, management UI, Forms processing, Email, or delivery behavior.
 
 > Goosialize Leads is locally package-installable but remains non-functional, is not marketplace-ready, and is not production-ready.
 
@@ -45,6 +45,18 @@ The first release is planned to provide:
 ├── CHANGELOG.md
 ├── README.md
 ├── blueprints.yaml
+├── autoload.php
+├── classes
+│   ├── Application
+│   │   └── CaptureCommand.php
+│   ├── Domain
+│   │   ├── LeadIdGenerator.php
+│   │   └── LeadRecord.php
+│   └── Validation
+│       ├── LeadInputValidator.php
+│       ├── LeadNormalizer.php
+│       ├── ValidationError.php
+│       └── ValidationResult.php
 ├── composer.json
 ├── goosialize-leads.php
 ├── goosialize-leads.yaml

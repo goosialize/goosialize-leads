@@ -1,7 +1,15 @@
 CHANGELOG.md
 README.md
 admin-next/pages/goosialize-leads.js
+autoload.php
 blueprints.yaml
+classes/Application/CaptureCommand.php
+classes/Domain/LeadIdGenerator.php
+classes/Domain/LeadRecord.php
+classes/Validation/LeadInputValidator.php
+classes/Validation/LeadNormalizer.php
+classes/Validation/ValidationError.php
+classes/Validation/ValidationResult.php
 composer.json
 goosialize-leads.php
 goosialize-leads.yaml

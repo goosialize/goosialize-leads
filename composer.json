@@ -2,7 +2,8 @@
     "name": "goosialize/goosialize-leads",
     "type": "grav-plugin",
     "require": {
-        "php": "^8.3"
+        "php": "^8.3",
+        "ext-intl": "*"
     },
     "autoload": {
         "psr-4": {

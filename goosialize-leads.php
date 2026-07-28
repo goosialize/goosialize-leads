@@ -9,6 +9,11 @@ use RocketTheme\Toolbox\Event\Event;
 
 final class GoosializeLeadsPlugin extends Plugin
 {
+    public function autoload(): void
+    {
+        require_once __DIR__ . '/autoload.php';
+    }
+
     public static function getSubscribedEvents(): array
     {
         return [
