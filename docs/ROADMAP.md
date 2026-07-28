@@ -54,7 +54,8 @@
 - Phase 4B.2 reversible delete/restore is also `BLOCKED_BY_ADMIN2_2_0_15` because it requires the same secure native mutation lifecycle.
 - The Phase 4A.1 index remains read-only; primary records remain immutable and no mutable status metadata exists. Custom JavaScript, web components, Shadow DOM, legacy Admin, imitation controls and compiled Admin2 changes are forbidden blocker workarounds.
 - Phase 4B can be reconsidered only after one supported native workflow source-proves explicit save, Lead-ID and revision transport, authentication and ACL, general plugin nonce/CSRF creation/transport/verification before persistence, conflict handling, and native success/error feedback without custom components.
-- Phase 4C owns bounded authenticated CSV export subject to a separate read-only native-action readiness gate. Notifications remain later.
+- Phase 4C.1 owns the approved native authenticated bounded CSV export. It exports only the deterministic latest-100 backend collection through Admin2 2.0.15's built-in resource-table blob-download action, with a dedicated ACL, fixed CSV format and injection protection, no client-filter claim, and no plugin JavaScript or mutation. Contract branch: `docs/phase-4c1-admin2-csv-export-contract`; implementation branch: `feat/phase-4c1-admin2-csv-export`; implementation subject: `feat: add bounded Admin2 Lead CSV export`.
+- Notifications remain later.
 - Test accessibility, authorization, bounded reads, source compatibility, deterministic packaging, and all completed regressions.
 
 ## Phase 5: Lead magnet delivery

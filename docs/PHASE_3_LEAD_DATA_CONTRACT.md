@@ -392,3 +392,25 @@ Phase 4B.1 status mutation and Phase 4B.2 reversible delete/restore are `BLOCKED
 While blocked, the canonical Lead record remains immutable, `status` and `revision` retain their captured values, no separate mutable status metadata exists, and the Phase 4A.1 projection remains read-only. Phase 3B security/idempotency sidecars remain separate and unopened by Admin2 reads. No hypothetical Phase 4B schema, runtime API or migration is approved.
 
 Unblocking requires one exact installed-platform workflow proving together: native edit form and select, explicit submit/save, Lead ID, revision/version, authentication, dedicated ACL, general plugin nonce/CSRF creation and transport, server verification before persistence, stale-conflict behavior, native success/error feedback, and operation without plugin JavaScript, custom components, Shadow DOM, legacy Admin or compiled Admin2 changes.
+
+## Phase 4C.1 bounded CSV projection
+
+Phase 4C.1 exports only the existing immutable Phase 4A.1 summary projection. It calls `FilesystemLeadReadRepository::latest(LeadIndexQuery::newest())`; therefore it scans at most 10,000 exact primary-record candidates, refuses candidate 10,001, returns at most the newest 100 in canonical `created_at` descending then `id` ascending order, rejects malformed/oversized/symlinked/non-contained primary records, performs no write and never opens Phase 3B sidecars.
+
+Columns are fixed and exhaustive:
+
+| Order | Header | Source | Null | Maximum CSV cell | Disclosure |
+|---:|---|---|---|---:|---|
+| 1 | `Lead ID` | `LeadSummary::id()` | empty quoted cell | 128 UTF-8 code points | Synthetic opaque identifier only |
+| 2 | `Created (UTC)` | `LeadSummary::createdAt()` | empty quoted cell | 32 code points | Canonical UTC timestamp unchanged |
+| 3 | `Name` | `LeadSummary::name()` | empty quoted cell | 256 code points | Existing summary field |
+| 4 | `Email` | `LeadSummary::email()` | empty quoted cell | 320 code points | Existing summary field |
+| 5 | `Source` | `LeadSummary::source()` | empty quoted cell | 128 code points | Existing summary field |
+| 6 | `Form` | `LeadSummary::formName()` | empty quoted cell | 128 code points | Existing summary field |
+| 7 | `Status` | `LeadSummary::status()` | empty quoted cell | 32 code points | Immutable captured status only |
+
+No message, telephone, consent, campaign, locale, company, resource, revision, HMAC, key version, fingerprint, storage path, sidecar or future mutable metadata is exported. A source value exceeding its column maximum fails the entire export before output with `export_record_invalid`; it is never silently truncated.
+
+CSV is UTF-8 without BOM, comma-delimited, CRLF-terminated, and contains exactly one header row plus zero to 100 rows. Every field is enclosed in ASCII double quotes; embedded double quotes are doubled; CRLF and bare CR inside values normalize to LF and embedded LF remains inside the quoted cell. Null is an empty quoted cell. There are no Boolean columns. Timestamps remain canonical UTC strings. The final record also ends in CRLF.
+
+Formula injection is neutralized without changing disk data. After line-break normalization and length validation, any non-empty cell whose first byte is tab, CR or LF, or whose first non-ASCII-whitespace character after leading ASCII space/tab is `=`, `+`, `-` or `@`, receives one leading ASCII apostrophe before CSV quoting. This includes leading-whitespace cases. Neutralization precedes response-byte accounting; no truncation occurs. Tests cover each dangerous prefix, leading spaces/tabs, safe apostrophes and ordinary Unicode.
