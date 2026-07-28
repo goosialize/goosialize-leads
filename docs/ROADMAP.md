@@ -80,3 +80,10 @@
 - Run the complete automated and manual test matrix.
 - Resolve release-blocking defects and verify all acceptance criteria.
 - Produce a reviewable release candidate; publishing remains subject to explicit approval.
+
+## Phase 3C transport checkpoints
+
+- Phase 3C.1 is complete: native Grav Forms capture reuses the shared Phase 3A/3B pipeline.
+- Phase 3C.2 owns exactly one anonymous POST JSON endpoint, raw-body parsing, Origin enforcement, direct-client fixed-window rate limiting, API idempotency, deterministic JSON responses, package integration, and synthetic regression tests.
+- Phase 3C.2 does not add Forms behavior, frontend rendering or JavaScript, notifications, Admin2, ACL UI, CSV/export, themes, delivery, accounts, OAuth, CAPTCHA providers, or external rate-limit storage.
+- Notifications remain Phase 3D. Full security/integration acceptance remains Phase 3E. Admin2 management, permissions, reads, search, status changes, retention execution, deletion, and CSV/export remain Phase 4.

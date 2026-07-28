@@ -346,3 +346,25 @@ Phase 3C.1 user-visible outcomes contain no Lead data. Success is the exact tran
 | `{"email":"lead@example.test","consent":{"granted":true},"page_url":"https://example.test/example"}` | `unknown_field` |
 | `{"phone":"000","consent":{"granted":true},"message":"Example"}` | `invalid_phone` |
 | An object with two `email` members | `DUPLICATE_JSON_KEY` |
+
+## Phase 3C.2 public JSON transport projection
+
+The public endpoint accepts only these JSON members and projects them into the existing Phase 3A contract. Transport parsing never normalizes a submitted value.
+
+| JSON member | Required and JSON type | Ownership and exact projection |
+|---|---|---|
+| `full_name` | Optional string or null | Submitted `full_name`; Phase 3A owns empty, length, NFC, and grammar. |
+| `first_name` | Optional string or null | Submitted alternative name half; valid only with `last_name` and without `full_name`; Phase 3A combines the pair. |
+| `last_name` | Optional string or null | Submitted alternative name half; valid only with `first_name` and without `full_name`; Phase 3A combines the pair. |
+| `email` | Optional string or null | Submitted `email`; Phase 3A owns normalization and validation. |
+| `phone` | Optional string or null | Submitted `phone`; Phase 3A owns normalization and validation. |
+| `company` | Optional string or null | Submitted `company`; Phase 3A owns empty and length rules. |
+| `message` | Optional string or null | Submitted `message`; Phase 3A owns content and length; at least one of this and `resource_id` must survive validation. |
+| `resource_id` | Optional string or null | Submitted `resource_id`; Phase 3A owns grammar; at least one inquiry field is required. |
+| `source_path` | Optional string or null | Submitted `source_path`; Phase 3A owns its safe relative-path contract. |
+| `campaign` | Optional object or null | Only `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, and `utm_content` are allowed, each string or null; Phase 3A owns normalization, grammar, and length. |
+| `consent` | Required object | Must contain exactly `{"granted":true}`; Phase 3A owns the consent invariant. |
+
+Every other member, including client-supplied `source`, `form_name`, `locale`, `consent_version`, `status`, `schema_version`, `revision`, `id`, `created_at`, `updated_at`, and idempotency data, is `unknown_member`. Trusted values are `source = public_api`, `form_name = public_api`, configured `locale`, and configured `consent_version`. Missing optional members are represented as null only where the existing validator permits null. Arrays, numbers, Booleans outside `consent.granted`, and objects outside `campaign` and `consent` fail `request_schema_invalid`; repeated JSON names at any object depth fail earlier as `duplicate_json_key`.
+
+API idempotency comes only from one case-sensitive `Idempotency-Key` header matching `[A-Za-z0-9._~-]{16,128}`. `IdempotencyKeyRing::deriveApiIdempotencyKey()` applies the active configured key to exact bytes `"public-api-v1\n" + header + "\n"` and returns lowercase hexadecimal HMAC-SHA-256. The header and digest remain transport/coordinator data and are absent from the Lead record. Same derived key plus the same canonical payload returns the existing Lead ID as replay; a changed payload returns `idempotency_conflict`. Missing and malformed headers never reach validation or persistence.
