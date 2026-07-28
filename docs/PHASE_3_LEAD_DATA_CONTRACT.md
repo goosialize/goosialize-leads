@@ -384,3 +384,11 @@ Phase 4A.1 is read-only and does not change canonical records. The provider retu
 | `status` | `status` | Required stored string; native text and status filter; never mutated. |
 
 Exact key order is `id`, `created_at`, `name`, `email`, `source`, `form_name`, `status`. HMAC/idempotency, revision, consent, company, message, phone, resource, source path, campaign, locale, paths, and sidecars are not projected. The success envelope is `data: list<LeadSummary>` followed by `meta` with exact keys `read_only:true`, `count:0..100`, `limit:100`, `truncated:boolean`, `total_scanned:0..10000`, and `allowed_statuses:[new,contacted,qualified,closed]`. No Phase 4A.1 endpoint exposes older records.
+
+## Phase 4B mutation boundary
+
+Phase 4B.1 status mutation and Phase 4B.2 reversible delete/restore are `BLOCKED_BY_ADMIN2_2_0_15`. The installed native resource-table editor transports only the selected value and has no source-proven revision/version field, explicit save action, general plugin nonce/CSRF lifecycle or deterministic conflict lifecycle. API authentication alone must never authorize these mutations.
+
+While blocked, the canonical Lead record remains immutable, `status` and `revision` retain their captured values, no separate mutable status metadata exists, and the Phase 4A.1 projection remains read-only. Phase 3B security/idempotency sidecars remain separate and unopened by Admin2 reads. No hypothetical Phase 4B schema, runtime API or migration is approved.
+
+Unblocking requires one exact installed-platform workflow proving together: native edit form and select, explicit submit/save, Lead ID, revision/version, authentication, dedicated ACL, general plugin nonce/CSRF creation and transport, server verification before persistence, stale-conflict behavior, native success/error feedback, and operation without plugin JavaScript, custom components, Shadow DOM, legacy Admin or compiled Admin2 changes.

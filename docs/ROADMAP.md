@@ -49,7 +49,12 @@
 
 - Phase 4A.1 owns a native declarative read-only bounded Lead Index. Admin2 2.0.15 fetches one collection and filters client-side; it has no native pagination or interactive sorting. The backend returns at most the latest 100 records in fixed `created_at` descending, `id` ascending order and rejects storage beyond its exact scan bound.
 - Phase 4A.1 has one read ACL and native loading/empty/error states, with no JavaScript, web component, Shadow DOM, custom control, row action, detail, mutation, or export. Documentation branch: `docs/phase-4a1-bounded-admin2-lead-index-contract`; implementation branch: `feat/phase-4a1-bounded-admin2-lead-index`; implementation subject: `feat: add bounded Admin2 Lead Index`.
-- Phase 4A.2 owns native Lead detail only after a separately proven architecture. Phase 4B owns status, reversible delete, restore, and mutation permissions. Phase 4C owns CSV export. Notifications remain later.
+- Phase 4A.2 owns native Lead detail only after a separately proven architecture and remains blocked because Admin2 2.0.15 has no source-proven native Lead-detail composition API.
+- Phase 4B.1 status mutation is `BLOCKED_BY_ADMIN2_2_0_15`. The native resource-table editor sends only the edited scalar, with no revision transport, explicit save lifecycle or reusable general plugin nonce/CSRF lifecycle. Authentication alone must never expose a mutation endpoint.
+- Phase 4B.2 reversible delete/restore is also `BLOCKED_BY_ADMIN2_2_0_15` because it requires the same secure native mutation lifecycle.
+- The Phase 4A.1 index remains read-only; primary records remain immutable and no mutable status metadata exists. Custom JavaScript, web components, Shadow DOM, legacy Admin, imitation controls and compiled Admin2 changes are forbidden blocker workarounds.
+- Phase 4B can be reconsidered only after one supported native workflow source-proves explicit save, Lead-ID and revision transport, authentication and ACL, general plugin nonce/CSRF creation/transport/verification before persistence, conflict handling, and native success/error feedback without custom components.
+- Phase 4C owns bounded authenticated CSV export subject to a separate read-only native-action readiness gate. Notifications remain later.
 - Test accessibility, authorization, bounded reads, source compatibility, deterministic packaging, and all completed regressions.
 
 ## Phase 5: Lead magnet delivery
