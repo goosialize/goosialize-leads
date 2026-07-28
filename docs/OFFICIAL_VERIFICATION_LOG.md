@@ -175,3 +175,19 @@ Verified locally without network access against immutable image `sha256:702d936e
 Two independent final Phase 3C.2 builds produced byte-identical `goosialize-leads-0.1.0-dev.zip` archives. The first SHA-256 was `6602e3dd69f6ba1150a30535181213982a41c9397704938d78af1d6a6f237c92`; the second SHA-256 was `6602e3dd69f6ba1150a30535181213982a41c9397704938d78af1d6a6f237c92`; deterministic equality PASS. The package manifest and offline-installed tree each contain exactly 37 regular files, all 27 runtime types load and reflect, no `vendor/` exists, and offline GPM direct installation passed.
 
 `PASS_PHASE_3C2_SHARED_API`, `PASS_PHASE_3C2_RAW_JSON`, `PASS_PHASE_3C2_PUBLIC_ROUTE`, `PASS_PHASE_3C2_RATE_LIMIT`, `PASS_PHASE_3C2_REGRESSIONS`, and `PASS_PHASE_3C2_PACKAGE` passed. Phase 3A validation, Phase 3B persistence/fault/concurrency, Phase 3C.1 Forms/nonce, and Phase 2B/2C/2D regressions passed. All PHP files passed `php -l`; Composer JSON, YAML, Markdown, package manifest, and all shell scripts passed their structural or syntax checks. ShellCheck remained unavailable, so `bash -n` was used for every shell script. No genuine browser runtime was available or claimed.
+
+## Phase 4A.1 bounded Admin2 Lead Index source evidence
+
+The local checkpoint is Grav 2.0.12, Admin2 2.0.15 (`admin2/blueprints.yaml:1-5`), API 1.0.12 (`api/blueprints.yaml:1-5`), PHP 8.5.8. API `README.md:899-1005` and controller source prove sidebar/page events, blueprint pages, session authentication, and route registration. The reference source was audited without data: its blueprint proves `resource-table`, text/select/datetime filters, operators, columns, and native state messages; its mutations/export and Shadow-DOM page are rejected.
+
+Compiled Admin2 `app/_app/immutable/chunks/pU51ty18.js` proves `Ae()` fetches one endpoint, `U()` filters locally, `j()` implements contains/equals/inclusive dates, `ie()` performs text/datetime display with em-dash null fallback, and rendering iterates all filtered rows. It sends no page, size, filter, or sort parameters and has no pagination/sort control. The contract consequently fixes newest-first backend order, response limit 100, no pagination, and no interactive sorting.
+
+| Question | Pass evidence | Failure fallback |
+|---|---|---|
+| Declarative operation? | `page_type: blueprint` plus one `resource-table`; no page script. | No custom component fallback. |
+| Exact filters/states? | Compiled field dispatch accepts text/select/datetime and native loading/error/empty branches. | Mismatch blocks implementation. |
+| Honest bounds? | Scan at most 10,000 valid records, reject candidate 10,001, return at most 100 with `truncated`; title always says `latest 100`. | Unbounded or silent partial scan blocks implementation. |
+| Closed ACL/dependencies? | Only `api.goosialize_leads.read`; absent events are inert. | Browsing fails closed without affecting capture. |
+| Deterministic package? | Require 45 files, 33 types, two identical builds/SHA, offline installation, all regressions. | Any mismatch blocks merge. |
+
+Phase 3C.2 SHA `6602e3dd69f6ba1150a30535181213982a41c9397704938d78af1d6a6f237c92` remains baseline. No Phase 4A.1 SHA is predeclared.

@@ -727,3 +727,72 @@ Production order is exact: `GoosializeLeadsPlugin::onApiRegisterRoutes()` regist
 `GRAV_TEST_IMAGE=lscr.io/linuxserver/grav:2.0.12 tests/integration/phase-3c2-public-json-api.sh` uses `docker run --rm --network none`, a synthetic temporary Grav tree and API source fixture, never the reference data. It proves absent/present API load, disabled/invalid inertness, exact hook/path/controller, middleware-before-decoder ordering, POST/405/OPTIONS, negotiation, 16,384/16,385 bytes, UTF-8, syntax/depth/duplicates, every Origin and direct-address rule, 10/11 boundary, concurrent rate state, unavailable storage, all response oracles and redaction; it prints `PASS_PHASE_3C2_RAW_JSON`, `PASS_PHASE_3C2_PUBLIC_ROUTE`, and `PASS_PHASE_3C2_RATE_LIMIT`.
 
 The same integration script runs existing Phase 3A, Phase 3B, Phase 3C.1, and Phase 2B/2C/2D commands, proves no notification/Admin2/theme behavior, and prints `PASS_PHASE_3C2_REGRESSIONS`. Updated package scripts build twice, compare bytes and SHA, offline GPM-install, assert exactly 37 manifest/install files and all 27 reflected runtime types, retain the Phase 3C.1 baseline, reject development/state/data files, and print `PASS_PHASE_3C2_PACKAGE`. Any missing marker, unsupported lifecycle, extra path, unsafe output, nondeterminism, or regression blocks implementation commit and leaves the public API disabled.
+
+## Phase 4A.1 bounded native Admin2 Lead Index
+
+Phase 4A.1 is implemented on `feat/phase-4a1-bounded-admin2-lead-index` in one commit with subject `feat: add bounded Admin2 Lead Index`. It provides one read-only API/ACL-backed Admin2 page through Admin2 2.0.15's declarative `resource-table`. It adds no plugin-owned JavaScript, web component, Shadow DOM, CSS, compiled asset, detail view, row action, mutation, export, notification, or capture change.
+
+The installed resource-table calls one endpoint without page, page-size, filter, or sort parameters, filters the returned `data` array client-side, and renders every filtered row. Phase 4A.1 therefore has no pagination or interactive sorting. The provider returns at most 100 records in one fixed order. The page title is exactly `Leads — latest 100`, permanently disclosing that older records can be outside the bounded index. Phase 4A.2 owns detail only after a native architecture is separately proven; Phase 4B owns status and reversible mutations; Phase 4C owns export; notifications remain later.
+
+### Phase 4A.1 exact implementation manifest
+
+The future implementation changes exactly 22 paths: ten new and twelve modified.
+
+New paths are `admin/blueprints/goosialize-leads-index.yaml`, `classes/Admin/LeadIndexCollection.php`, `classes/Admin/LeadIndexQuery.php`, `classes/Admin/LeadSummary.php`, `classes/Admin/LeadsIndexController.php`, `classes/Storage/FilesystemLeadReadRepository.php`, `classes/Storage/LeadReadRepository.php`, `permissions.yaml`, `tests/integration/phase-4a1-bounded-admin2-lead-index.sh`, and `tests/unit/phase-4a1-bounded-admin2-lead-index.php`.
+
+Modified paths are `CHANGELOG.md`, `README.md`, `blueprints.yaml`, `docs/OFFICIAL_VERIFICATION_LOG.md`, `goosialize-leads.php`, `goosialize-leads.yaml`, `packaging/package-files.txt`, `tests/integration/clean-grav-plugin-load.sh`, `tests/integration/installable-plugin-package.sh`, `tests/integration/phase-2d-entry-points.sh`, `tests/integration/phase-3c-grav-forms.sh`, and `tests/integration/phase-3c2-public-json-api.sh`.
+
+Exactly six runtime types, one declarative page, one permissions definition, one unit test, and one integration test are new. The six runtime types plus the page and permissions enter the package; tests do not. The package/installed tree grows from 37 to 45 files and reflection from 27 to 33 types. Append these manifest entries in exact order: `admin/blueprints/goosialize-leads-index.yaml`, `classes/Admin/LeadIndexCollection.php`, `classes/Admin/LeadIndexQuery.php`, `classes/Admin/LeadSummary.php`, `classes/Admin/LeadsIndexController.php`, `classes/Storage/FilesystemLeadReadRepository.php`, `classes/Storage/LeadReadRepository.php`, `permissions.yaml`. No tests, fixtures, data, state, logs, ZIP, VCS metadata, `vendor/`, JavaScript, CSS, Svelte, or compiled Admin2 asset enters the package.
+
+### Bounded filesystem read policy
+
+`FilesystemLeadReadRepository` receives the real `user-data://` root and owns reads below `goosialize-leads/v1/records`. It never opens the idempotency tree. Missing or malformed sidecars therefore have no effect on Phase 4A.1 reads; sidecar validity remains a Phase 3B capture/replay concern and no sidecar-derived value enters a summary. Every concatenated segment is grammar-checked; `lstat()`, `realpath()`, containment, non-symlink directory, regular-file, and `0600` checks are mandatory. Only `YYYY/MM/<32 lowercase hex>.json` is accepted. Temporary, unknown, malformed, non-regular, or incorrectly permissioned entries fail the request.
+
+Iteration is bounded to 256 year/month directory entries and 10,001 record candidates. Candidate 10,001 returns `lead_index_capacity_exceeded` with no partial data. Each accepted record is at most 32,768 bytes, valid UTF-8 JSON, an associative object, and the exact Phase 3B canonical schema. At most 10,000 decoded records are resident. A corrupt, malformed, or incomplete record returns `lead_index_record_invalid`; none is repaired or skipped. Reads perform no write, chmod, rename, unlink, lock creation, sidecar access, or value/path logging.
+
+For 0–10,000 valid records, sort by canonical UTC `created_at` descending, then `id` ascending using bytewise comparison. Missing/malformed timestamps fail rather than sort as null. Return the first 100. `truncated` is true exactly when valid count exceeds 100; `total_scanned` is the valid count. There is no configurable limit, pagination emulation, or older-record endpoint.
+
+### Exact public APIs
+
+| Type/path | Exact API | Creator, consumer, and invariant |
+|---|---|---|
+| `final Admin\LeadSummary`; `classes/Admin/LeadSummary.php` | Private constructor; `fromRecord(array $record): self`; getters `id(): string`, `createdAt(): string`, `name(): ?string`, `email(): ?string`, `source(): string`, `formName(): string`, `status(): string`; `toArray(): array{id:string,created_at:string,name:?string,email:?string,source:string,form_name:string,status:string}`. | Repository creates; collection/controller consume. Bad input throws `InvalidArgumentException('Invalid Lead summary record.')`. |
+| `final Admin\LeadIndexQuery`; `classes/Admin/LeadIndexQuery.php` | Private constructor; `newest(): self`; `limit(): int` always 100. | Controller creates; repository consumes. Immutable, with no page, filter, cursor, or sort input. |
+| `final Admin\LeadIndexCollection`; `classes/Admin/LeadIndexCollection.php` | Private constructor; `create(array $summaries, bool $truncated, int $totalScanned): self`; `summaries(): array`; `truncated(): bool`; `totalScanned(): int`; `toResponse(): array{data:list<array<string,mixed>>,meta:array{read_only:true,count:int,limit:100,truncated:bool,total_scanned:int,allowed_statuses:list<string>}}`. | Repository creates; controller consumes. Requires a list of at most 100 summaries and internally consistent totals/truncation; otherwise `InvalidArgumentException('Invalid Lead index collection.')`. |
+| `Storage\LeadReadRepository`; `classes/Storage/LeadReadRepository.php` | Interface containing only `latest(LeadIndexQuery $query): LeadIndexCollection`. | Controller depends on it; filesystem reader and unit fakes implement it. |
+| `final Storage\FilesystemLeadReadRepository`; `classes/Storage/FilesystemLeadReadRepository.php` | `__construct(string $userDataRoot)`; `latest(LeadIndexQuery $query): LeadIndexCollection`. | Plugin composes; controller calls. Only stable codes `lead_index_storage_invalid`, `lead_index_capacity_exceeded`, `lead_index_record_invalid`, `unexpected_storage_failure`. |
+| `final Admin\LeadsIndexController`; `classes/Admin/LeadsIndexController.php` | `__construct(Grav $grav, Config $config)`; `index(ServerRequestInterface $request): ResponseInterface`. | API router creates/calls. It enforces authentication, config, and `api.goosialize_leads.read`, then creates query/repository. |
+
+All names above use prefix `Grav\Plugin\GoosializeLeads\`. Direct tests may call public APIs only. `GoosializeLeadsPlugin` is the registrar: add `PermissionsRegisterEvent`, `onApiSidebarItems`, and `onApiPluginPageInfo`; register only GET `/goosialize-leads` to `LeadsIndexController::index`. Exact new handlers are `onRegisterPermissions(PermissionsRegisterEvent $event): void`, `onApiSidebarItems(Event $event): void`, and `onApiPluginPageInfo(Event $event): void`. They are inert when disabled or API/Admin2 events are absent.
+
+### Declarative resource-table contract
+
+`admin/blueprints/goosialize-leads-index.yaml` contains one `form.fields.leads`: `type: resource-table`, `endpoint: /goosialize-leads`, `id_key: id`; clear and refresh true, export false; and no export endpoint, editor, action, link, detail, page, cursor, size, or sort key. Messages are exactly `No leads have been captured yet.`, `No leads match the active filters.`, and `Lead data could not be loaded.`.
+
+| Filter | Exact declaration and client behavior |
+|---|---|
+| Search | `name: search`, `section: search`, `type: text`, label `Search`, placeholder `Search name, email, source or Lead ID`, fields `[id, name, email, source]`, `operator: contains`; lowercase containment; empty inactive. |
+| Status | `name: status`, `type: select`, label `Status`, field `status`, `operator: equals`, `options_from_meta: allowed_statuses`; lowercase equality; options `new`, `contacted`, `qualified`, `closed`. |
+| Source | `name: source`, `type: select`, label `Source`, field `source`, `operator: equals`, `options_from_field: source`; lowercase equality over bounded rows. |
+| From | `name: date_from`, `type: datetime`, label `Created from`, field `created_at`, `operator: date-from`; inclusive leading `YYYY-MM-DD`; invalid/empty inactive. |
+| To | `name: date_to`, `type: datetime`, label `Created to`, field `created_at`, `operator: date-to`; inclusive leading `YYYY-MM-DD`; invalid/empty inactive. |
+
+Filters are exclusively client-side. Labels are native accessibility labels. Columns in order are `created_at` (`Created`, datetime, 18%), `name` (`Name`, 18%), `email` (`Email`, 24%), `source` (`Source`, 14%), `form_name` (`Form`, 12%), and `status` (`Status`, 14%). Native text/datetime rendering escapes values and renders null/empty as an em dash. No badge/custom renderer exists.
+
+Page definition is id/plugin/blueprint `goosialize-leads`, title `Leads — latest 100`, icon `fa-address-book`, `page_type: blueprint`, actions `[]`. Sidebar is id/plugin `goosialize-leads`, label `Leads`, same icon, route `/plugin/goosialize-leads`, priority 20, badge null, authorize `api.goosialize_leads.read`. No page script exists.
+
+### ACL, configuration, and responses
+
+`permissions.yaml` registers only `api.goosialize_leads.read` through `PermissionsRegisterEvent` and `PermissionsReader::fromYaml()`. No role receives it by default. Navigation/page are omitted without it; the provider rejects unauthenticated with 401 `authentication_required` and unauthorized with 403 `forbidden`. Bodies contain only `ok:false`, `code`, `message`; logs contain stable codes only.
+
+Configuration contains only `plugins.goosialize-leads.admin2_index.enabled` (Boolean, default false; only literal true enables) and `plugins.goosialize-leads.admin2_index.timezone` (string, default/only value `UTC`). Missing/invalid values disable Admin2 browsing only, never Forms or public API capture. The 100 limit is fixed.
+
+Success/empty is 200 with exact top-level `data`, then `meta`; meta is `read_only`, `count`, `limit`, `truncated`, `total_scanned`, `allowed_statuses`. Truncated success is ordinary 200; resource-table ignores unused metadata while the title discloses the bound. Error mappings are exact: 401 `authentication_required` / `Authentication required.`, 403 `forbidden` / `Lead access is forbidden.`, 503 `admin2_index_unavailable` / `Lead index is unavailable.`, 503 `lead_index_record_invalid` / `Lead index data is invalid.`, 503 `lead_index_storage_invalid` / `Lead index storage is unavailable.`, 503 `lead_index_capacity_exceeded` / `Lead index capacity was exceeded.`, and 500 `internal_error` / `Lead index could not be loaded.`. Errors contain keys `ok`, `code`, `message` in that order. Every response has JSON UTF-8, `Cache-Control: no-store`, and `X-Content-Type-Options: nosniff`; no path, record value, sidecar, key, HMAC, exception, or stack leaks.
+
+### Tests and acceptance
+
+`php tests/unit/phase-4a1-bounded-admin2-lead-index.php` uses synthetic temporary roots; reflects all six APIs; covers empty/one/many, 100/101 and 10,000/10,001 boundaries, ordering/tie, projection, corrupt/incomplete/oversize/malformed/symlink/containment/mode faults, zero writes, responses, redaction, ACL/config; prints `PASS_PHASE_4A1_BOUNDED_INDEX`.
+
+`GRAV_TEST_IMAGE=lscr.io/linuxserver/grav:2.0.12 tests/integration/phase-4a1-bounded-admin2-lead-index.sh` uses `docker run --rm --network none` with source-compatible synthetic Admin2/API fixtures; proves absent/present load, disabled behavior, permission/navigation/page/provider ACL, exact blueprint/filter/column declarations, no JS/web component/Shadow DOM/CSS/pagination/sort/detail/action/export, native states, all regressions; prints `PASS_PHASE_4A1_NATIVE_RESOURCE_TABLE`, `PASS_PHASE_4A1_READ_ACL`, `PASS_PHASE_4A1_REGRESSIONS`, `PASS_PHASE_4A1_PACKAGE`.
+
+The five modified integration scripts preserve every older marker while updating package/install count 45, reflection count 33, plugin loading, and entry points. Acceptance requires PHP syntax, Composer/YAML/Markdown/manifest integrity, shell syntax, two byte-identical builds and SHA values, offline GPM install, no browser claim, clean resources, and exact 22-path commit. The final Phase 4A.1 SHA is implementation evidence, not a planning constant; Phase 3C.2 SHA remains baseline.

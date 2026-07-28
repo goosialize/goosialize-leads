@@ -368,3 +368,19 @@ The public endpoint accepts only these JSON members and projects them into the e
 Every other member, including client-supplied `source`, `form_name`, `locale`, `consent_version`, `status`, `schema_version`, `revision`, `id`, `created_at`, `updated_at`, and idempotency data, is `unknown_member`. Trusted values are `source = public_api`, `form_name = public_api`, configured `locale`, and configured `consent_version`. Missing optional members are represented as null only where the existing validator permits null. Arrays, numbers, Booleans outside `consent.granted`, and objects outside `campaign` and `consent` fail `request_schema_invalid`; repeated JSON names at any object depth fail earlier as `duplicate_json_key`.
 
 API idempotency comes only from one case-sensitive `Idempotency-Key` header matching `[A-Za-z0-9._~-]{16,128}`. `IdempotencyKeyRing::deriveApiIdempotencyKey()` applies the active configured key to exact bytes `"public-api-v1\n" + header + "\n"` and returns lowercase hexadecimal HMAC-SHA-256. The header and digest remain transport/coordinator data and are absent from the Lead record. Same derived key plus the same canonical payload returns the existing Lead ID as replay; a changed payload returns `idempotency_conflict`. Missing and malformed headers never reach validation or persistence.
+
+## Phase 4A.1 bounded Lead summary projection
+
+Phase 4A.1 is read-only and does not change canonical records. The provider returns at most 100 summaries ordered by canonical `created_at` descending, then `id` ascending. It is a bounded inbox, not a complete history.
+
+| Response key | Canonical source | Projection |
+|---|---|---|
+| `id` | `id` | Required opaque 32-character lowercase hexadecimal string. |
+| `created_at` | `created_at` | Required canonical UTC timestamp. |
+| `name` | `full_name` | String or null; native text. |
+| `email` | `email` | String or null; native text. |
+| `source` | `source` | Required string; native text and source filter. |
+| `form_name` | `form_name` | Required string; native text. |
+| `status` | `status` | Required stored string; native text and status filter; never mutated. |
+
+Exact key order is `id`, `created_at`, `name`, `email`, `source`, `form_name`, `status`. HMAC/idempotency, revision, consent, company, message, phone, resource, source path, campaign, locale, paths, and sidecars are not projected. The success envelope is `data: list<LeadSummary>` followed by `meta` with exact keys `read_only:true`, `count:0..100`, `limit:100`, `truncated:boolean`, `total_scanned:0..10000`, and `allowed_statuses:[new,contacted,qualified,closed]`. No Phase 4A.1 endpoint exposes older records.

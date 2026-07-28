@@ -47,9 +47,10 @@
 
 ## Phase 4: Native Admin2 management
 
-- Build the Leads page through official Admin2 extension mechanisms and native components.
-- Add permission-gated viewing, search, combined filters, statuses, CSV export, updates, and deletion.
-- Test accessibility, authorization, and Admin2 compatibility.
+- Phase 4A.1 owns a native declarative read-only bounded Lead Index. Admin2 2.0.15 fetches one collection and filters client-side; it has no native pagination or interactive sorting. The backend returns at most the latest 100 records in fixed `created_at` descending, `id` ascending order and rejects storage beyond its exact scan bound.
+- Phase 4A.1 has one read ACL and native loading/empty/error states, with no JavaScript, web component, Shadow DOM, custom control, row action, detail, mutation, or export. Documentation branch: `docs/phase-4a1-bounded-admin2-lead-index-contract`; implementation branch: `feat/phase-4a1-bounded-admin2-lead-index`; implementation subject: `feat: add bounded Admin2 Lead Index`.
+- Phase 4A.2 owns native Lead detail only after a separately proven architecture. Phase 4B owns status, reversible delete, restore, and mutation permissions. Phase 4C owns CSV export. Notifications remain later.
+- Test accessibility, authorization, bounded reads, source compatibility, deterministic packaging, and all completed regressions.
 
 ## Phase 5: Lead magnet delivery
 
