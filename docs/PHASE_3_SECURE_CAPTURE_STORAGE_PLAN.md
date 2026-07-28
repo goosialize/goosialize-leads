@@ -448,22 +448,22 @@ Phase 3B chooses maintenance scope B. It performs only current-operation cleanup
 docker run --rm --network none --mount type=bind,src=/home/goosialize/projects/local-docker/grav/goosialize-leads-dev,dst=/source,readonly --entrypoint php sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351 /source/tests/unit/phase-3b-secure-persistence.php
 ```
 
-The command first requires that `docker image inspect --format '{{.Id}}' lscr.io/linuxserver/grav:2.0.12` equals the literal image ID used above. The test uses only `lead@example.test`, `+35722000000`, `Synthetic Lead`, consent version `privacy-v1`, source `api`, form `goosialize-leads-capture`, UTC `2026-07-27T10:20:30.123456Z`, entropy bytes `00` through `0f`, idempotency key `synthetic-key-01`, Base64 `S0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0s=` for version 1, and Base64 `UlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUlI=` for version 2. The exact 261-byte payload-HMAC input is:
+The command first requires that `docker image inspect --format '{{.Id}}' lscr.io/linuxserver/grav:2.0.12` equals the literal image ID used above. The test uses only `lead@example.test`, `+35722000000`, `Synthetic Lead`, message `Phase 3B persistence fixture`, consent version `privacy-v1`, source `api`, form `goosialize-leads-capture`, UTC `2026-07-27T10:20:30.123456Z`, entropy bytes `00` through `0f`, idempotency key `synthetic-key-01`, Base64 `S0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0s=` for version 1, and Base64 `UlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUlI=` for version 2. The exact 287-byte payload-HMAC input is:
 
 ```json
-{"source":"api","form_name":"goosialize-leads-capture","locale":null,"consent":{"granted":true},"full_name":"Synthetic Lead","email":"lead@example.test","phone":"+35722000000","company":null,"message":null,"resource_id":null,"source_path":null,"campaign":null}
+{"source":"api","form_name":"goosialize-leads-capture","locale":null,"consent":{"granted":true},"full_name":"Synthetic Lead","email":"lead@example.test","phone":"+35722000000","company":null,"message":"Phase 3B persistence fixture","resource_id":null,"source_path":null,"campaign":null}
 ```
 
-The JSON line plus exactly one LF is the HMAC input. Its key digest is `3a1190b048a946c5d50e77efb7361ab6768acbfa4e3a54fa8e0bf0b8ff927f59`; its version-1 payload digest is `e17f2b0515ba2afa241577ee6c3def115049d871527eeba9eb61c546695a8115`. With ID `00000000000000000000000000000000`, the exact persisted record bytes are this line plus one LF:
+The JSON line plus exactly one LF is the HMAC input. Its key digest is `3a1190b048a946c5d50e77efb7361ab6768acbfa4e3a54fa8e0bf0b8ff927f59`; its version-1 payload digest is `838eb9525abf7512b0e1872249d52b5af67d662341185bed54dd14c93437896b`. With ID `00000000000000000000000000000000`, the exact persisted record bytes are this line plus one LF:
 
 ```json
-{"schema_version":1,"id":"00000000000000000000000000000000","created_at":"2026-07-27T10:20:30.123456Z","updated_at":"2026-07-27T10:20:30.123456Z","status":"new","revision":1,"source":"api","form_name":"goosialize-leads-capture","locale":null,"consent":{"granted":true,"version":"privacy-v1","captured_at":"2026-07-27T10:20:30.123456Z"},"idempotency":{"key_version":1,"key_hash":"3a1190b048a946c5d50e77efb7361ab6768acbfa4e3a54fa8e0bf0b8ff927f59","payload_fingerprint":"e17f2b0515ba2afa241577ee6c3def115049d871527eeba9eb61c546695a8115"},"full_name":"Synthetic Lead","email":"lead@example.test","phone":"+35722000000","company":null,"message":null,"resource_id":null,"source_path":null,"campaign":null}
+{"schema_version":1,"id":"00000000000000000000000000000000","created_at":"2026-07-27T10:20:30.123456Z","updated_at":"2026-07-27T10:20:30.123456Z","status":"new","revision":1,"source":"api","form_name":"goosialize-leads-capture","locale":null,"consent":{"granted":true,"version":"privacy-v1","captured_at":"2026-07-27T10:20:30.123456Z"},"idempotency":{"key_version":1,"key_hash":"3a1190b048a946c5d50e77efb7361ab6768acbfa4e3a54fa8e0bf0b8ff927f59","payload_fingerprint":"838eb9525abf7512b0e1872249d52b5af67d662341185bed54dd14c93437896b"},"full_name":"Synthetic Lead","email":"lead@example.test","phone":"+35722000000","company":null,"message":"Phase 3B persistence fixture","resource_id":null,"source_path":null,"campaign":null}
 ```
 
 The exact sidecar bytes are this line plus one LF:
 
 ```json
-{"schema_version":1,"key_version":1,"key_digest":"3a1190b048a946c5d50e77efb7361ab6768acbfa4e3a54fa8e0bf0b8ff927f59","payload_digest":"e17f2b0515ba2afa241577ee6c3def115049d871527eeba9eb61c546695a8115","lead_id":"00000000000000000000000000000000","created_at":"2026-07-27T10:20:30.123456Z","expires_at":"2026-08-26T10:20:30.123456Z"}
+{"schema_version":1,"key_version":1,"key_digest":"3a1190b048a946c5d50e77efb7361ab6768acbfa4e3a54fa8e0bf0b8ff927f59","payload_digest":"838eb9525abf7512b0e1872249d52b5af67d662341185bed54dd14c93437896b","lead_id":"00000000000000000000000000000000","created_at":"2026-07-27T10:20:30.123456Z","expires_at":"2026-08-26T10:20:30.123456Z"}
 ```
 
 The test defines an in-memory `LeadRepository` fake whose queued exact results are `created`, `replayed`, `id_collision`, or `failure`; it records immutable request snapshots and exposes no filesystem API.
