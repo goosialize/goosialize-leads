@@ -298,6 +298,33 @@ Records and sidecars use the same verified hard-link no-replace publication boun
 
 Malformed sidecars are never overwritten, renamed, quarantined, or repaired during anonymous capture. A future authorized Phase 7 maintenance command may copy them into a contained `quarantine/` directory only after explicit review; it must preserve the source, redact logs, and pass corruption, symlink, containment, and recovery tests.
 
+## Phase 3C.1 Grav Forms mapping
+
+Phase 3C.1 accepts only the filtered values returned by Forms 9.1.14 `Form::value()` after its built-in nonce, blueprint, and honeypot validation. The exact field mapping is:
+
+| Forms field | Phase 3A destination | Presence and type |
+|---|---|---|
+| `full_name` | submitted `full_name` | Required string for Phase 3C.1 Forms; missing, null, or non-string reaches unchanged Phase 3A validation. |
+| `email` | submitted `email` | Optional string or null; at least one of email/phone remains required. |
+| `phone` | submitted `phone` | Optional string or null. |
+| `company` | submitted `company` | Optional string or null. |
+| `message` | submitted `message` | Optional string or null; at least one of message/resource remains required. |
+| `resource_id` | submitted `resource_id` | Optional string or null. |
+| `source_path` | submitted `source_path` | Optional string or null. |
+| `campaign` | submitted `campaign` | Optional null or exact five-key campaign object. |
+| `consent` | submitted `consent` | Required exact object `{"granted":true}`; no Boolean/string coercion. |
+| `Form::getFormName()` | trusted `form_name` | Exact configured case-sensitive lowercase slug. |
+| `plugins.goosialize-leads.forms.source` | trusted `source` | Validated lowercase slug. |
+| `plugins.goosialize-leads.forms.locale` | trusted `locale` | Validated locale or null. |
+| `plugins.goosialize-leads.forms.consent_version` | trusted `consent_version` | Validated lowercase slug. |
+| `Form::getUniqueId()` | idempotency derivation only | Exactly 20 lowercase ASCII alphanumeric characters; never a command or record field. |
+
+Missing fields become null only where Phase 3A permits null. Repeated/multiple values remain arrays and fail `invalid_type`; no adapter coercion or first-value selection occurs. Unknown filtered field names produce the stable form-level validation failure and are not silently discarded. Trusted names in submitted data remain forbidden. All trimming, NFC, telephone normalization, email-domain lowercasing, control/noncharacter checks, field grammar, consent, contact, name, and inquiry rules remain exclusively Phase 3A behavior.
+
+Forms idempotency uses `IdempotencyKeyRing::deriveFormsIdempotencyKey()` with exact bytes `grav-forms-v1`, LF, form name, LF, submission ID, LF and the active Phase 3B HMAC key. The lowercase hexadecimal HMAC becomes the existing coordinator’s opaque idempotency key. Identical form/name/ID and normalized payload replays; a changed payload conflicts; absent/malformed ID or missing key configuration fails before persistence. Neither the Forms ID nor derived key is stored raw or exposed.
+
+Phase 3C.1 user-visible outcomes contain no Lead data. Success is the exact translated message `Forms Lead captured.` followed by a configured validated internal 303 redirect with no query. Validation uses `Please correct the form and try again.` and standard redisplay. Configuration, identifier, conflict, or storage failure uses `We could not submit this form. Please try again later.` and standard redisplay. Primitive errors remain available only inside `CaptureResult` for deterministic tests and are not rendered with submitted values.
+
 ## Compatibility and security invariants
 
 - Schema 1 is the only Phase 3 write format; even additive keys require an explicit schema decision.
