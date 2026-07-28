@@ -38,7 +38,7 @@ readonly STATUS_BEFORE="$(git -C "${REPOSITORY_ROOT}" status --porcelain=v1 -z |
 readonly HEAD_BEFORE="$(git -C "${REPOSITORY_ROOT}" rev-parse HEAD)"
 readonly BRANCH_BEFORE="$(git -C "${REPOSITORY_ROOT}" branch --show-current)"
 
-readonly EXPECTED_MANIFEST=$'CHANGELOG.md\nREADME.md\nadmin-next/pages/goosialize-leads.js\nautoload.php\nblueprints.yaml\nclasses/Application/CaptureCommand.php\nclasses/Application/LeadPersistenceCoordinator.php\nclasses/Domain/LeadIdGenerator.php\nclasses/Domain/LeadRecord.php\nclasses/Security/IdempotencyKeyRing.php\nclasses/Storage/FilesystemLeadRepository.php\nclasses/Storage/LeadRepository.php\nclasses/Storage/PersistenceRequest.php\nclasses/Storage/PersistenceResult.php\nclasses/Storage/StorageException.php\nclasses/Validation/LeadInputValidator.php\nclasses/Validation/LeadNormalizer.php\nclasses/Validation/ValidationError.php\nclasses/Validation/ValidationResult.php\ncomposer.json\ngoosialize-leads.php\ngoosialize-leads.yaml\nlanguages/en.yaml\ntemplates/phase-2d-skeleton.html.twig'
+readonly EXPECTED_MANIFEST=$'CHANGELOG.md\nREADME.md\nadmin-next/pages/goosialize-leads.js\nautoload.php\nblueprints.yaml\nclasses/Application/CaptureCommand.php\nclasses/Application/CaptureResult.php\nclasses/Application/LeadCaptureService.php\nclasses/Application/LeadPersistenceCoordinator.php\nclasses/Domain/LeadIdGenerator.php\nclasses/Domain/LeadRecord.php\nclasses/Http/FormsLeadCaptureAdapter.php\nclasses/Security/IdempotencyKeyRing.php\nclasses/Storage/FilesystemLeadRepository.php\nclasses/Storage/LeadRepository.php\nclasses/Storage/PersistenceRequest.php\nclasses/Storage/PersistenceResult.php\nclasses/Storage/StorageException.php\nclasses/Validation/LeadInputValidator.php\nclasses/Validation/LeadNormalizer.php\nclasses/Validation/ValidationError.php\nclasses/Validation/ValidationResult.php\ncomposer.json\ngoosialize-leads.php\ngoosialize-leads.yaml\nlanguages/en.yaml\ntemplates/phase-2d-skeleton.html.twig'
 [[ "$(<"${REPOSITORY_ROOT}/packaging/package-files.txt")" == "${EXPECTED_MANIFEST}" ]] || fail 'package manifest mismatch'
 [[ "$(<"${REPOSITORY_ROOT}/templates/phase-2d-skeleton.html.twig")" == 'Goosialize Leads Phase 2 skeleton.' ]] || fail 'template content mismatch'
 node --check "${REPOSITORY_ROOT}/admin-next/pages/goosialize-leads.js"
@@ -95,14 +95,17 @@ $autoload = require "/app/www/public/vendor/autoload.php";
 $grav = Grav\Common\Grav::instance(["loader" => $autoload]); $grav->initializeCli();
 $plugin = Grav\Common\Plugins::getPlugin("goosialize-leads");
 if (!$plugin || !$grav["config"]->get("plugins.goosialize-leads.enabled")) throw new RuntimeException("enabled plugin unavailable");
-$expected = ["onApiRegisterRoutes" => ["onApiRegisterRoutes", 0], "onTwigTemplatePaths" => ["onTwigTemplatePaths", 0]];
+$expected = ["onApiRegisterRoutes" => ["onApiRegisterRoutes", 0], "onTwigTemplatePaths" => ["onTwigTemplatePaths", 0], "onFormProcessed" => ["onFormProcessed", 0]];
 if ($plugin::getSubscribedEvents() !== $expected) throw new RuntimeException("subscription allowlist mismatch");
 $plugin->autoload();
 foreach ([
     "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureCommand",
+    "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureResult",
+    "Grav\\Plugin\\GoosializeLeads\\Application\\LeadCaptureService",
     "Grav\\Plugin\\GoosializeLeads\\Application\\LeadPersistenceCoordinator",
     "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadIdGenerator",
     "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadRecord",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\FormsLeadCaptureAdapter",
     "Grav\\Plugin\\GoosializeLeads\\Security\\IdempotencyKeyRing",
     "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadRepository",
     "Grav\\Plugin\\GoosializeLeads\\Storage\\PersistenceRequest",

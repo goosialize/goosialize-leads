@@ -40,6 +40,24 @@ final class IdempotencyKeyRing
     public function enabled(): bool { return $this->activeVersion !== null; }
     public function activeVersion(): ?int { return $this->activeVersion; }
 
+    public function deriveFormsIdempotencyKey(string $formName, string $submissionId): string
+    {
+        if (
+            preg_match('/\A[a-z0-9](?:[a-z0-9_-]{0,62}[a-z0-9])?\z/D', $formName) !== 1
+            || preg_match('/\A[a-z0-9]{20}\z/D', $submissionId) !== 1
+        ) {
+            throw new \InvalidArgumentException('Invalid Forms idempotency input.');
+        }
+        if (!$this->enabled() || !isset($this->keys[$this->activeVersion])) {
+            throw new StorageException('key_configuration_invalid');
+        }
+        return hash_hmac(
+            'sha256',
+            "grav-forms-v1\n" . $formName . "\n" . $submissionId . "\n",
+            $this->keys[$this->activeVersion]
+        );
+    }
+
     public function keyDigest(?string $idempotencyKey): ?string
     {
         if ($idempotencyKey === null) return null;

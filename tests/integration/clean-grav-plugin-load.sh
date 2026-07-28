@@ -72,6 +72,7 @@ if ($enabled !== $expectedEnabled) throw new RuntimeException("Merged enabled st
 $expectedSubscriptions = [
     "onApiRegisterRoutes" => ["onApiRegisterRoutes", 0],
     "onTwigTemplatePaths" => ["onTwigTemplatePaths", 0],
+    "onFormProcessed" => ["onFormProcessed", 0],
 ];
 if (GoosializeLeadsPlugin::getSubscribedEvents() !== $expectedSubscriptions) throw new RuntimeException("Unexpected event subscriptions");
 foreach (array_keys($expectedSubscriptions) as $method) {
@@ -94,9 +95,12 @@ if ($expectedEnabled) {
     $plugin->autoload();
     $classes = [
         "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureCommand",
+        "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureResult",
+        "Grav\\Plugin\\GoosializeLeads\\Application\\LeadCaptureService",
         "Grav\\Plugin\\GoosializeLeads\\Application\\LeadPersistenceCoordinator",
         "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadIdGenerator",
         "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadRecord",
+        "Grav\\Plugin\\GoosializeLeads\\Http\\FormsLeadCaptureAdapter",
         "Grav\\Plugin\\GoosializeLeads\\Security\\IdempotencyKeyRing",
         "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadRepository",
         "Grav\\Plugin\\GoosializeLeads\\Storage\\PersistenceRequest",

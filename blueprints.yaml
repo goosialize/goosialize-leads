@@ -31,3 +31,45 @@ form:
         0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
       validate:
         type: bool
+    forms.enabled:
+      type: toggle
+      label: PLUGIN_GOOSIALIZE_LEADS.FORMS_ENABLED
+      default: 0
+      options:
+        1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
+        0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
+      validate:
+        type: bool
+    forms.forms:
+      type: array
+      label: PLUGIN_GOOSIALIZE_LEADS.FORMS_LIST
+      default: []
+      value_only: true
+      validate:
+        type: array
+    forms.source:
+      type: text
+      label: PLUGIN_GOOSIALIZE_LEADS.FORMS_SOURCE
+      default: website
+      validate:
+        required: true
+        pattern: '^[a-z0-9](?:[a-z0-9_-]{0,62}[a-z0-9])?$'
+    forms.locale:
+      type: text
+      label: PLUGIN_GOOSIALIZE_LEADS.FORMS_LOCALE
+      default: null
+      validate:
+        pattern: '^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*$'
+    forms.consent_version:
+      type: text
+      label: PLUGIN_GOOSIALIZE_LEADS.FORMS_CONSENT_VERSION
+      default: privacy-v1
+      validate:
+        required: true
+        pattern: '^[a-z0-9](?:[a-z0-9_-]{0,62}[a-z0-9])?$'
+    forms.success_redirect:
+      type: text
+      label: PLUGIN_GOOSIALIZE_LEADS.FORMS_SUCCESS_REDIRECT
+      default: /
+      validate:
+        required: true

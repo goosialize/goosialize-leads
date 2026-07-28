@@ -1,5 +1,10 @@
 # Goosialize Leads
 
+Phase 3C.1 adds opt-in, server-rendered Grav Forms capture. Configure
+`forms.enabled`, list eligible lowercase form names in `forms.forms`, and add the
+`goosialize_leads_capture` process action to those forms. Public JSON and XHR
+capture remain out of scope.
+
 Goosialize Leads is planned as a standalone commercial plugin for Grav CMS 2.0.12. Its objective is to capture, securely store, deliver, organize, and manage leads directly inside Grav and native Admin2.
 
 ## Current status

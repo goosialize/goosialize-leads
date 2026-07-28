@@ -2,3 +2,10 @@ enabled: true
 idempotency:
   active_key_version: null
   keys: {}
+forms:
+  enabled: false
+  forms: []
+  source: website
+  locale: null
+  consent_version: privacy-v1
+  success_redirect: /

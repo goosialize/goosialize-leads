@@ -4,9 +4,12 @@ admin-next/pages/goosialize-leads.js
 autoload.php
 blueprints.yaml
 classes/Application/CaptureCommand.php
+classes/Application/CaptureResult.php
+classes/Application/LeadCaptureService.php
 classes/Application/LeadPersistenceCoordinator.php
 classes/Domain/LeadIdGenerator.php
 classes/Domain/LeadRecord.php
+classes/Http/FormsLeadCaptureAdapter.php
 classes/Security/IdempotencyKeyRing.php
 classes/Storage/FilesystemLeadRepository.php
 classes/Storage/LeadRepository.php

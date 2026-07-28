@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add opt-in native Grav Forms Lead capture backed by the Phase 3A validation
+  and Phase 3B secure filesystem persistence services.
+
 ## 0.1.0-dev — Unreleased
 
 - Established the project foundation.

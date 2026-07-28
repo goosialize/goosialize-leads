@@ -47,6 +47,30 @@ check($ring->verify(1, $ring->canonicalPayload($command), $ring->payloadDigest($
 $rotated = new IdempotencyKeyRing(2, [1 => $key1, 2 => $key2]);
 check($rotated->verify(1, $ring->canonicalPayload($command), $ring->payloadDigest($command)), 'historical verification failed');
 check($rotated->payloadDigest($command) !== $ring->payloadDigest($command), 'rotation did not change digest');
+$formsBytes = "grav-forms-v1\ncontact\n0123456789abcdefghij\n";
+check(
+    $ring->deriveFormsIdempotencyKey('contact', '0123456789abcdefghij')
+        === hash_hmac('sha256', $formsBytes, str_repeat('K', 32)),
+    'Forms idempotency active-key derivation mismatch'
+);
+check(
+    $rotated->deriveFormsIdempotencyKey('contact', '0123456789abcdefghij')
+        === hash_hmac('sha256', $formsBytes, str_repeat('R', 32)),
+    'Forms idempotency key-version selection mismatch'
+);
+foreach ([['Contact', '0123456789abcdefghij'], ['contact', 'invalid']] as [$formName, $submissionId]) {
+    try {
+        $ring->deriveFormsIdempotencyKey($formName, $submissionId);
+        throw new RuntimeException('invalid Forms idempotency argument accepted');
+    } catch (\InvalidArgumentException) {
+    }
+}
+try {
+    (new IdempotencyKeyRing(null, []))->deriveFormsIdempotencyKey('contact', '0123456789abcdefghij');
+    throw new RuntimeException('disabled Forms idempotency key ring accepted');
+} catch (\Grav\Plugin\GoosializeLeads\Storage\StorageException $e) {
+    check($e->stableCode() === 'key_configuration_invalid', 'wrong disabled Forms key code');
+}
 foreach ([[null, [1 => $key1]], [1, []], [1, [1 => 'bad']]] as [$active, $keys]) {
     try {
         new IdempotencyKeyRing($active, $keys);
@@ -106,7 +130,7 @@ foreach ($classes as $class) check((new ReflectionClass($class))->isFinal(), 'cl
 check((new ReflectionClass(LeadRepository::class))->isInterface(), 'repository is not interface');
 $methods = [
     LeadPersistenceCoordinator::class => ['__construct', 'persist'],
-    IdempotencyKeyRing::class => ['__construct', 'enabled', 'activeVersion', 'keyDigest', 'canonicalPayload', 'payloadDigest', 'verify'],
+    IdempotencyKeyRing::class => ['__construct', 'enabled', 'activeVersion', 'deriveFormsIdempotencyKey', 'keyDigest', 'canonicalPayload', 'payloadDigest', 'verify'],
     \Grav\Plugin\GoosializeLeads\Storage\FilesystemLeadRepository::class => ['__construct', 'persist'],
     PersistenceRequest::class => ['create', 'record', 'recordBytes', 'keyDigest', 'payloadBytes', 'hasIdempotency'],
     PersistenceResult::class => ['created', 'replayed', 'idCollision', 'failure', 'status', 'record', 'code', 'errors', 'errorsAsArray', 'isSuccess', 'toArray'],
@@ -121,3 +145,15 @@ foreach ($methods as $class => $expected) {
     }
     check($actual === $expected, 'public API mismatch: ' . $class);
 }
+$formsMethod = new ReflectionMethod(IdempotencyKeyRing::class, 'deriveFormsIdempotencyKey');
+check($formsMethod->isPublic() && !$formsMethod->isStatic(), 'Forms idempotency method visibility mismatch');
+check((string) $formsMethod->getReturnType() === 'string', 'Forms idempotency return type mismatch');
+$formsParameters = $formsMethod->getParameters();
+check(count($formsParameters) === 2, 'Forms idempotency parameter count mismatch');
+check(
+    $formsParameters[0]->getName() === 'formName'
+        && (string) $formsParameters[0]->getType() === 'string'
+        && $formsParameters[1]->getName() === 'submissionId'
+        && (string) $formsParameters[1]->getType() === 'string',
+    'Forms idempotency parameter contract mismatch'
+);

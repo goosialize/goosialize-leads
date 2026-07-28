@@ -54,9 +54,12 @@ required = [
     "autoload.php",
     "blueprints.yaml",
     "classes/Application/CaptureCommand.php",
+    "classes/Application/CaptureResult.php",
+    "classes/Application/LeadCaptureService.php",
     "classes/Application/LeadPersistenceCoordinator.php",
     "classes/Domain/LeadIdGenerator.php",
     "classes/Domain/LeadRecord.php",
+    "classes/Http/FormsLeadCaptureAdapter.php",
     "classes/Security/IdempotencyKeyRing.php",
     "classes/Storage/FilesystemLeadRepository.php",
     "classes/Storage/LeadRepository.php",
@@ -73,10 +76,10 @@ required = [
     "languages/en.yaml",
     "templates/phase-2d-skeleton.html.twig",
 ]
-if files != required: raise SystemExit("manifest does not match the independent 24-file allowlist")
+if files != required: raise SystemExit("manifest does not match the independent 27-file allowlist")
 expected = {root + "/", root + "/languages/"} | {f"{root}/{name}" for name in files}
 expected |= {root + "/admin-next/", root + "/admin-next/pages/", root + "/templates/"}
-expected |= {root + "/classes/", root + "/classes/Application/", root + "/classes/Domain/", root + "/classes/Security/", root + "/classes/Storage/", root + "/classes/Validation/"}
+expected |= {root + "/classes/", root + "/classes/Application/", root + "/classes/Domain/", root + "/classes/Http/", root + "/classes/Security/", root + "/classes/Storage/", root + "/classes/Validation/"}
 with zipfile.ZipFile(archive_path) as archive:
     infos = archive.infolist(); names = [item.filename for item in infos]
     if len(names) != len(set(names)): raise SystemExit("duplicate ZIP entry")
@@ -95,7 +98,7 @@ PY
 fixture="${TEMP_ROOT}/fixture"
 mkdir -p "${fixture}/packaging" "${fixture}/scripts" "${fixture}/languages" \
     "${fixture}/admin-next/pages" "${fixture}/templates" \
-    "${fixture}/classes/Application" "${fixture}/classes/Domain" "${fixture}/classes/Security" \
+    "${fixture}/classes/Application" "${fixture}/classes/Domain" "${fixture}/classes/Http" "${fixture}/classes/Security" \
     "${fixture}/classes/Storage" "${fixture}/classes/Validation"
 cp "${REPOSITORY_ROOT}/packaging/package-files.txt" "${fixture}/packaging/"
 cp "${REPOSITORY_ROOT}/scripts/build-plugin-package.sh" "${fixture}/scripts/"
@@ -135,7 +138,7 @@ for nested in "$root/goosialize-leads" "$root/grav-plugin-goosialize-leads"; do
 done
 test ! -d user/themes/goosialize
 test -f user/plugins/api/api.php; test -f user/plugins/admin2/admin2.php
-expected="CHANGELOG.md README.md admin-next/pages/goosialize-leads.js autoload.php blueprints.yaml classes/Application/CaptureCommand.php classes/Application/LeadPersistenceCoordinator.php classes/Domain/LeadIdGenerator.php classes/Domain/LeadRecord.php classes/Security/IdempotencyKeyRing.php classes/Storage/FilesystemLeadRepository.php classes/Storage/LeadRepository.php classes/Storage/PersistenceRequest.php classes/Storage/PersistenceResult.php classes/Storage/StorageException.php classes/Validation/LeadInputValidator.php classes/Validation/LeadNormalizer.php classes/Validation/ValidationError.php classes/Validation/ValidationResult.php composer.json goosialize-leads.php goosialize-leads.yaml languages/en.yaml templates/phase-2d-skeleton.html.twig"
+expected="CHANGELOG.md README.md admin-next/pages/goosialize-leads.js autoload.php blueprints.yaml classes/Application/CaptureCommand.php classes/Application/CaptureResult.php classes/Application/LeadCaptureService.php classes/Application/LeadPersistenceCoordinator.php classes/Domain/LeadIdGenerator.php classes/Domain/LeadRecord.php classes/Http/FormsLeadCaptureAdapter.php classes/Security/IdempotencyKeyRing.php classes/Storage/FilesystemLeadRepository.php classes/Storage/LeadRepository.php classes/Storage/PersistenceRequest.php classes/Storage/PersistenceResult.php classes/Storage/StorageException.php classes/Validation/LeadInputValidator.php classes/Validation/LeadNormalizer.php classes/Validation/ValidationError.php classes/Validation/ValidationResult.php composer.json goosialize-leads.php goosialize-leads.yaml languages/en.yaml templates/phase-2d-skeleton.html.twig"
 actual="$(find "$root" -type f -printf "%P\n" | LC_ALL=C sort | tr "\n" " " | sed "s/ $//")"
 test "$actual" = "$expected"
 test -f "$root/templates/phase-2d-skeleton.html.twig"
@@ -185,14 +188,18 @@ if ($grav["config"]->get("plugins.goosialize-leads.enabled")!==true) throw new R
 if (Grav\Plugin\GoosializeLeadsPlugin::getSubscribedEvents()!==[
     "onApiRegisterRoutes"=>["onApiRegisterRoutes",0],
     "onTwigTemplatePaths"=>["onTwigTemplatePaths",0],
+    "onFormProcessed"=>["onFormProcessed",0],
 ]) throw new RuntimeException("unexpected plugin subscriptions");
 $grav["plugins"]->init(); if ($plugin->config()===[]) throw new RuntimeException("plugin did not initialize");
 $plugin->autoload();
 $classes=[
     "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureCommand",
+    "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureResult",
+    "Grav\\Plugin\\GoosializeLeads\\Application\\LeadCaptureService",
     "Grav\\Plugin\\GoosializeLeads\\Application\\LeadPersistenceCoordinator",
     "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadIdGenerator",
     "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadRecord",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\FormsLeadCaptureAdapter",
     "Grav\\Plugin\\GoosializeLeads\\Security\\IdempotencyKeyRing",
     "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadRepository",
     "Grav\\Plugin\\GoosializeLeads\\Storage\\PersistenceRequest",
