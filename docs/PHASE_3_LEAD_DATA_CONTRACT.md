@@ -414,3 +414,19 @@ No message, telephone, consent, campaign, locale, company, resource, revision, H
 CSV is UTF-8 without BOM, comma-delimited, CRLF-terminated, and contains exactly one header row plus zero to 100 rows. Every field is enclosed in ASCII double quotes; embedded double quotes are doubled; CRLF and bare CR inside values normalize to LF and embedded LF remains inside the quoted cell. Null is an empty quoted cell. There are no Boolean columns. Timestamps remain canonical UTC strings. The final record also ends in CRLF.
 
 Formula injection is neutralized without changing disk data. After line-break normalization and length validation, any non-empty cell whose first byte is tab, CR or LF, or whose first non-ASCII-whitespace character after leading ASCII space/tab is `=`, `+`, `-` or `@`, receives one leading ASCII apostrophe before CSV quoting. This includes leading-whitespace cases. Neutralization precedes response-byte accounting; no truncation occurs. Tests cover each dangerous prefix, leading spaces/tabs, safe apostrophes and ordinary Unicode.
+
+## Phase 5A notification-event contract
+
+Phase 5A defines exactly one immutable event type, `lead.accepted`, schema version integer `1`. Its event ID is lowercase SHA-256 of the exact bytes `goosialize-leads` + NUL + `lead.accepted` + NUL + the canonical 32-hex-character Lead ID. The 64-hex-character digest is deterministic and does not directly reveal the Lead ID.
+
+Canonical JSON key order is `schema_version`, `event_id`, `event_type`, `lead_id`, `created_at`. Values are respectively integer `1`, the event ID, exact string `lead.accepted`, canonical Lead ID, and the Lead record's canonical UTC `created_at`. Encoding is UTF-8 JSON with `JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE` plus exactly one LF, at most 512 bytes. Nulls, unknown keys and alternate ordering are invalid. The event contains no contact/message/consent data, HMAC, fingerprint, key version, path, address, Origin, proxy header, exception, credential or raw request. Future delivery may rely only on the event type, Lead reference and creation time, and must reread the primary Lead under a later contract.
+
+| Order/field | Exact source and type | Maximum/null policy | Disclosure and future reliance |
+|---:|---|---|---|
+| 1 `schema_version` | Contract constant; integer exactly `1` | One decimal digit; never null | Non-sensitive routing metadata; future readers may select schema with it. |
+| 2 `event_id` | Deterministic digest defined above; lowercase hexadecimal string | Exactly 64 ASCII characters; never null | Opaque internal identifier; the digest does not reveal the Lead ID; future delivery may use it for event idempotency. |
+| 3 `event_type` | Contract constant; string exactly `lead.accepted` | Exactly 13 ASCII characters; never null | Non-sensitive routing metadata; future delivery may route on it. |
+| 4 `lead_id` | Canonical immutable primary-record `id`; lowercase hexadecimal string | Exactly 32 ASCII characters; never null | Internal Lead reference that does reveal the stored Lead ID; future delivery may use it only to reread that Lead. |
+| 5 `created_at` | Canonical immutable primary-record `created_at`; UTC string `Y-m-d\TH:i:s.u\Z` | Exactly 27 ASCII characters; never null | Internal event time; future delivery may order or audit with it. |
+
+The primary Lead and Phase 3B sidecar schemas remain byte-identical. Capture responses remain exactly unchanged and never expose notification state.
