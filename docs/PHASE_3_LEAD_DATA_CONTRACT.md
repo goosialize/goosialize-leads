@@ -1,6 +1,6 @@
 # Phase 3 Lead Data Contract
 
-Status: strict schema-v1 planning contract; not implemented.
+Status: strict schema-v1 contract; Phase 3A record primitives are implemented and Phase 3B persistence is not yet implemented.
 
 ## Canonical synthetic record
 
@@ -260,7 +260,7 @@ Phase 3 permits only creation as `new`. Status transitions, revision increments 
 
 The server supplies `source`, `form_name`, `locale`, consent version/time, status, revision, and timestamps from allowlisted configuration/context. Visitor `source_path` never selects configuration. Consent stores affirmative evidence/version/time, not policy prose; it is not proof of identity or a compliance claim.
 
-`Idempotency-Key` is an opaque 16–128 character token matching `[A-Za-z0-9._~-]+`. It is never stored raw. With a key, store its SHA-256 and an HMAC-SHA-256 payload fingerprint. Without it both values are `null` and a valid request is new. Email and phone are not separate hashes. The HMAC key ring is plugin-owned configuration outside the repository at `plugins.goosialize-leads.idempotency.active_key_version` and `plugins.goosialize-leads.idempotency.keys.<positive-version>`; Phase 3B must generate or require a 32-byte secret, reject missing/short values, prove backup and rotation behavior, and fail closed. Secret values never enter documentation, logs, records, sidecars, packages, or responses. An unkeyed fingerprint or committed secret is forbidden.
+`Idempotency-Key` is an opaque 16–128 character token matching `[A-Za-z0-9._~-]+`. It is never stored raw. With a key, store its SHA-256 and an HMAC-SHA-256 payload fingerprint. Without it both values are `null` and a valid request is new. Email and phone are not separate hashes. Secrets are required external configuration and are never generated: `plugins.goosialize-leads.idempotency.active_key_version` is a positive integer and each `plugins.goosialize-leads.idempotency.keys.<positive-version>` value is canonical padded Base64 decoding to exactly 32 bytes. The active version must exist; historical referenced versions remain configured. Null/empty configuration permits only submissions without an idempotency key; keyed submission fails closed. Secret values never enter documentation, logs, records, sidecars, packages, or responses. An unkeyed fingerprint or committed secret is forbidden. The exact key-ring API, rotation tests, digest bytes, error mapping, and Phase 3A idempotency-aware record factory are normative in `docs/PHASE_3_SECURE_CAPTURE_STORAGE_PLAN.md`.
 
 ## Canonical idempotency sidecar
 
@@ -294,7 +294,7 @@ Every key is required; unknown keys are rejected. Maximum serialized size is 1,0
 
 Replay validation under the global capture lock rejects symlinks, non-regular or oversized files, malformed JSON, unknown/duplicate keys, unsupported schema, invalid key versions/digests/timestamps/Lead references, missing or corrupt referenced Leads, filename/digest mismatch, or reconstructed payload-digest mismatch with internal `IDEMPOTENCY_INDEX_INVALID` and redacted 503. It verifies that the referenced Lead exists, its ID and key version match, and its stored canonical command reproduces `payload_digest`. Before expiry, same key/same digest returns the original result without storage or notification; same key/different digest returns `IDEMPOTENCY_CONFLICT`/409. Simultaneous matches serialize and produce at most one Lead and sidecar. Sidecar collisions are inspected, never overwritten.
 
-Records and sidecars use the same verified hard-link no-replace publication boundary. Partial temporary sidecars are ignored by readers. If record publication succeeds but sidecar publication is interrupted, the request returns 503; a subsequent same-key request performs a bounded record scan under the lock for matching `key_hash` and `payload_fingerprint`, validates exactly one record, and publishes the missing sidecar. Zero, multiple, or inconsistent matches fail closed.
+Records and sidecars use the same verified hard-link no-replace publication boundary. Partial temporary sidecars are ignored by readers. If record publication succeeds but sidecar publication is interrupted, the request returns 503; before any later same-key record publication, the repository scans at most 10,000 canonical records across validated `records/YYYY/MM` directories in lexical order for matching `key_hash`, key version, and `payload_fingerprint`, validates exactly one record, and publishes the missing sidecar. Zero matches permits the new publication path; exactly one returns replay after sidecar recovery; multiple matches, a 10,001st record, or inconsistent state fails closed.
 
 Malformed sidecars are never overwritten, renamed, quarantined, or repaired during anonymous capture. A future authorized Phase 7 maintenance command may copy them into a contained `quarantine/` directory only after explicit review; it must preserve the source, redact logs, and pass corruption, symlink, containment, and recovery tests.
 

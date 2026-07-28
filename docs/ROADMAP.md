@@ -31,6 +31,17 @@
 - Implement protected filesystem storage, atomic writes, identifiers, and duplicate protection.
 - Add email notifications and foundational automated tests.
 
+### Phase 3B implementation boundary
+
+- Contract branch: `docs/phase-3b-secure-persistence-contract`; implementation branch: `feat/phase-3b-secure-lead-storage`; future implementation subject: `feat: add secure Lead filesystem repository`.
+- Output is exactly the normative nineteen-path manifest in `docs/PHASE_3_SECURE_CAPTURE_STORAGE_PLAN.md`: seven packaged runtime classes, one repository-only unit test, one repository-only integration test, and ten exact modifications.
+- `Storage\FilesystemLeadRepository` is the sole filesystem owner; `Application\LeadPersistenceCoordinator` is the sole Phase 3B orchestrator; required external versioned HMAC keys are handled only by `Security\IdempotencyKeyRing`.
+- Completion requires exact `0700/0600` modes, contained non-symlink paths, one lock, full write/flush/file-fsync, hard-link no-replace publication, five-attempt collision handling, canonical record/sidecar bytes, replay/recovery/concurrency, immediate current-operation cleanup, exhaustive redacted failure mapping, and all six Phase 3B markers.
+- The package grows from 17 to exactly 24 packaged and installed files. Two independent implementation builds must be byte-identical; their shared SHA is recorded only after those bytes exist.
+- Phase 3B guarantees process-visible atomic publication, not directory-entry persistence across power loss. It performs no scheduled/post-crash scan and registers no cleanup CLI. Those maintenance capabilities are Phase 7.
+- Phase 3C owns HTTP and Forms capture; Phase 3D owns notification; Phase 4 owns Admin2, ACL, search, edits, deletion, and CSV; Phase 5 owns lead-magnet delivery; Phase 7 owns migration, retention execution, recovery, and scheduled/post-crash maintenance.
+- Phase 3B completes only after the exact unit/integration commands, package/install/reflection checks, Phase 3A regression, Phase 2B/2C/2D regressions, clean pre-commit review, one approved commit, separate merge review, and local fast-forward merge pass.
+
 ## Phase 4: Native Admin2 management
 
 - Build the Leads page through official Admin2 extension mechanisms and native components.

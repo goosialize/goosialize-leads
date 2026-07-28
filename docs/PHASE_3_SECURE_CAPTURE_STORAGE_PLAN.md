@@ -1,6 +1,6 @@
 # Phase 3 Secure Capture and Storage Plan
 
-Planning status: review draft; no Phase 3 runtime behavior exists.
+Planning status: normative through Phase 3B; Phase 3A runtime primitives exist and Phase 3B runtime behavior is not yet implemented.
 
 ## Objective, scope, and baseline
 
@@ -90,13 +90,9 @@ The sole publication primitive is same-filesystem hard-link creation after a com
 
 Unique submissions serialize and succeed. Same-key submissions create at most one record/sidecar; exact replay does no write or notification. Termination before link leaves a temp; after link but before temp unlink leaves a valid final plus temp; after record link but before sidecar link invokes recovery. Full disk, short write, permission/mode failure, malformed state, invalid filename, unsupported links, or collision exhaustion fails closed without replacing data. Process exit releases `flock`; no stale-lock deletion exists.
 
-Current-request cleanup is step 10. Stale files left by terminated processes are handled only by the explicitly authorized Phase 3B CLI operation `bin/grav goosialize-leads:cleanup-temporaries`; anonymous capture, Forms, API, Admin2, and automatic startup never invoke it. `Application\StaleTemporaryCleanup` confirms authorization, supplies the fixed cleanup policy (24-hour minimum age, 100-entry maximum and two-second maximum), invokes only `Storage\TemporaryArtifactMaintenanceRepository`, handles its redacted result and emits stable redacted event/result codes. It never accesses the filesystem, paths, locks, symlinks, stored JSON or file contents directly.
+Current-request cleanup is step 10 and removes only a validated temporary created by the same call. Phase 3B never scans publication directories and never deletes a temporary left by another process. Stale/post-crash cleanup, authorization, active-write detection, bounded scans, maintenance results/events, and a CLI entry point are deferred together to Phase 7. Anonymous capture, Forms, API, Admin2, plugin startup, and Phase 3B invoke no cleanup operation beyond same-call `finally` cleanup.
 
-The `FilesystemLeadRepository` implementation of that maintenance interface exclusively resolves and validates the storage root; acquires the same `v1/.capture.lock` and releases it in `finally`; scans only validated plugin-owned record year/month and idempotency-shard publication directories; and enforces the 100-entry/two-second bounds. Under that single lock it performs directory iteration, exact temporary-filename matching, `lstat`-style inspection, containment/mode/symlink validation, active-write detection, 24-hour stale eligibility, deletion and filesystem-exception translation. It never follows symlinks or scans arbitrary paths, never deletes/replaces/treats the lock as stale, skips recent or unverifiable entries, and fails closed on anomalies. This one repository-owned lock order cannot deadlock with publication and protects active writes. Canonical records and sidecars are never cleanup candidates.
-
-Only `FilesystemLeadRepository` may unlink a verified stale temporary artifact. It returns `Storage\TemporaryArtifactMaintenanceResult` containing only `scanned_count`, `removed_count`, `skipped_recent_count`, `skipped_active_count`, `rejected_count`, `limit_reached`, `elapsed_limit_reached`, and stable result/error codes. It never returns absolute paths, filenames, contents, Lead data, raw keys, submitted PII, or unsafe exceptions. `StaleTemporaryCleanup` emits only `LEAD_TEMP_CLEANUP_COMPLETED` or `LEAD_TEMP_CLEANUP_FAILED` plus those redacted aggregates; capture clients receive no cleanup detail. Phase 3B tests preserve recent, wrong-name, symlinked, escaped, active-write, malformed, published-record and published-sidecar entries; remove a valid stale temp; enforce entry/time limits; verify result redaction and safe failure; and prove no unauthenticated request can invoke cleanup.
-
-Hard-link atomicity is limited to the verified local same-filesystem contract. Directory-entry durability, directory `fsync`, network/overlay filesystems, and crash semantics require the Phase 3B probe; failure means installation is unsupported for capture and remains inert.
+Hard-link atomicity is limited to the verified local same-filesystem contract. Phase 3B guarantees process-visible atomic no-replace publication, not persistence of directory entries across power loss. Directory `fsync`, network/overlay filesystem crash semantics, scheduled cleanup, and post-crash temporary cleanup are explicit Phase 3B non-goals. Absence of directory `fsync` is not a runtime failure. File contents must still be completely written, flushed, and successfully `fsync()`ed before publication. Tests prove that readers see either no final entry or one complete final entry and document that power-loss durability remains an operator/filesystem responsibility.
 
 ## Capture/API contract
 
@@ -146,19 +142,18 @@ All classes use `Grav\Plugin\GoosializeLeads`.
 | `Validation\ValidationError`, `ValidationResult` | Immutable stable primitive error and operation-result values; pure. |
 | `Domain\LeadIdGenerator` | Injected random-byte source. |
 | `Storage\LeadRepository` | Capture/idempotency port. |
-| `Storage\TemporaryArtifactMaintenanceRepository` | Narrow maintenance port accepting authorized policy bounds and returning only `TemporaryArtifactMaintenanceResult`; exposes no paths or file primitives. |
-| `Storage\FilesystemLeadRepository` | Sole concrete filesystem-aware class; implements both `LeadRepository` and `TemporaryArtifactMaintenanceRepository`, exclusively owning storage-root/path/iteration/filename/`lstat`/symlink/lock/active-write/stale/deletion/mode handling, stored Lead/sidecar JSON, and filesystem exception translation. |
+| `Storage\PersistenceRequest`, `Storage\PersistenceResult` | Immutable Phase 3B repository boundary values. |
+| `Storage\FilesystemLeadRepository` | Sole concrete filesystem-aware class; implements `LeadRepository` and exclusively owns storage-root/path/filename/`lstat`/symlink/lock/current-write/current-temp/mode handling, stored Lead/sidecar JSON, and filesystem exception translation. |
 | `Application\LeadCaptureService` | Orchestrates validation, attribution, repository, fingerprint and notification port; no HTTP/filesystem. |
-| `Application\StaleTemporaryCleanup` | Operator-only orchestration: confirms authorization, supplies age/entry/time policy, invokes only `TemporaryArtifactMaintenanceRepository`, and handles/emits its redacted result; no direct filesystem, lock, path, symlink, deletion, or JSON access. |
-| `Storage\TemporaryArtifactMaintenanceResult` | Immutable redacted counts, limit flags and stable result/error codes; never paths, filenames, contents, Lead data, raw keys, PII, or unsafe exceptions. |
-| `Console\CleanupTemporariesCommand` | Explicit CLI entry point that invokes `StaleTemporaryCleanup`; no filesystem access and no HTTP, Forms, or Admin2 exposure. |
+| `Application\LeadPersistenceCoordinator` | Sole Phase 3B orchestrator connecting Phase 3A validation/record creation to the repository. |
+| `Security\IdempotencyKeyRing` | Validates required external key configuration and derives/verifies non-secret digests. |
 | `Http\LeadCaptureController` | JSON/PSR-7 adapter; translates requests/results only. |
 | `Http\FormsLeadCaptureAdapter` | Forms event adapter; maps native validated form data/results only. |
 | `Application\CaptureCommand` | Adapter-neutral normalized submitted fields plus trusted attribution. |
 | `Application\CaptureResult` and typed errors | Stable non-PII boundary values. |
 | `Notification\LeadNotificationService` | Phase 3 adapter invoked after durable capture; failure never rolls back a Lead. It uses the verified Email 5.0.3 service boundary and Phase 3D probe. |
 
-Dependencies point HTTP/Console → application → domain/storage ports; concrete adapters implement ports. `StaleTemporaryCleanup` depends only on `TemporaryArtifactMaintenanceRepository`. Only composition and the verified controller constructor may access Grav services; only `FilesystemLeadRepository` resolves the storage locator or touches filesystem paths, locks, permissions, files, and stored Lead/sidecar JSON. Capture, Forms, API, notification, console and maintenance orchestration services never touch storage files directly.
+Dependencies point HTTP → application → domain/storage ports; concrete adapters implement ports. Only composition may access Grav services; only `FilesystemLeadRepository` resolves the storage locator or touches filesystem paths, locks, permissions, files, and stored Lead/sidecar JSON. Capture, Forms, API, notification, and application services never touch storage files directly.
 
 ### Normative Phase 3A public API
 
@@ -259,6 +254,250 @@ Never store raw payload, IP, user agent, full URL/query, arbitrary custom data, 
 
 ## Tests and implementation checkpoints
 
+## Normative Phase 3B secure-persistence implementation contract
+
+This section is the sole normative Phase 3B implementation contract and supersedes earlier Phase 3B planning prose where they differ. Phase 3A public behavior remains stable. Phase 3B adds only the exact APIs, callers, files, and tests below.
+
+### Implementation manifest
+
+- Implementation branch: `feat/phase-3b-secure-lead-storage`.
+- Future implementation commit subject: `feat: add secure Lead filesystem repository`.
+- Exact nine new files:
+  - `classes/Application/LeadPersistenceCoordinator.php`
+  - `classes/Security/IdempotencyKeyRing.php`
+  - `classes/Storage/LeadRepository.php`
+  - `classes/Storage/PersistenceRequest.php`
+  - `classes/Storage/PersistenceResult.php`
+  - `classes/Storage/FilesystemLeadRepository.php`
+  - `classes/Storage/StorageException.php`
+  - `tests/unit/phase-3b-secure-persistence.php`
+  - `tests/integration/phase-3b-secure-storage.sh`
+- Exact ten modified files:
+  - `classes/Domain/LeadRecord.php`: add only the idempotency-aware factory defined below; preserve `fromCommand()` and every Phase 3A invariant.
+  - `goosialize-leads.yaml`: add only the disabled-by-default required-config idempotency keys defined below; never contain a secret value.
+  - `packaging/package-files.txt`: add the seven new runtime-class paths in lexical order.
+  - `tests/unit/phase-3a-lead-data-validation.php`: add regression/reflection coverage for the new `LeadRecord` factory while preserving every Phase 3A marker.
+  - `tests/integration/clean-grav-plugin-load.sh`: reflect the fourteen packaged runtime classes and prove enabled/disabled loading remains inert.
+  - `tests/integration/installable-plugin-package.sh`: assert the exact 24-file package/installed tree and fourteen-class reflection contract.
+  - `tests/integration/phase-2d-entry-points.sh`: update only package/class assertions while preserving the Phase 2D behavior and regression markers.
+  - `README.md`: describe completed Phase 3B primitives and explicitly retain the no-route/no-Forms/no-notification boundary.
+  - `CHANGELOG.md`: record the Phase 3B secure-persistence checkpoint without claiming later capture behavior.
+  - `docs/OFFICIAL_VERIFICATION_LOG.md`: record executed Phase 3B probes, two final package hashes, counts, markers, and accepted directory-durability limitation.
+- Counts: nine new files, ten modified files, nineteen changed paths, seven new runtime classes, one new unit-test file, and one new integration-test file.
+- Exact package-manifest additions: the seven new runtime-class paths above. The resulting package and installed tree each contain exactly 24 regular files. Development-only files excluded from the package are `tests/unit/phase-3b-secure-persistence.php` and `tests/integration/phase-3b-secure-storage.sh`.
+- Exact package reflection list: `Application\CaptureCommand`, `Application\LeadPersistenceCoordinator`, `Domain\LeadIdGenerator`, `Domain\LeadRecord`, `Security\IdempotencyKeyRing`, `Storage\LeadRepository`, `Storage\PersistenceRequest`, `Storage\PersistenceResult`, `Storage\FilesystemLeadRepository`, `Storage\StorageException`, `Validation\LeadInputValidator`, `Validation\LeadNormalizer`, `Validation\ValidationError`, and `Validation\ValidationResult`.
+- Changed package inputs are `classes/Domain/LeadRecord.php`, `goosialize-leads.yaml`, `packaging/package-files.txt`, and the seven new runtime classes. No other package input changes.
+
+The exact final `packaging/package-files.txt` is this 24-line lexical list:
+
+```text
+CHANGELOG.md
+README.md
+admin-next/pages/goosialize-leads.js
+autoload.php
+blueprints.yaml
+classes/Application/CaptureCommand.php
+classes/Application/LeadPersistenceCoordinator.php
+classes/Domain/LeadIdGenerator.php
+classes/Domain/LeadRecord.php
+classes/Security/IdempotencyKeyRing.php
+classes/Storage/FilesystemLeadRepository.php
+classes/Storage/LeadRepository.php
+classes/Storage/PersistenceRequest.php
+classes/Storage/PersistenceResult.php
+classes/Storage/StorageException.php
+classes/Validation/LeadInputValidator.php
+classes/Validation/LeadNormalizer.php
+classes/Validation/ValidationError.php
+classes/Validation/ValidationResult.php
+composer.json
+goosialize-leads.php
+goosialize-leads.yaml
+languages/en.yaml
+templates/phase-2d-skeleton.html.twig
+```
+
+Phase 3B adds no functional public HTTP route, API controller, Forms processor, notification or replay notification, Admin2 management/control, Shadow DOM, ACL/permission management, CSV export, theme integration, migration, lead-magnet delivery, or production UI. Phase 3C owns HTTP and Forms capture; Phase 3D owns notification; Phase 4 owns Admin2/ACL/CSV; Phase 5 owns delivery; Phase 7 owns migrations and scheduled/post-crash maintenance.
+
+### Normative Phase 3B public API
+
+All concrete Phase 3B value/service classes are `final`, expose no public properties or setters, and return copies rather than references. The two repository ports are interfaces. Literal union types below are encoded table-safely.
+
+| FQCN and path | Declaration, construction, and exact public API | State, exceptions, creators, consumers, and direct tests |
+|---|---|---|
+| `Grav\Plugin\GoosializeLeads\Storage\LeadRepository`; `classes/Storage/LeadRepository.php` | `interface LeadRepository`; no constructor; `public function persist(PersistenceRequest $request): PersistenceResult` | Stateless port. It throws only `StorageException` for storage failure and `\InvalidArgumentException` for programmer misuse. Production implementation: `FilesystemLeadRepository`. Production caller: `LeadPersistenceCoordinator::persist()`. Direct access is limited to the two Phase 3B tests and a unit-test fake implementing this exact method. |
+| `Grav\Plugin\GoosializeLeads\Storage\PersistenceRequest`; `classes/Storage/PersistenceRequest.php` | `final class`; private constructor `private function __construct(LeadRecord $record, string $recordBytes, ?string $keyDigest, ?string $payloadBytes)`; factory `public static function create(LeadRecord $record, string $recordBytes, ?string $keyDigest, ?string $payloadBytes): self`; accessors `public function record(): LeadRecord`, `public function recordBytes(): string`, `public function keyDigest(): ?string`, `public function payloadBytes(): ?string`, `public function hasIdempotency(): bool` | Immutable. `recordBytes` must equal successful canonical serialization of the same receiver. Key digest/payload bytes are either both null or a 64-character lowercase hexadecimal digest plus the exact canonical command JSON and LF used for HMAC. The record’s idempotency key hash must match the digest. Invalid direct use throws redacted `\InvalidArgumentException`. Creator: `LeadPersistenceCoordinator::persist()`. Consumer: `FilesystemLeadRepository::persist()`. Direct tests: both Phase 3B tests. |
+| `Grav\Plugin\GoosializeLeads\Storage\PersistenceResult`; `classes/Storage/PersistenceResult.php` | `final class`; private constructor `private function __construct(string $status, ?array $record, ?string $code, array $errors)`; factories `public static function created(LeadRecord $record): self`, `public static function replayed(array $record): self`, `public static function idCollision(): self`, `public static function failure(string $code, array $errors = []): self`; accessors `public function status(): string`, `public function record(): ?array`, `public function code(): ?string`, `public function errors(): array`, `public function errorsAsArray(): array`, `public function isSuccess(): bool`, `public function toArray(): array`; PHPDoc is <code>@param array&lt;string,mixed&gt;&#124;null $record</code>, `@param list<ValidationError> $errors`, `@return list<ValidationError>` for `errors()`, and <code>@return array{status:string,record:array&lt;string,mixed&gt;&#124;null,code:?string,errors:list&lt;array{code:string,field:?string}&gt;}</code> for `toArray()` | Immutable statuses are exactly `created`, `replayed`, `id_collision`, `failure`. Created/replayed carry the complete canonical record and null code/empty errors; collision carries neither and empty errors; only `validation_failed` may carry the original ordered `ValidationError` list, while every other failure requires an empty list. Invalid factories throw `\InvalidArgumentException`. Producers: `FilesystemLeadRepository::persist()` and `LeadPersistenceCoordinator::persist()`. Consumers: `LeadPersistenceCoordinator::persist()` and Phase 3C `Grav\Plugin\GoosializeLeads\Application\LeadCaptureService::capture()`. Direct tests: both Phase 3B tests. |
+| `Grav\Plugin\GoosializeLeads\Storage\FilesystemLeadRepository`; `classes/Storage/FilesystemLeadRepository.php` | `final class implements LeadRepository`; constructor `public function __construct(string $userDataRoot, callable $temporaryEntropy, IdempotencyKeyRing $keyRing)` with PHPDoc `@param callable(int):string $temporaryEntropy`; `public function persist(PersistenceRequest $request): PersistenceResult` | Mutable only during one locked call; retains validated canonical root, entropy callable, and key-ring object, but no Lead data. `$userDataRoot` is the trusted absolute `user-data://` resolution supplied by plugin composition, not a visitor value. It alone performs filesystem operations, record/sidecar serialization validation, locking, and exception translation; secret operations remain encapsulated by `IdempotencyKeyRing`. Constructor misuse throws `\InvalidArgumentException`; operational failures throw `StorageException`. Production creator: `Grav\Plugin\GoosializeLeads\Application\LeadCaptureService::__construct()` in Phase 3C composition. Caller: `LeadPersistenceCoordinator::persist()`. Direct access: integration test only. |
+| `Grav\Plugin\GoosializeLeads\Storage\StorageException`; `classes/Storage/StorageException.php` | `final class extends \RuntimeException`; constructor `public function __construct(string $code, ?\Throwable $previous = null)`; `public function stableCode(): string` | Message is always the stable code and never incorporates the previous message. The previous exception is chained for internal debugging only and never serialized/logged by Phase 3B. Invalid code throws `\InvalidArgumentException`. Producers: only `FilesystemLeadRepository` and `IdempotencyKeyRing`. Consumer: only `LeadPersistenceCoordinator::persist()`, which maps it to `PersistenceResult::failure('storage_unavailable')`. Direct tests: both Phase 3B tests. |
+| `Grav\Plugin\GoosializeLeads\Security\IdempotencyKeyRing`; `classes/Security/IdempotencyKeyRing.php` | `final class`; constructor `public function __construct(?int $activeVersion, array $encodedKeys)` with PHPDoc `@param array<int,string> $encodedKeys`; `public function enabled(): bool`, `public function activeVersion(): ?int`, `public function keyDigest(?string $idempotencyKey): ?string`, `public function canonicalPayload(CaptureCommand $command): string`, `public function payloadDigest(CaptureCommand $command): ?string`, `public function verify(int $version, string $payloadBytes, string $expectedDigest): bool` | Immutable decoded secrets are held only in memory. Both constructor arguments represent required external configuration. Empty/null disables idempotent capture and permits only null idempotency keys. Invalid/missing active configuration throws `StorageException('key_configuration_invalid')`; direct invalid method arguments throw `\InvalidArgumentException`. Creator: Phase 3C composition. Consumers: `LeadPersistenceCoordinator::persist()` derives new metadata; `FilesystemLeadRepository::persist()` invokes only `verify()` for historical sidecars. Direct access: unit test only. |
+| `Grav\Plugin\GoosializeLeads\Application\LeadPersistenceCoordinator`; `classes/Application/LeadPersistenceCoordinator.php` | `final class`; constructor `public function __construct(LeadInputValidator $validator, LeadRepository $repository, IdempotencyKeyRing $keyRing)`; `public function persist(mixed $submitted, array $trusted, ?string $idempotencyKey, callable $entropy, callable $clock): PersistenceResult`; PHPDoc defines `$trusted` as the exact Phase 3A trusted shape, `$entropy` as `callable(int):string`, and `$clock` as `callable():\DateTimeInterface` | Stateless orchestrator and sole new production caller of Phase 3A validation/record APIs. It performs exactly the call graph below and catches only `StorageException`, mapping it to redacted failure. Invalid callable/trusted programmer misuse remains `\InvalidArgumentException`; expected validation/record failures map to `PersistenceResult::failure()` using the exact code policy below. Production creator/caller: Phase 3C `Grav\Plugin\GoosializeLeads\Application\LeadCaptureService::__construct()`/`capture()`. Direct access: unit and integration tests. |
+
+`LeadRecord` gains exactly:
+
+```php
+public static function fromCommandWithIdempotency(
+    CaptureCommand $command,
+    callable $entropy,
+    callable $clock,
+    ?int $keyVersion,
+    ?string $keyHash,
+    ?string $payloadFingerprint
+): ValidationResult
+```
+
+`fromCommand()` remains unchanged externally and delegates to the new factory with three null idempotency arguments. The new factory requires either all three idempotency values null or a positive version plus two 64-character lowercase hexadecimal strings. It retains every existing timestamp, entropy, record-shape, validation, and exception rule. Production caller is only `LeadPersistenceCoordinator::persist()`; direct access is limited to the Phase 3A and Phase 3B unit tests.
+
+### Exact production call graph and collision policy
+
+The exact Phase 3B entry is `LeadPersistenceCoordinator::persist()`. Phase 3B registers no lifecycle, route, command, or automatic caller. Phase 3C’s exact `Grav\Plugin\GoosializeLeads\Application\LeadCaptureService::capture()` is the only authorized production caller.
+
+1. `LeadPersistenceCoordinator::persist()` calls `LeadInputValidator::validate()`. Failure becomes `PersistenceResult::failure('validation_failed', $validationResult->errors())`, preserving the exact Phase 3A ordered non-PII errors.
+2. It validates an optional idempotency key against `[A-Za-z0-9._~-]{16,128}`. Invalid input returns `invalid_idempotency_key`.
+3. `IdempotencyKeyRing::keyDigest()` returns lowercase SHA-256 of exact ASCII key bytes; `canonicalPayload()` serializes `CaptureCommand::toArray()` with the Phase 3A JSON flags and one LF; `payloadDigest()` HMACs those bytes with the active decoded 32-byte key.
+4. For attempts numbered 1 through 5 inclusive, the coordinator calls `LeadRecord::fromCommandWithIdempotency()` once with the same command, clock, derived metadata, and caller-supplied entropy. Each individual factory call invokes entropy exactly once and creates a fresh record. There is no retry inside `LeadRecord`.
+5. It invokes `LeadRecord::serialize($record)`, then `PersistenceRequest::create()`, then `LeadRepository::persist()`.
+6. `created`, `replayed`, or `failure` returns immediately. Only `id_collision` advances to the next attempt. After attempt five, collision maps deterministically to `PersistenceResult::failure('collision_exhausted')`.
+7. `FilesystemLeadRepository::persist()` alone verifies sidecar-to-record consistency. For an existing sidecar it selects the sidecar’s historical version through `IdempotencyKeyRing::verify()` and the request’s canonical payload bytes; it does not compare an active-version digest to a historical-version digest. `StorageException` is caught only by the coordinator and becomes `storage_unavailable`; no raw detail crosses the coordinator.
+
+Unit oracles inject five deterministic 16-byte entropy values, assert one call for each record attempt, assert early stop on attempts 1–4 success, assert exactly five calls on five collisions, preserve the original target bytes, and require exact terminal `collision_exhausted`.
+
+### Required-config HMAC policy
+
+Secrets are required, never generated. `goosialize-leads.yaml` adds exactly:
+
+```yaml
+idempotency:
+  active_key_version: null
+  keys: {}
+```
+
+Deployment supplies `plugins.goosialize-leads.idempotency.active_key_version` as a positive integer and `keys.<version>` as standard padded Base64 encoding of exactly 32 decoded bytes. No default, example, test, documentation, or package contains a secret. Null/empty configuration permits captures only when no idempotency key is supplied; a supplied key fails closed as `key_configuration_invalid`.
+
+New writes use the active version. Historical positive integer keys remain accepted for verification. Active version must exist in the map; keys must be unique positive integer indices and valid canonical Base64 decoding to exactly 32 bytes. Missing, short, extra-padded, noncanonical, duplicate-decoded, or invalid keys fail with `key_configuration_invalid`. Rotation adds a higher version and selects it active; referenced historical keys must remain. Removal is allowed only after no retained record or sidecar references that version and is Phase 7 maintenance.
+
+The key digest is lowercase `hash('sha256', $idempotencyKey)`. The payload bytes are canonical JSON of `CaptureCommand::toArray()` using `JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE` plus one LF. The fingerprint is lowercase `hash_hmac('sha256', $payloadBytes, $decodedKey)`. Verification selects the sidecar’s positive historical version and uses `hash_equals()` with the recomputed lowercase digest as first argument. Raw keys, decoded secrets, and HMAC input/output never appear in paths except the non-secret key digest, errors, logs, results, or documentation.
+
+### Storage locator, containment, names, modes, and publication
+
+`FilesystemLeadRepository::__construct()` accepts exactly one trusted absolute canonical `user-data://` filesystem root, already resolved by Grav composition, and appends only `goosialize-leads/v1`. It rejects empty, relative, NUL-containing, stream-wrapper, dot-segment, trailing-dot-segment, and noncanonical paths. It never accepts the plugin-relative root or a visitor-derived path. On Windows drive syntax is unsupported; Phase 3B supports the pinned Linux deployment only.
+
+The constructor lexical-normalizes repeated separators and a single trailing separator, requires the supplied existing user-data root to have `realpath()`, requires it to be a non-symlink directory by `lstat()`, and stores its canonical path. Each existing descendant is checked with `lstat()` before `realpath()`, must not be a symlink, and must remain separator-aware within the stored root. Missing descendants are created one component at a time with `mkdir(..., 0700)`, immediately `chmod(..., 0700)`, then rechecked with `lstat()`, `realpath()`, containment, ownership type, and exact `0700 & 0777`. A missing component whose parent cannot be canonicalized fails `root_invalid`. Any root/component symlink fails `symlink_detected`. No arbitrary absolute child or `..` is accepted.
+
+All directories are exactly `0700`; lock, temporary, record, and sidecar files are exactly `0600`. The repository temporarily sets `umask(0077)` only around creation, restores it in `finally`, calls `chmod()` explicitly, and verifies `fileperms() & 0777`. It assumes the PHP process owns newly created paths; ownership mismatch or inability to verify exact modes fails `permission_failed`. Errors expose no path.
+
+The lock path is exactly `goosialize-leads/v1/.capture.lock`. It is opened with `fopen($path, 'c+b')`, immediately validated as a contained non-symlink regular file, explicitly chmodded and verified as `0600`, and acquired with blocking `flock($handle, LOCK_EX)`. One repository call owns it until all replay, collision, record, sidecar, recovery, and current-temp cleanup decisions finish. `flock($handle, LOCK_UN)` and `fclose()` run in nested `finally` blocks; acquisition, unlock, or lock-handle close failure maps to `lock_failed`. No lock file is deleted or treated as stale.
+
+Final record path is `records/YYYY/MM/<32-lowercase-hex-id>.json`. Final sidecar path is `idempotency/<first-two-key-digest-characters>/<64-lowercase-hex-key-digest>.json`. UTC year/month come only from the canonical record timestamp. Maximum final basenames are 37 and 69 bytes respectively.
+
+Temporary record basename is `.tmp-<32-lowercase-hex-id>-<16-lowercase-hex>.json` (59 bytes). Temporary sidecar basename is `.tmp-sidecar-<64-lowercase-hex-key-digest>-<16-lowercase-hex>.json` (99 bytes). The repository invokes `$temporaryEntropy(8)` exactly once per temporary creation; it must return exactly eight bytes, encoded with lowercase `bin2hex()`. Throwable or wrong-length output maps to `temporary_creation_failed`. Files are opened only with `fopen($path, 'x+b')`.
+
+The complete byte string is prepared before opening. Writes loop until all bytes are accepted; `false` maps to `write_failed`, zero or incomplete termination maps to `short_write`. Then `fflush()` and `fsync()` must return true, mode/type/containment are revalidated, and `fclose()` must return true. Failure maps respectively to `flush_failed`, `file_fsync_failed`, or `close_failed`. The handle is closed in `finally`; only the validated current-attempt temporary is unlinked.
+
+Publication uses only same-directory `link($temporaryPath, $finalPath)`. No `rename()`, copy, overwrite, or fallback exists. Once per repository instance, inside the acquired lock and before inspecting or publishing a request, the repository creates `v1/.probe-link-<16-lowercase-hex>` with `fopen(..., 'x+b')`, writes the exact bytes `phase-3b-link-probe\n`, flushes/fsyncs/closes it, hard-links it to `v1/.probe-link-<same-hex>.linked`, verifies equal nonzero inode and exact bytes, then unlinks the linked name followed by the source name. The same constructor temporary-entropy callable supplies exactly eight bytes for the suffix. Any pre-existing probe name, failed operation, unequal inode/bytes, or cleanup failure maps to `publication_unsupported`; both names are current-operation artifacts removed in `finally`. Probe names are never records, sidecars, or reader candidates.
+
+An already existing canonical record final returns `PersistenceResult::idCollision()` after validating that it is a non-symlink regular contained file; its bytes are never changed. An existing sidecar is strictly parsed and verified against its referenced canonical Lead and historical key version. The candidate request record’s `capturedAt()` is the injected current request time used for expiry comparison; `capturedAt() >= expires_at` returns `idempotency_expired`. Before expiry, matching historical-version HMAC returns `replayed`, a different payload returns `idempotency_conflict`, and malformed state throws `idempotency_index_invalid`. Other record `link()` failure maps to `publication_failed`; sidecar `link()` failure maps to `sidecar_publication_failed`.
+
+For every keyed request, after checking for an existing sidecar and before publishing the candidate record, the repository performs the missing-sidecar recovery scan. It walks only validated non-symlink `records/YYYY/MM` directories in ascending lexical `YYYY/MM/filename` order and examines at most 10,000 canonical final record names across the entire contained `records` tree. It validates each examined record’s exact schema, filename/ID, size, mode, containment, key hash, key version, and payload fingerprint, and calls `IdempotencyKeyRing::verify()` with that record’s historical version and the request payload bytes. Zero matches permits new record publication; exactly one matching record causes publication of its missing sidecar and returns `replayed`; multiple matches, an anomaly, or encountering a 10,001st canonical record fails `idempotency_index_invalid`. Thus a retry in a later UTC month cannot miss an earlier orphan and cannot create a second keyed Lead.
+
+For keyed creation, the record publishes first and the sidecar second. If sidecar publication fails, the published record remains immutable and the operation returns `sidecar_publication_failed`; it is never rolled back because unlinking a visible Lead would lose accepted data. A later same-key request executes the pre-publication recovery scan above. Unkeyed creation ends after record publication. Readers never consume temporary names.
+
+Process-visible atomic publication means concurrent readers observe no final file or the complete fsynced bytes. Directory-entry persistence across power loss is not guaranteed and absence of directory `fsync` is not failure. Integration acceptance documents this limitation and proves only process-visible atomicity.
+
+### Storage errors and exception mapping
+
+`StorageException` stable codes are exactly:
+
+`root_invalid`, `unsafe_path`, `symlink_detected`, `directory_creation_failed`, `permission_failed`, `lock_failed`, `temporary_creation_failed`, `write_failed`, `short_write`, `flush_failed`, `file_fsync_failed`, `close_failed`, `publication_unsupported`, `publication_failed`, `sidecar_publication_failed`, `cleanup_failed`, `idempotency_index_invalid`, `key_configuration_invalid`, and `unexpected_storage_failure`.
+
+| Condition | Storage behavior |
+|---|---|
+| Invalid/unresolved root | throw `root_invalid` |
+| Containment/traversal failure | throw `unsafe_path` |
+| Root/component/file symlink | throw `symlink_detected` |
+| Directory creation failure | throw `directory_creation_failed` |
+| Exact mode/ownership verification failure | throw `permission_failed` |
+| Lock create/acquire/release failure | throw `lock_failed` |
+| Temp entropy/open failure | throw `temporary_creation_failed` |
+| Write false | throw `write_failed` |
+| Zero/incomplete write | throw `short_write` |
+| Flush failure | throw `flush_failed` |
+| File fsync failure | throw `file_fsync_failed` |
+| Close failure | throw `close_failed` |
+| Hard-link probe unsupported | throw `publication_unsupported` |
+| Existing record final | return `id_collision` |
+| Other record link failure | throw `publication_failed` |
+| Sidecar link/recovery publication failure | throw `sidecar_publication_failed` |
+| Immediate temp unlink failure | throw `cleanup_failed` after preserving any published final |
+| Existing malformed/inconsistent sidecar | throw `idempotency_index_invalid` |
+| Missing/invalid HMAC configuration | throw `key_configuration_invalid` |
+| Five record collisions | coordinator returns failure `collision_exhausted` |
+| Unexpected filesystem throwable | throw `unexpected_storage_failure` with previous chained |
+
+The coordinator result-code allowlist is exactly `validation_failed`, `invalid_idempotency_key`, `idempotency_conflict`, `idempotency_expired`, `collision_exhausted`, and `storage_unavailable`. Storage exceptions never cross it. Programmer misuse—invalid direct value-object construction, invalid trusted array, invalid callable declaration, or an unknown stable code—throws `\InvalidArgumentException`. No public result contains an exception, message, path, submitted value, raw key, digest input, secret, or trace.
+
+### Immediate cleanup and deferred maintenance
+
+Phase 3B chooses maintenance scope B. It performs only current-operation cleanup of the one validated temporary path in `finally`. It does not scan directories or remove crash leftovers. `TemporaryArtifactMaintenanceRepository`, `TemporaryArtifactMaintenanceResult`, `Application\StaleTemporaryCleanup`, and `Console\CleanupTemporariesCommand` are not Phase 3B runtime classes or files. The command `goosialize-leads:cleanup-temporaries`, scheduled cleanup, 24-hour/100-entry/two-second policy, active-write detection, event emission, and post-crash cleanup are deferred to Phase 7. Phase 3B registers no command or cleanup hook in `goosialize-leads.php`.
+
+### Exact tests, fixtures, fault injection, and markers
+
+`tests/unit/phase-3b-secure-persistence.php` runs in the pinned offline runtime exactly as:
+
+```text
+docker run --rm --network none --mount type=bind,src=/home/goosialize/projects/local-docker/grav/goosialize-leads-dev,dst=/source,readonly --entrypoint php sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351 /source/tests/unit/phase-3b-secure-persistence.php
+```
+
+The command first requires that `docker image inspect --format '{{.Id}}' lscr.io/linuxserver/grav:2.0.12` equals the literal image ID used above. The test uses only `lead@example.test`, `+35722000000`, `Synthetic Lead`, consent version `privacy-v1`, source `api`, form `goosialize-leads-capture`, UTC `2026-07-27T10:20:30.123456Z`, entropy bytes `00` through `0f`, idempotency key `synthetic-key-01`, Base64 `S0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0s=` for version 1, and Base64 `UlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUlI=` for version 2. The exact 261-byte payload-HMAC input is:
+
+```json
+{"source":"api","form_name":"goosialize-leads-capture","locale":null,"consent":{"granted":true},"full_name":"Synthetic Lead","email":"lead@example.test","phone":"+35722000000","company":null,"message":null,"resource_id":null,"source_path":null,"campaign":null}
+```
+
+The JSON line plus exactly one LF is the HMAC input. Its key digest is `3a1190b048a946c5d50e77efb7361ab6768acbfa4e3a54fa8e0bf0b8ff927f59`; its version-1 payload digest is `e17f2b0515ba2afa241577ee6c3def115049d871527eeba9eb61c546695a8115`. With ID `00000000000000000000000000000000`, the exact persisted record bytes are this line plus one LF:
+
+```json
+{"schema_version":1,"id":"00000000000000000000000000000000","created_at":"2026-07-27T10:20:30.123456Z","updated_at":"2026-07-27T10:20:30.123456Z","status":"new","revision":1,"source":"api","form_name":"goosialize-leads-capture","locale":null,"consent":{"granted":true,"version":"privacy-v1","captured_at":"2026-07-27T10:20:30.123456Z"},"idempotency":{"key_version":1,"key_hash":"3a1190b048a946c5d50e77efb7361ab6768acbfa4e3a54fa8e0bf0b8ff927f59","payload_fingerprint":"e17f2b0515ba2afa241577ee6c3def115049d871527eeba9eb61c546695a8115"},"full_name":"Synthetic Lead","email":"lead@example.test","phone":"+35722000000","company":null,"message":null,"resource_id":null,"source_path":null,"campaign":null}
+```
+
+The exact sidecar bytes are this line plus one LF:
+
+```json
+{"schema_version":1,"key_version":1,"key_digest":"3a1190b048a946c5d50e77efb7361ab6768acbfa4e3a54fa8e0bf0b8ff927f59","payload_digest":"e17f2b0515ba2afa241577ee6c3def115049d871527eeba9eb61c546695a8115","lead_id":"00000000000000000000000000000000","created_at":"2026-07-27T10:20:30.123456Z","expires_at":"2026-08-26T10:20:30.123456Z"}
+```
+
+The test defines an in-memory `LeadRepository` fake whose queued exact results are `created`, `replayed`, `id_collision`, or `failure`; it records immutable request snapshots and exposes no filesystem API.
+
+The unit test asserts every API signature/finality/visibility/type/PHPDoc shape; exact key/payload digests; canonical Base64 rejection; active/historical selection and `hash_equals()` verification; null-key behavior; required-config failure; record idempotency fields; unchanged `fromCommand()` null behavior; one entropy call per record attempt; attempts 1–5; early success; five-collision exhaustion; exact result arrays; exception redaction; and the complete call graph. It emits:
+
+- `PASS_PHASE_3B_IDEMPOTENCY` only after key selection, rotation, hashes, sidecar metadata, missing/invalid configuration, and redaction pass.
+- `PASS_PHASE_3B_COLLISION_POLICY` only after all one-through-five attempt and no-overwrite fake-repository oracles pass.
+
+`tests/integration/phase-3b-secure-storage.sh` runs exactly:
+
+```text
+GRAV_TEST_IMAGE=lscr.io/linuxserver/grav:2.0.12 tests/integration/phase-3b-secure-storage.sh
+```
+
+It first verifies immutable image ID `sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351`, then uses `mktemp -d` outside the repository as the trusted synthetic user-data root and mounts only the repository read-only plus that root read-write into `docker run --rm --network none`. A trap removes the root and named test containers. No volume is created.
+
+The test-only fault fixture subclasses no production class. It supplies the constructor’s temporary-entropy callable and invokes the repository in disposable directories whose permissions and precreated entries deterministically cause each failure. `FilesystemLeadRepository` calls PHP filesystem functions unqualified within its namespace. For stages not reliably induced by permissions—write false, zero write, flush, fsync, close, hard-link unsupported, record link, sidecar link, and immediate unlink—the test runs the repository in a subprocess with a test-only same-namespace PHP function shim loaded before the class; the shim delegates to the corresponding global function by default and fails exactly the named call ordinal. Production files contain no fault hook. Each subprocess receives one stage name from the exact allowlist and asserts the mapped stable code, no final partial bytes, and no leftover current-operation temp.
+
+Exact assertions cover: canonical record bytes; exact record/sidecar paths and bytes; 0700 directories; 0600 lock/temp/finals; umask restoration; traversal/root/symlink rejection; no write outside root; exact probe bytes/inode/cleanup and one-probe-per-instance behavior; same-file inode after publication; complete-byte visibility; duplicate record target byte identity; keyed replay/conflict/expiry; malformed and mismatched sidecars; zero/one/multiple/10,001-entry recovery including a prior-month orphan; two simultaneous unkeyed unique records; two simultaneous same-key calls producing one record/sidecar; every mapped fault stage; current-temp cleanup; no scheduled scan; and redacted exceptions. Expected sidecar bytes are the exact canonical schema in `docs/PHASE_3_LEAD_DATA_CONTRACT.md` with the deterministic fixture digests and one LF.
+
+It then runs the Phase 3A unit test and the three existing integration scripts, builds two independent packages, requires byte-identical archives, installs one offline with GPM, asserts the exact 24-file package and installed trees, reflects all fourteen runtime classes, proves no `vendor/`, and preserves clean enabled/disabled load and `PASS_PHASE_2B_REGRESSION`, `PASS_PHASE_2C_REGRESSION`, and `PASS_PHASE_2D_REGRESSION`.
+
+Markers map exactly:
+
+- `PASS_PHASE_3B_NO_REPLACE`: link-only publication, inode identity, existing-target preservation, unsupported-link failure, and no overwrite fallback.
+- `PASS_PHASE_3B_ATOMIC_STORAGE`: exact bytes/names/modes, full write/flush/fsync/close, process-visible completeness, publication ordering, rollback policy, and every stage fault.
+- `PASS_PHASE_3B_IDEMPOTENCY`: unit marker plus sidecar schema, HMAC selection/rotation, replay/conflict/expiry, corruption, and recovery.
+- `PASS_PHASE_3B_CONCURRENCY`: simultaneous unique and same-key process tests with exact resulting counts.
+- `PASS_PHASE_3B_IMMEDIATE_CLEANUP`: current-attempt cleanup on every pre/post-publication failure and proof that no scan/scheduled cleanup exists.
+- Existing Phase 3A and Phase 2 markers retain their exact current meanings.
+
+Final implementation acceptance builds independently twice, requires byte-identical ZIP bytes and identical SHA-256 values, and records that SHA and both 24-file counts in `docs/OFFICIAL_VERIFICATION_LOG.md`. The final Phase 3B SHA is implementation evidence, not a planning-time constant. The Phase 3A SHA `6c6e5040baecc19ce89535ade4ab3d63fd68b51e8a1e881f4bb93ed6b83f2d7d` remains the pre-implementation baseline.
+
 Use only synthetic `.test` data. Every PASS marker below maps to its named assertions; unavailable required coverage stops the checkpoint. Every checkpoint uses its named branch created from current `main`; the prior checkpoint must already be merged, and that main commit must be the direct parent of the checkpoint commit. Every listed documentation path is a required update, not merely permitted. Each checkpoint requires a clean pre-commit review, all listed tests, exactly one approved commit with the stated subject, then a separate read-only merge review and local `git merge --ff-only <branch>`. No remote, push, publish, or deploy is allowed. Post-merge, rerun earlier Phase 2 and Phase 3 markers and prove clean status, retained branch, unchanged reference, and package determinism.
 
 ### Phase 3A — Lead data and validation primitives
@@ -276,10 +515,9 @@ Use only synthetic `.test` data. Every PASS marker below maps to its named asser
 
 ### Phase 3B — secure filesystem repository and idempotency index
 
-- Branch: `feat/phase-3b-secure-lead-storage`; purpose: sole concrete filesystem repository, hard-link publication, lock, record/sidecar recovery and authorized stale-artifact maintenance.
-- New files: `classes/Storage/LeadRepository.php`, `classes/Storage/TemporaryArtifactMaintenanceRepository.php`, `classes/Storage/FilesystemLeadRepository.php`, `classes/Storage/StorageException.php`, `classes/Storage/TemporaryArtifactMaintenanceResult.php`, `classes/Application/StaleTemporaryCleanup.php`, `classes/Console/CleanupTemporariesCommand.php`, `tests/unit/phase-3b-sidecar-schema.php`, `tests/unit/phase-3b-stale-temporary-cleanup.php`, `tests/integration/phase-3b-secure-storage.sh`.
-- Modified files: `goosialize-leads.php`, `composer.json`, `packaging/package-files.txt`, `README.md`, `CHANGELOG.md`, `docs/OFFICIAL_VERIFICATION_LOG.md`.
-- Forbidden: HTTP, Forms, Email, Admin2, theme/core/API plugin. Tests: interface-only cleanup orchestration with no filesystem calls; redacted result shape; repository-exclusive containment, iteration, filename, `lstat`, symlink, lock, active-write, stale-age, bounds, deletion, permissions and exception translation; `0700/0600`, exclusive temp, fsync, hard-link no-replace, existing target, unsupported link, fault/crash/full-disk/collision cases; sidecar schema/replay/expiry/corruption/recovery; concurrent unique/same-key; and recent/stale/wrong-name/escape/malformed/published cleanup cases. Markers: `PASS_PHASE_3B_NO_REPLACE`, `PASS_PHASE_3B_ATOMIC_STORAGE`, `PASS_PHASE_3B_IDEMPOTENCY`, `PASS_PHASE_3B_CONCURRENCY`, `PASS_PHASE_3B_STALE_TEMP_CLEANUP`. Subject: `feat: add secure Lead filesystem repository`.
+- Branch, subject, exact nineteen-path implementation manifest, APIs, call graph, tests, package contract, and forbidden scope are defined exclusively by the normative Phase 3B section above.
+- Phase 3B retains immediate current-operation temporary cleanup only. Scheduled/post-crash cleanup and the previously proposed CLI/maintenance classes are deferred to Phase 7.
+- Required markers are `PASS_PHASE_3B_NO_REPLACE`, `PASS_PHASE_3B_ATOMIC_STORAGE`, `PASS_PHASE_3B_IDEMPOTENCY`, `PASS_PHASE_3B_COLLISION_POLICY`, `PASS_PHASE_3B_CONCURRENCY`, and `PASS_PHASE_3B_IMMEDIATE_CLEANUP`, followed by all existing Phase 3A and Phase 2 regression markers.
 
 ### Phase 3C — theme-independent Forms and JSON API capture adapters
 
@@ -315,8 +553,8 @@ Phase 4 owns reads, permissions, search/filter/index/pagination, status transiti
 | 3A | Implement the specified handwritten root `autoload.php`; require it once from `GoosializeLeadsPlugin::autoload(): void`; implement the seven-class normative API table; update the exact 17-file manifest and three integration scripts; install offline through GPM and reflect every class and method with no `vendor/`. | Pass: exact constructors/factories/types/results/callables/exceptions, idempotent contained loader, exact manifest/tree, byte-identical builds, new recorded hash, installed reflection and Phase 2 regressions; fail: any API mismatch, escape, foreign lookup, missing/extra file, generated dependency, nondeterminism, or activated functional behavior; fallback: no Phase 3A runtime classes and checkpoint failure. |
 | 3A | Probe `extension_loaded('intl')`, `class_exists('Normalizer')`, `Normalizer::FORM_C`, `normalize()` and `isNormalized()` in the pinned image using decomposed `e` plus `U+0301`, expecting `U+00E9`; declare `"ext-intl": "*"` and test capability before validation. | Pass: all capabilities exist and exact NFC output verifies; fail: absence, false return, mismatch, or unverifiable result; fallback: fail closed with `unicode_normalization_unavailable` or `unicode_normalization_failed`, including ASCII input, without runtime detail or submitted values. |
 | 3A | Execute every row of the exhaustive primitive error table, including multi-error permutations, and the exact conservative ASCII email examples/boundaries. | Pass: one primary error per field, fixed canonical/unknown/cross-field ordering and byte-identical results; fail: unmapped rejection, unstable order, value/PII leakage, or grammar mismatch; fallback: checkpoint failure and no capture adapters. |
-| 3B | Probe locator path, effective modes, `fsync`, `flock`, hard links, crash points, and the authorized 24-hour/100-entry/two-second stale-temp cleanup bounds on the supported deployment filesystem. | Pass: exact containment/mode/no-replace/fault plus recent/stale/active/symlink/limit/authorization tests; fail: any overwrite, active-write removal, unauthenticated invocation, path escape, or unsupported guarantee; fallback: capture disabled and cleanup unavailable. |
-| 3B | Generate/validate 32-byte HMAC secret; simulate rotation/backup against sidecars. | Pass: old sidecars remain verifiable through approved key-version handling; fail: loss/ambiguity; fallback: refuse capture. |
+| 3B | Probe the exact trusted user-data locator, `0700/0600`, file `fsync`, `flock`, hard-link no-replace publication, process-visible atomicity, containment/symlink rejection, current-operation cleanup, and every namespaced fault shim stage in `tests/integration/phase-3b-secure-storage.sh`. | Pass: all six exact Phase 3B markers plus no overwrite, no escape, no partial final, no current temp, and documented absence of directory-fsync/power-loss guarantee; fail: any marker or invariant fails; fallback: no Phase 3B merge and capture remains unavailable. |
+| 3B | Validate required externally configured canonical-Base64 32-byte HMAC keys and active/historical versions in `tests/unit/phase-3b-secure-persistence.php`; run sidecar rotation/replay integration assertions. | Pass: version 2 signs new payloads, versions 1 and 2 verify their own historical digests with `hash_equals()`, invalid/missing keyed configuration fails redacted, and no secret enters source/package/output; fail: loss, ambiguity, leakage, or unkeyed digest; fallback: keyed capture fails closed and no implementation merge. |
 | 3C | Prove plugin-owned Forms blueprint registration, native templates, `onFormProcessed`, standard POST/303 and exact XHR mapping in Form 9.1.13. | Pass: theme-free standard flow plus asserted XHR or explicit unsupported result; fail: theme ownership/bypass; fallback: disable Forms adapter, never replace architecture. |
 | 3C | Prove `onApiCollectPublicRoutes`, cache invalidation, proxy-aware same-origin/missing-Origin/CSRF policy, pre-buffer byte/duplicate detector, and endpoint abuse control. | Pass: exact anonymous security/status tests; fail: bypass/fail-open endpoint; fallback: API adapter disabled. |
 | 3D | Probe Email 5.0.3 service availability, `message(): Message`, exact accepted `send(): int` statuses, construction/delivery separation, and redaction without using plugin debug output. | Pass: source signatures plus one minimized post-durable attempt with accepted status interpretation and redacted failure; fail: signature/status mismatch, leakage, duplicate, or ordering defect; fallback: notification disabled while stored Lead remains valid. |
