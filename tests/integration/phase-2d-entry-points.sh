@@ -38,7 +38,7 @@ readonly STATUS_BEFORE="$(git -C "${REPOSITORY_ROOT}" status --porcelain=v1 -z |
 readonly HEAD_BEFORE="$(git -C "${REPOSITORY_ROOT}" rev-parse HEAD)"
 readonly BRANCH_BEFORE="$(git -C "${REPOSITORY_ROOT}" branch --show-current)"
 
-[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 45 ]] || fail 'package manifest count mismatch'
+[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 48 ]] || fail 'package manifest count mismatch'
 [[ "$(<"${REPOSITORY_ROOT}/templates/phase-2d-skeleton.html.twig")" == 'Goosialize Leads Phase 2 skeleton.' ]] || fail 'template content mismatch'
 node --check "${REPOSITORY_ROOT}/admin-next/pages/goosialize-leads.js"
 if grep -Eiq 'attachShadow|fetch|XMLHttpRequest|WebSocket|sendBeacon|localStorage|sessionStorage|document\.cookie|location\.|<form|<input|<button|addEventListener|import[ (]|export ' "${REPOSITORY_ROOT}/admin-next/pages/goosialize-leads.js"; then

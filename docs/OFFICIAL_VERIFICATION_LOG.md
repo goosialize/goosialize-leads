@@ -221,3 +221,11 @@ The export button has no per-action capability property. The exact native ACL ar
 ### Phase 4C.1 implementation-contract correction
 
 The implementation manifest is corrected to five new paths plus twelve modified paths, exactly seventeen total. This log is the sole implementation-evidence document; the data contract, secure-capture/storage plan and roadmap remain immutable after this correction. Oversized cells are never truncated: the exact Unicode-code-point maximum is accepted, one code point over fails before neutralization/quoting, and the controller returns only the exact redacted 503 `export_record_invalid` JSON response with no CSV bytes or storage mutation.
+
+### Phase 4C.1 implementation evidence
+
+Implemented and verified on 2026-07-29 against immutable image `sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351`, Grav 2.0.12, Admin2 2.0.15 and observed PHP 8.5.8. The retained Phase 4A.1 baseline is `db2a91d241552d28b86acd7dd79da32752389c6ba7d3c0b15e951455d9f1f422`.
+
+The pre-review candidate SHA-256 `2a90b0f20657b56d95064026c0d07c601d4db5ffa4f48bf2e3d7ca4d33d4713e` is superseded after final review made export-action visibility explicitly require API access in addition to read and export permissions. Two independent corrected builds produced SHA-256 `aa7c59ed1986d710fecd361c8b095c37f57a9bb00509b7c23b10dbd73343bf5c` and `aa7c59ed1986d710fecd361c8b095c37f57a9bb00509b7c23b10dbd73343bf5c`; byte comparison and deterministic equality PASS. The package manifest and genuine offline-installed tree contain exactly 48 regular files, and all 35 runtime types load and reflect.
+
+PHP syntax, Composer JSON, YAML, Markdown, manifest and shell syntax checks passed. The complete unit/integration matrix passed `PASS_PHASE_4C1_CSV_FORMAT`, `PASS_PHASE_4C1_CSV_INJECTION`, `PASS_PHASE_4C1_BOUNDED_EXPORT`, `PASS_PHASE_4C1_EXPORT_RESPONSES`, `PASS_PHASE_4C1_CELL_LENGTH_REJECTION`, `PASS_PHASE_4C1_AUTHENTICATED_ENDPOINT`, `PASS_PHASE_4C1_NATIVE_EXPORT`, `PASS_PHASE_4C1_EXPORT_ACL`, `PASS_PHASE_4C1_NO_CUSTOM_COMPONENT`, `PASS_PHASE_4C1_REGRESSIONS`, `PASS_PHASE_4C1_PACKAGE` and every completed Phase 2/3/4A.1 regression. ShellCheck remains unavailable, so every shell script passed `bash -n`. No real browser was available and no browser verification is claimed.

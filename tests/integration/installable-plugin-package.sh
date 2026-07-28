@@ -52,12 +52,15 @@ required = [
     "README.md",
     "admin-next/pages/goosialize-leads.js",
     "admin/blueprints/goosialize-leads-index.yaml",
+    "admin/blueprints/goosialize-leads-index-export.yaml",
     "autoload.php",
     "blueprints.yaml",
     "classes/Admin/LeadIndexCollection.php",
+    "classes/Admin/LeadCsvExporter.php",
     "classes/Admin/LeadIndexQuery.php",
     "classes/Admin/LeadSummary.php",
     "classes/Admin/LeadsIndexController.php",
+    "classes/Admin/LeadsCsvExportController.php",
     "classes/Application/CaptureCommand.php",
     "classes/Application/CaptureResult.php",
     "classes/Application/LeadCaptureService.php",
@@ -94,7 +97,7 @@ required = [
     "permissions.yaml",
     "templates/phase-2d-skeleton.html.twig",
 ]
-if files != required: raise SystemExit("manifest does not match the independent 45-file allowlist")
+if files != sorted(required): raise SystemExit("manifest does not match the independent 48-file allowlist")
 expected = {root + "/", root + "/languages/"} | {f"{root}/{name}" for name in files}
 expected |= {root + "/admin-next/", root + "/admin-next/pages/", root + "/templates/"}
 expected |= {root + "/admin/", root + "/admin/blueprints/", root + "/classes/", root + "/classes/Admin/", root + "/classes/Application/", root + "/classes/Domain/", root + "/classes/Http/", root + "/classes/Security/", root + "/classes/Storage/", root + "/classes/Validation/"}

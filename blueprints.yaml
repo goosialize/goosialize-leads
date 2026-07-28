@@ -131,3 +131,20 @@ form:
       type: display
       label: Lead Index timezone
       default: UTC
+    admin2_csv_export.enabled:
+      type: toggle
+      label: Native Admin2 Lead CSV export
+      default: 0
+      options:
+        1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
+        0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
+      validate:
+        type: bool
+    admin2_csv_export.max_response_bytes:
+      type: number
+      label: Maximum CSV response bytes
+      default: 131072
+      validate:
+        type: int
+        min: 131072
+        max: 131072

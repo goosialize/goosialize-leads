@@ -5,3 +5,5 @@ actions:
     actions:
       read:
         label: View leads
+      export:
+        label: Export leads

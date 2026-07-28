@@ -1,5 +1,7 @@
 # Goosialize Leads
 
+Phase 4C.1 adds a permission-gated native Admin2 export of the deterministic latest-100 Lead summary collection. CSV export is disabled by default, uses no plugin-owned Admin2 JavaScript, and does not modify Lead storage.
+
 Phase 3C.1 adds opt-in, server-rendered Grav Forms capture. Configure
 `forms.enabled`, list eligible lowercase form names in `forms.forms`, and add the
 `goosialize_leads_capture` process action to those forms. Public JSON and XHR

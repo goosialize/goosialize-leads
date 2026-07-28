@@ -9,6 +9,7 @@ use Grav\Common\Processors\Events\RequestHandlerEvent;
 use Grav\Events\PermissionsRegisterEvent;
 use Grav\Framework\Acl\PermissionsReader;
 use Grav\Plugin\GoosializeLeads\Admin\LeadsIndexController;
+use Grav\Plugin\GoosializeLeads\Admin\LeadsCsvExportController;
 use Grav\Plugin\GoosializeLeads\Application\LeadCaptureService;
 use Grav\Plugin\GoosializeLeads\Application\LeadPersistenceCoordinator;
 use Grav\Plugin\GoosializeLeads\Http\FormsLeadCaptureAdapter;
@@ -54,6 +55,9 @@ final class GoosializeLeadsPlugin extends Plugin
         }
         if ($this->admin2IndexConfigurationValid() && method_exists($routes, 'get')) {
             $routes->get('/goosialize-leads', [LeadsIndexController::class, 'index']);
+            if ($this->admin2CsvExportConfigurationValid()) {
+                $routes->get('/goosialize-leads/export', [LeadsCsvExportController::class, 'export']);
+            }
         }
     }
 
@@ -92,7 +96,10 @@ final class GoosializeLeadsPlugin extends Plugin
             'title' => 'Leads — latest 100',
             'icon' => 'fa-address-book',
             'page_type' => 'blueprint',
-            'blueprint' => 'goosialize-leads-index',
+            'blueprint' => $this->eventUserCanExport($event['user'] ?? null)
+                && $this->admin2CsvExportConfigurationValid()
+                ? 'goosialize-leads-index-export'
+                : 'goosialize-leads-index',
             'actions' => [],
         ];
     }
@@ -245,6 +252,30 @@ final class GoosializeLeadsPlugin extends Plugin
         return is_array($config)
             && ($config['enabled'] ?? null) === true
             && ($config['timezone'] ?? null) === 'UTC';
+    }
+
+    private function admin2CsvExportConfigurationValid(): bool
+    {
+        $config = $this->config()['admin2_csv_export'] ?? null;
+        return is_array($config)
+            && ($config['enabled'] ?? null) === true
+            && ($config['max_response_bytes'] ?? null) === 131072;
+    }
+
+    private function eventUserCanExport(mixed $user): bool
+    {
+        if (!is_object($user)) return false;
+        try {
+            if (method_exists($user, 'get') && (bool) $user->get('access.api.super')) return true;
+            $api = method_exists($user, 'get') && (bool) $user->get('access.api.access');
+            $read = method_exists($user, 'get') && (bool) $user->get('access.api.goosialize_leads.read');
+            $export = method_exists($user, 'get') && (bool) $user->get('access.api.goosialize_leads.export');
+            return $api && (($read && $export) || (method_exists($user, 'authorize')
+                && (bool) $user->authorize('api.goosialize_leads.read')
+                && (bool) $user->authorize('api.goosialize_leads.export')));
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     private function eventUserAllowed(mixed $user): bool

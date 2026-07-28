@@ -27,7 +27,7 @@ $filters=array_column($field["filters"],null,"name");
 foreach(["search","status","source","date_from","date_to"] as $name)if(!isset($filters[$name]))throw new RuntimeException("filter missing");
 if(isset($field["export_endpoint"],$field["page"],$field["sort"],$field["editor"]))throw new RuntimeException("forbidden declaration");
 $permissions=Yaml::parseFile("/source/permissions.yaml");
-if(array_keys($permissions["actions"]["api.goosialize_leads"]["actions"]??[])!==["read"])throw new RuntimeException("permission mismatch");
+if(array_keys($permissions["actions"]["api.goosialize_leads"]["actions"]??[])!==["read","export"])throw new RuntimeException("permission mismatch");
 $defaults=Yaml::parseFile("/source/goosialize-leads.yaml");
 if(($defaults["admin2_index"]??null)!==["enabled"=>false,"timezone"=>"UTC"])throw new RuntimeException("default mismatch");
 $source=file_get_contents("/source/goosialize-leads.php");
@@ -84,7 +84,7 @@ if($hidden["items"]!==[])throw new RuntimeException("unauthorized navigation vis
 echo "PASS_PHASE_4A1_PLUGIN_REGISTRATION\n";
 '
 
-[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 45 ]]
+[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 48 ]]
 [[ -z "$(find "${REPOSITORY_ROOT}" -type f \( -name '*.js' -o -name '*.css' -o -name '*.svelte' \) -newer "${REPOSITORY_ROOT}/docs/PHASE_3_SECURE_CAPTURE_STORAGE_PLAN.md" -print)" ]]
 
 printf 'PASS_PHASE_4A1_REGRESSIONS\n'
