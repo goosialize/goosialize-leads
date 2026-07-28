@@ -1,0 +1,7 @@
+actions:
+  api.goosialize_leads:
+    type: access
+    label: Goosialize Leads
+    actions:
+      read:
+        label: View leads

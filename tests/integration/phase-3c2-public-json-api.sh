@@ -85,7 +85,7 @@ docker run --rm --network none \
     --mount "type=bind,src=${REPOSITORY_ROOT},dst=/plugin,readonly" \
     --entrypoint /bin/sh "${EXPECTED_IMAGE_ID}" -c \
     'set -eu; for f in /plugin/classes/*/*.php /plugin/goosialize-leads.php; do php -l "$f" >/dev/null; done'
-[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 37 ]] || fail 'package count'
+[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 45 ]] || fail 'package count'
 for path in classes/Http/ApiParseResult.php classes/Http/RawJsonParser.php classes/Http/PublicLeadApiController.php; do
     grep -qx "${path}" "${REPOSITORY_ROOT}/packaging/package-files.txt" || fail "missing ${path}"
 done

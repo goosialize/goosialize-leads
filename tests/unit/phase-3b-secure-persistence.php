@@ -86,6 +86,28 @@ foreach ([[null, [1 => $key1]], [1, []], [1, [1 => 'bad']]] as [$active, $keys])
 }
 echo "PASS_PHASE_3B_IDEMPOTENCY\n";
 
+$storageCodes = [
+    'root_invalid', 'unsafe_path', 'symlink_detected', 'directory_creation_failed',
+    'permission_failed', 'lock_failed', 'temporary_creation_failed', 'write_failed',
+    'short_write', 'flush_failed', 'file_fsync_failed', 'close_failed',
+    'publication_unsupported', 'publication_failed', 'sidecar_publication_failed',
+    'cleanup_failed', 'idempotency_index_invalid', 'key_configuration_invalid',
+    'unexpected_storage_failure', 'lead_index_storage_invalid',
+    'lead_index_capacity_exceeded', 'lead_index_record_invalid',
+];
+foreach ($storageCodes as $storageCode) {
+    $exception = new \Grav\Plugin\GoosializeLeads\Storage\StorageException($storageCode);
+    check($exception->stableCode() === $storageCode && $exception->getMessage() === $storageCode, 'storage code mismatch');
+}
+foreach (['lead_index_', 'lead_index_*', '*', 'arbitrary'] as $unknownCode) {
+    try {
+        new \Grav\Plugin\GoosializeLeads\Storage\StorageException($unknownCode);
+        throw new RuntimeException('unknown storage code accepted');
+    } catch (\InvalidArgumentException) {
+    }
+}
+echo "PASS_PHASE_4A1_STORAGE_EXCEPTION_ALLOWLIST\n";
+
 $fake = new class implements LeadRepository {
     /** @var list<string> */
     public array $queue = [];

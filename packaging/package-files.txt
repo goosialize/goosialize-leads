@@ -1,8 +1,13 @@
 CHANGELOG.md
 README.md
 admin-next/pages/goosialize-leads.js
+admin/blueprints/goosialize-leads-index.yaml
 autoload.php
 blueprints.yaml
+classes/Admin/LeadIndexCollection.php
+classes/Admin/LeadIndexQuery.php
+classes/Admin/LeadSummary.php
+classes/Admin/LeadsIndexController.php
 classes/Application/CaptureCommand.php
 classes/Application/CaptureResult.php
 classes/Application/LeadCaptureService.php
@@ -21,7 +26,9 @@ classes/Http/PublicLeadApiController.php
 classes/Http/RateLimitResult.php
 classes/Http/RawJsonParser.php
 classes/Security/IdempotencyKeyRing.php
+classes/Storage/FilesystemLeadReadRepository.php
 classes/Storage/FilesystemLeadRepository.php
+classes/Storage/LeadReadRepository.php
 classes/Storage/LeadRepository.php
 classes/Storage/PersistenceRequest.php
 classes/Storage/PersistenceResult.php
@@ -34,4 +41,5 @@ composer.json
 goosialize-leads.php
 goosialize-leads.yaml
 languages/en.yaml
+permissions.yaml
 templates/phase-2d-skeleton.html.twig

@@ -70,14 +70,17 @@ if (($composer["require"]["ext-intl"] ?? null) !== "*") throw new RuntimeExcepti
 $enabled = (bool) $grav["config"]->get("plugins.goosialize-leads.enabled");
 if ($enabled !== $expectedEnabled) throw new RuntimeException("Merged enabled state mismatch");
 $expectedSubscriptions = [
+    "Grav\\Events\\PermissionsRegisterEvent" => ["onRegisterPermissions", 1000],
     "onApiRegisterRoutes" => ["onApiRegisterRoutes", 0],
+    "onApiSidebarItems" => ["onApiSidebarItems", 0],
+    "onApiPluginPageInfo" => ["onApiPluginPageInfo", 0],
     "onApiCollectPublicRoutes" => ["onApiCollectPublicRoutes", 0],
     "onRequestHandlerInit" => ["onRequestHandlerInit", 98000],
     "onTwigTemplatePaths" => ["onTwigTemplatePaths", 0],
     "onFormProcessed" => ["onFormProcessed", 0],
 ];
 if (GoosializeLeadsPlugin::getSubscribedEvents() !== $expectedSubscriptions) throw new RuntimeException("Unexpected event subscriptions");
-foreach (array_keys($expectedSubscriptions) as $method) {
+foreach ($expectedSubscriptions as [$method]) {
     if (!method_exists($plugin, $method)) throw new RuntimeException("Missing inert listener: " . $method);
 }
 $grav["plugins"]->init();
@@ -96,6 +99,10 @@ if ($expectedEnabled) {
     $plugin->autoload();
     $plugin->autoload();
     $classes = [
+        "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadIndexCollection",
+        "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadIndexQuery",
+        "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadSummary",
+        "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadsIndexController",
         "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureCommand",
         "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureResult",
         "Grav\\Plugin\\GoosializeLeads\\Application\\LeadCaptureService",
@@ -115,6 +122,7 @@ if ($expectedEnabled) {
         "Grav\\Plugin\\GoosializeLeads\\Http\\RawJsonParser",
         "Grav\\Plugin\\GoosializeLeads\\Security\\IdempotencyKeyRing",
         "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadRepository",
+        "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadReadRepository",
         "Grav\\Plugin\\GoosializeLeads\\Storage\\PersistenceRequest",
         "Grav\\Plugin\\GoosializeLeads\\Storage\\PersistenceResult",
         "Grav\\Plugin\\GoosializeLeads\\Storage\\StorageException",
@@ -127,6 +135,7 @@ if ($expectedEnabled) {
         if (!class_exists($class) || !(new ReflectionClass($class))->isFinal()) throw new RuntimeException("Phase 3A class mismatch: " . $class);
     }
     if (!interface_exists("Grav\\Plugin\\GoosializeLeads\\Storage\\LeadRepository")) throw new RuntimeException("Phase 3B repository interface missing");
+    if (!interface_exists("Grav\\Plugin\\GoosializeLeads\\Storage\\LeadReadRepository")) throw new RuntimeException("Phase 4A.1 read repository interface missing");
     if (is_dir($root . "/vendor")) throw new RuntimeException("Packaged vendor directory exists");
     echo "PASS_PHASE_3A_AUTOLOAD\n";
     echo "PASS_ENABLED_DISCOVERY_LOAD\n";

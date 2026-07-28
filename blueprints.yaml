@@ -118,3 +118,16 @@ form:
       type: display
       label: Rate-limit window seconds
       default: 60
+    admin2_index.enabled:
+      type: toggle
+      label: Native Admin2 Lead Index
+      default: 0
+      options:
+        1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
+        0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
+      validate:
+        type: bool
+    admin2_index.timezone:
+      type: display
+      label: Lead Index timezone
+      default: UTC

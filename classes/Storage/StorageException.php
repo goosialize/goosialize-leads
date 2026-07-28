@@ -12,7 +12,8 @@ final class StorageException extends \RuntimeException
         'short_write', 'flush_failed', 'file_fsync_failed', 'close_failed',
         'publication_unsupported', 'publication_failed', 'sidecar_publication_failed',
         'cleanup_failed', 'idempotency_index_invalid', 'key_configuration_invalid',
-        'unexpected_storage_failure',
+        'unexpected_storage_failure', 'lead_index_storage_invalid',
+        'lead_index_capacity_exceeded', 'lead_index_record_invalid',
     ];
 
     public function __construct(private readonly string $stableCode, ?\Throwable $previous = null)

@@ -6,6 +6,9 @@ namespace Grav\Plugin;
 
 use Grav\Common\Plugin;
 use Grav\Common\Processors\Events\RequestHandlerEvent;
+use Grav\Events\PermissionsRegisterEvent;
+use Grav\Framework\Acl\PermissionsReader;
+use Grav\Plugin\GoosializeLeads\Admin\LeadsIndexController;
 use Grav\Plugin\GoosializeLeads\Application\LeadCaptureService;
 use Grav\Plugin\GoosializeLeads\Application\LeadPersistenceCoordinator;
 use Grav\Plugin\GoosializeLeads\Http\FormsLeadCaptureAdapter;
@@ -31,7 +34,10 @@ final class GoosializeLeadsPlugin extends Plugin
     public static function getSubscribedEvents(): array
     {
         return [
+            PermissionsRegisterEvent::class => ['onRegisterPermissions', 1000],
             'onApiRegisterRoutes' => ['onApiRegisterRoutes', 0],
+            'onApiSidebarItems' => ['onApiSidebarItems', 0],
+            'onApiPluginPageInfo' => ['onApiPluginPageInfo', 0],
             'onApiCollectPublicRoutes' => ['onApiCollectPublicRoutes', 0],
             'onRequestHandlerInit' => ['onRequestHandlerInit', 98000],
             'onTwigTemplatePaths' => ['onTwigTemplatePaths', 0],
@@ -41,10 +47,54 @@ final class GoosializeLeadsPlugin extends Plugin
 
     public function onApiRegisterRoutes(Event $event): void
     {
-        if (!$this->publicApiConfigurationValid()) return;
         $routes = $event['routes'] ?? null;
-        if (!is_object($routes) || !method_exists($routes, 'post')) return;
-        $routes->post('/goosialize-leads/capture', [PublicLeadApiController::class, 'capture']);
+        if (!is_object($routes)) return;
+        if ($this->publicApiConfigurationValid() && method_exists($routes, 'post')) {
+            $routes->post('/goosialize-leads/capture', [PublicLeadApiController::class, 'capture']);
+        }
+        if ($this->admin2IndexConfigurationValid() && method_exists($routes, 'get')) {
+            $routes->get('/goosialize-leads', [LeadsIndexController::class, 'index']);
+        }
+    }
+
+    public function onRegisterPermissions(PermissionsRegisterEvent $event): void
+    {
+        $event->permissions->addActions(PermissionsReader::fromYaml("plugin://{$this->name}/permissions.yaml"));
+    }
+
+    public function onApiSidebarItems(Event $event): void
+    {
+        if (!$this->admin2IndexConfigurationValid() || !$this->eventUserAllowed($event['user'] ?? null)) return;
+        $items = $event['items'] ?? [];
+        if (!is_array($items)) $items = [];
+        $items[] = [
+            'id' => 'goosialize-leads',
+            'plugin' => 'goosialize-leads',
+            'label' => 'Leads',
+            'icon' => 'fa-address-book',
+            'route' => '/plugin/goosialize-leads',
+            'priority' => 20,
+            'badge' => null,
+            'authorize' => 'api.goosialize_leads.read',
+        ];
+        $event['items'] = $items;
+    }
+
+    public function onApiPluginPageInfo(Event $event): void
+    {
+        if (($event['plugin'] ?? null) !== 'goosialize-leads'
+            || !$this->admin2IndexConfigurationValid()
+            || !$this->eventUserAllowed($event['user'] ?? null)
+        ) return;
+        $event['definition'] = [
+            'id' => 'goosialize-leads',
+            'plugin' => 'goosialize-leads',
+            'title' => 'Leads — latest 100',
+            'icon' => 'fa-address-book',
+            'page_type' => 'blueprint',
+            'blueprint' => 'goosialize-leads-index',
+            'actions' => [],
+        ];
     }
 
     public function onApiCollectPublicRoutes(Event $event): void
@@ -187,5 +237,25 @@ final class GoosializeLeadsPlugin extends Plugin
         $port = $parts['port'] ?? null;
         if (($parts['scheme'] === 'http' && $port === 80) || ($parts['scheme'] === 'https' && $port === 443)) return false;
         return true;
+    }
+
+    private function admin2IndexConfigurationValid(): bool
+    {
+        $config = $this->config()['admin2_index'] ?? null;
+        return is_array($config)
+            && ($config['enabled'] ?? null) === true
+            && ($config['timezone'] ?? null) === 'UTC';
+    }
+
+    private function eventUserAllowed(mixed $user): bool
+    {
+        if (!is_object($user)) return false;
+        try {
+            if (method_exists($user, 'get') && (bool) $user->get('access.api.super')) return true;
+            if (method_exists($user, 'get') && (bool) $user->get('access.api.goosialize_leads.read')) return true;
+            return method_exists($user, 'authorize') && (bool) $user->authorize('api.goosialize_leads.read');
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }

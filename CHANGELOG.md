@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add an opt-in, permission-gated, bounded native Admin2 Lead Index that reads
+  only canonical primary records and returns the latest 100 without mutation.
 - Add the opt-in Phase 3C.2 public JSON Lead capture endpoint with raw-body,
   Origin, idempotency, and local fixed-window abuse controls.
 - Add opt-in native Grav Forms Lead capture backed by the Phase 3A validation

@@ -9,7 +9,11 @@ Goosialize Leads is planned as a standalone commercial plugin for Grav CMS 2.0.1
 
 ## Current status
 
-**Phase 3B secure-persistence primitives.** The plugin includes the Phase 3A validation/record primitives plus a contained filesystem repository, hard-link no-replace publication, required-config HMAC key ring, idempotency sidecars, five-attempt collision orchestration, and immediate same-operation temporary cleanup. No capture adapter invokes them yet: the plugin still exposes only inert native entry points and contains no functional API, Forms processing, notification, management UI, or delivery behavior.
+**Phase 4A.1 bounded native Admin2 Lead Index.** The plugin includes secure
+Forms and public-API capture plus an opt-in, permission-gated, read-only native
+Admin2 resource table. The index reads only canonical primary Lead records,
+scans at most 10,000 records, and returns the latest 100 in fixed order. It has
+no detail, mutation, export, custom Admin2 JavaScript, or sidecar dependency.
 
 > Goosialize Leads is locally package-installable but remains non-functional, is not marketplace-ready, and is not production-ready.
 
@@ -112,6 +116,13 @@ GRAV_TEST_IMAGE=lscr.io/linuxserver/grav:2.0.12 tests/integration/phase-2d-entry
 ```
 
 The manifest is `packaging/package-files.txt`; the complete isolation and safety contract is documented in `docs/INSTALLABLE_PLUGIN_PACKAGE_TEST.md`. Build output must remain outside this repository.
+
+## Native Admin2 Lead Index
+
+Set `admin2_index.enabled: true` and grant `api.goosialize_leads.read` to an
+authenticated API/Admin2 user. The page title always states
+`Leads — latest 100`; filtering is native and client-side over that bounded
+collection. The index is disabled by default and never changes Lead data.
 
 ## Public JSON capture
 

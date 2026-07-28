@@ -38,7 +38,7 @@ readonly STATUS_BEFORE="$(git -C "${REPOSITORY_ROOT}" status --porcelain=v1 -z |
 readonly HEAD_BEFORE="$(git -C "${REPOSITORY_ROOT}" rev-parse HEAD)"
 readonly BRANCH_BEFORE="$(git -C "${REPOSITORY_ROOT}" branch --show-current)"
 
-[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 37 ]] || fail 'package manifest count mismatch'
+[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 45 ]] || fail 'package manifest count mismatch'
 [[ "$(<"${REPOSITORY_ROOT}/templates/phase-2d-skeleton.html.twig")" == 'Goosialize Leads Phase 2 skeleton.' ]] || fail 'template content mismatch'
 node --check "${REPOSITORY_ROOT}/admin-next/pages/goosialize-leads.js"
 if grep -Eiq 'attachShadow|fetch|XMLHttpRequest|WebSocket|sendBeacon|localStorage|sessionStorage|document\.cookie|location\.|<form|<input|<button|addEventListener|import[ (]|export ' "${REPOSITORY_ROOT}/admin-next/pages/goosialize-leads.js"; then
@@ -94,10 +94,14 @@ $autoload = require "/app/www/public/vendor/autoload.php";
 $grav = Grav\Common\Grav::instance(["loader" => $autoload]); $grav->initializeCli();
 $plugin = Grav\Common\Plugins::getPlugin("goosialize-leads");
 if (!$plugin || !$grav["config"]->get("plugins.goosialize-leads.enabled")) throw new RuntimeException("enabled plugin unavailable");
-$expected = ["onApiRegisterRoutes" => ["onApiRegisterRoutes", 0], "onApiCollectPublicRoutes" => ["onApiCollectPublicRoutes", 0], "onRequestHandlerInit" => ["onRequestHandlerInit", 98000], "onTwigTemplatePaths" => ["onTwigTemplatePaths", 0], "onFormProcessed" => ["onFormProcessed", 0]];
+$expected = ["Grav\\Events\\PermissionsRegisterEvent" => ["onRegisterPermissions", 1000], "onApiRegisterRoutes" => ["onApiRegisterRoutes", 0], "onApiSidebarItems" => ["onApiSidebarItems", 0], "onApiPluginPageInfo" => ["onApiPluginPageInfo", 0], "onApiCollectPublicRoutes" => ["onApiCollectPublicRoutes", 0], "onRequestHandlerInit" => ["onRequestHandlerInit", 98000], "onTwigTemplatePaths" => ["onTwigTemplatePaths", 0], "onFormProcessed" => ["onFormProcessed", 0]];
 if ($plugin::getSubscribedEvents() !== $expected) throw new RuntimeException("subscription allowlist mismatch");
 $plugin->autoload();
 foreach ([
+    "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadIndexCollection",
+    "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadIndexQuery",
+    "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadSummary",
+    "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadsIndexController",
     "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureCommand",
     "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureResult",
     "Grav\\Plugin\\GoosializeLeads\\Application\\LeadCaptureService",
@@ -117,6 +121,7 @@ foreach ([
     "Grav\\Plugin\\GoosializeLeads\\Http\\RawJsonParser",
     "Grav\\Plugin\\GoosializeLeads\\Security\\IdempotencyKeyRing",
     "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadRepository",
+    "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadReadRepository",
     "Grav\\Plugin\\GoosializeLeads\\Storage\\PersistenceRequest",
     "Grav\\Plugin\\GoosializeLeads\\Storage\\PersistenceResult",
     "Grav\\Plugin\\GoosializeLeads\\Storage\\StorageException",
@@ -128,6 +133,7 @@ foreach ([
     if (!class_exists($class) || !(new ReflectionClass($class))->isFinal()) throw new RuntimeException("Phase 3A class mismatch: " . $class);
 }
 if (!interface_exists("Grav\\Plugin\\GoosializeLeads\\Storage\\LeadRepository")) throw new RuntimeException("Phase 3B repository interface missing");
+if (!interface_exists("Grav\\Plugin\\GoosializeLeads\\Storage\\LeadReadRepository")) throw new RuntimeException("Phase 4A.1 read repository interface missing");
 $routeMethod = new ReflectionMethod($plugin, "onApiRegisterRoutes");
 $parameters = $routeMethod->getParameters();
 if (count($parameters) !== 1 || (string) $parameters[0]->getType() !== "RocketTheme\\Toolbox\\Event\\Event" || (string) $routeMethod->getReturnType() !== "void") throw new RuntimeException("route listener signature mismatch");
