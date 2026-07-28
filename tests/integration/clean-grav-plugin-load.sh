@@ -94,8 +94,14 @@ if ($expectedEnabled) {
     $plugin->autoload();
     $classes = [
         "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureCommand",
+        "Grav\\Plugin\\GoosializeLeads\\Application\\LeadPersistenceCoordinator",
         "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadIdGenerator",
         "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadRecord",
+        "Grav\\Plugin\\GoosializeLeads\\Security\\IdempotencyKeyRing",
+        "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadRepository",
+        "Grav\\Plugin\\GoosializeLeads\\Storage\\PersistenceRequest",
+        "Grav\\Plugin\\GoosializeLeads\\Storage\\PersistenceResult",
+        "Grav\\Plugin\\GoosializeLeads\\Storage\\StorageException",
         "Grav\\Plugin\\GoosializeLeads\\Validation\\LeadInputValidator",
         "Grav\\Plugin\\GoosializeLeads\\Validation\\LeadNormalizer",
         "Grav\\Plugin\\GoosializeLeads\\Validation\\ValidationError",
@@ -104,6 +110,7 @@ if ($expectedEnabled) {
     foreach ($classes as $class) {
         if (!class_exists($class) || !(new ReflectionClass($class))->isFinal()) throw new RuntimeException("Phase 3A class mismatch: " . $class);
     }
+    if (!interface_exists("Grav\\Plugin\\GoosializeLeads\\Storage\\LeadRepository")) throw new RuntimeException("Phase 3B repository interface missing");
     if (is_dir($root . "/vendor")) throw new RuntimeException("Packaged vendor directory exists");
     echo "PASS_PHASE_3A_AUTOLOAD\n";
     echo "PASS_ENABLED_DISCOVERY_LOAD\n";

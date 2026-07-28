@@ -1,1 +1,4 @@
 enabled: true
+idempotency:
+  active_key_version: null
+  keys: {}

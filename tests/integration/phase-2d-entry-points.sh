@@ -38,7 +38,7 @@ readonly STATUS_BEFORE="$(git -C "${REPOSITORY_ROOT}" status --porcelain=v1 -z |
 readonly HEAD_BEFORE="$(git -C "${REPOSITORY_ROOT}" rev-parse HEAD)"
 readonly BRANCH_BEFORE="$(git -C "${REPOSITORY_ROOT}" branch --show-current)"
 
-readonly EXPECTED_MANIFEST=$'CHANGELOG.md\nREADME.md\nadmin-next/pages/goosialize-leads.js\nautoload.php\nblueprints.yaml\nclasses/Application/CaptureCommand.php\nclasses/Domain/LeadIdGenerator.php\nclasses/Domain/LeadRecord.php\nclasses/Validation/LeadInputValidator.php\nclasses/Validation/LeadNormalizer.php\nclasses/Validation/ValidationError.php\nclasses/Validation/ValidationResult.php\ncomposer.json\ngoosialize-leads.php\ngoosialize-leads.yaml\nlanguages/en.yaml\ntemplates/phase-2d-skeleton.html.twig'
+readonly EXPECTED_MANIFEST=$'CHANGELOG.md\nREADME.md\nadmin-next/pages/goosialize-leads.js\nautoload.php\nblueprints.yaml\nclasses/Application/CaptureCommand.php\nclasses/Application/LeadPersistenceCoordinator.php\nclasses/Domain/LeadIdGenerator.php\nclasses/Domain/LeadRecord.php\nclasses/Security/IdempotencyKeyRing.php\nclasses/Storage/FilesystemLeadRepository.php\nclasses/Storage/LeadRepository.php\nclasses/Storage/PersistenceRequest.php\nclasses/Storage/PersistenceResult.php\nclasses/Storage/StorageException.php\nclasses/Validation/LeadInputValidator.php\nclasses/Validation/LeadNormalizer.php\nclasses/Validation/ValidationError.php\nclasses/Validation/ValidationResult.php\ncomposer.json\ngoosialize-leads.php\ngoosialize-leads.yaml\nlanguages/en.yaml\ntemplates/phase-2d-skeleton.html.twig'
 [[ "$(<"${REPOSITORY_ROOT}/packaging/package-files.txt")" == "${EXPECTED_MANIFEST}" ]] || fail 'package manifest mismatch'
 [[ "$(<"${REPOSITORY_ROOT}/templates/phase-2d-skeleton.html.twig")" == 'Goosialize Leads Phase 2 skeleton.' ]] || fail 'template content mismatch'
 node --check "${REPOSITORY_ROOT}/admin-next/pages/goosialize-leads.js"
@@ -100,8 +100,14 @@ if ($plugin::getSubscribedEvents() !== $expected) throw new RuntimeException("su
 $plugin->autoload();
 foreach ([
     "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureCommand",
+    "Grav\\Plugin\\GoosializeLeads\\Application\\LeadPersistenceCoordinator",
     "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadIdGenerator",
     "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadRecord",
+    "Grav\\Plugin\\GoosializeLeads\\Security\\IdempotencyKeyRing",
+    "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadRepository",
+    "Grav\\Plugin\\GoosializeLeads\\Storage\\PersistenceRequest",
+    "Grav\\Plugin\\GoosializeLeads\\Storage\\PersistenceResult",
+    "Grav\\Plugin\\GoosializeLeads\\Storage\\StorageException",
     "Grav\\Plugin\\GoosializeLeads\\Validation\\LeadInputValidator",
     "Grav\\Plugin\\GoosializeLeads\\Validation\\LeadNormalizer",
     "Grav\\Plugin\\GoosializeLeads\\Validation\\ValidationError",
@@ -109,6 +115,7 @@ foreach ([
 ] as $class) {
     if (!class_exists($class) || !(new ReflectionClass($class))->isFinal()) throw new RuntimeException("Phase 3A class mismatch: " . $class);
 }
+if (!interface_exists("Grav\\Plugin\\GoosializeLeads\\Storage\\LeadRepository")) throw new RuntimeException("Phase 3B repository interface missing");
 $routeMethod = new ReflectionMethod($plugin, "onApiRegisterRoutes");
 $parameters = $routeMethod->getParameters();
 if (count($parameters) !== 1 || (string) $parameters[0]->getType() !== "RocketTheme\\Toolbox\\Event\\Event" || (string) $routeMethod->getReturnType() !== "void") throw new RuntimeException("route listener signature mismatch");

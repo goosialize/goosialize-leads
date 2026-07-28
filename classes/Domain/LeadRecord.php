@@ -24,6 +24,28 @@ final class LeadRecord
         callable $entropy,
         callable $clock
     ): ValidationResult {
+        return self::fromCommandWithIdempotency($command, $entropy, $clock, null, null, null);
+    }
+
+    /**
+     * @param callable(int):string $entropy
+     * @param callable():\DateTimeInterface $clock
+     */
+    public static function fromCommandWithIdempotency(
+        CaptureCommand $command,
+        callable $entropy,
+        callable $clock,
+        ?int $keyVersion,
+        ?string $keyHash,
+        ?string $payloadFingerprint
+    ): ValidationResult {
+        $allNull = $keyVersion === null && $keyHash === null && $payloadFingerprint === null;
+        $allValid = is_int($keyVersion) && $keyVersion > 0
+            && is_string($keyHash) && preg_match('/\A[0-9a-f]{64}\z/D', $keyHash) === 1
+            && is_string($payloadFingerprint) && preg_match('/\A[0-9a-f]{64}\z/D', $payloadFingerprint) === 1;
+        if (!$allNull && !$allValid) {
+            throw new \InvalidArgumentException('Invalid idempotency metadata.');
+        }
         $idResult = (new LeadIdGenerator())->generate($entropy);
         if (!$idResult->isValid()) {
             return $idResult;
@@ -57,9 +79,9 @@ final class LeadRecord
             'locale' => $commandData['locale'],
             'consent' => $consent,
             'idempotency' => [
-                'key_version' => null,
-                'key_hash' => null,
-                'payload_fingerprint' => null,
+                'key_version' => $keyVersion,
+                'key_hash' => $keyHash,
+                'payload_fingerprint' => $payloadFingerprint,
             ],
             'full_name' => $commandData['full_name'],
             'email' => $commandData['email'],

@@ -4,7 +4,7 @@ Goosialize Leads is planned as a standalone commercial plugin for Grav CMS 2.0.1
 
 ## Current status
 
-**Phase 3A validation primitives.** The plugin includes a handwritten package loader and pure, immutable Lead command, validation, ID, record, and canonical-serialization primitives. It still exposes only inert native entry points and contains no capture adapter, storage, functional API, management UI, Forms processing, Email, or delivery behavior.
+**Phase 3B secure-persistence primitives.** The plugin includes the Phase 3A validation/record primitives plus a contained filesystem repository, hard-link no-replace publication, required-config HMAC key ring, idempotency sidecars, five-attempt collision orchestration, and immediate same-operation temporary cleanup. No capture adapter invokes them yet: the plugin still exposes only inert native entry points and contains no functional API, Forms processing, notification, management UI, or delivery behavior.
 
 > Goosialize Leads is locally package-installable but remains non-functional, is not marketplace-ready, and is not production-ready.
 
@@ -48,10 +48,19 @@ The first release is planned to provide:
 ├── autoload.php
 ├── classes
 │   ├── Application
-│   │   └── CaptureCommand.php
+│   │   ├── CaptureCommand.php
+│   │   └── LeadPersistenceCoordinator.php
 │   ├── Domain
 │   │   ├── LeadIdGenerator.php
 │   │   └── LeadRecord.php
+│   ├── Security
+│   │   └── IdempotencyKeyRing.php
+│   ├── Storage
+│   │   ├── FilesystemLeadRepository.php
+│   │   ├── LeadRepository.php
+│   │   ├── PersistenceRequest.php
+│   │   ├── PersistenceResult.php
+│   │   └── StorageException.php
 │   └── Validation
 │       ├── LeadInputValidator.php
 │       ├── LeadNormalizer.php
@@ -67,10 +76,14 @@ The first release is planned to provide:
 ├── scripts
 │   └── build-plugin-package.sh
 ├── tests
-│   └── integration
+│   ├── integration
 │       ├── clean-grav-plugin-load.sh
 │       ├── installable-plugin-package.sh
-│       └── phase-2d-entry-points.sh
+│       ├── phase-2d-entry-points.sh
+│       └── phase-3b-secure-storage.sh
+│   └── unit
+│       ├── phase-3a-lead-data-validation.php
+│       └── phase-3b-secure-persistence.php
 └── docs
     ├── ARCHITECTURE_PRINCIPLES.md
     ├── CLEAN_GRAV_PLUGIN_LOAD_TEST.md

@@ -73,7 +73,7 @@ assertTrue((new ReflectionClass(ValidationResult::class))->getConstructor()?->is
 $expectedMethods = [
     CaptureCommand::class => ['fromValidated', 'submitted', 'trusted', 'toArray'],
     LeadIdGenerator::class => ['__construct', 'generate'],
-    LeadRecord::class => ['fromCommand', 'id', 'capturedAt', 'status', 'data', 'toArray', 'serialize'],
+    LeadRecord::class => ['fromCommand', 'fromCommandWithIdempotency', 'id', 'capturedAt', 'status', 'data', 'toArray', 'serialize'],
     LeadNormalizer::class => ['__construct', 'unicodeCapabilityAvailable', 'normalizeNfc', 'normalizeWhitespace', 'normalizeEmail'],
     LeadInputValidator::class => ['__construct', 'validate'],
     ValidationError::class => ['__construct', 'code', 'field', 'toArray'],
@@ -98,6 +98,7 @@ $signatures = [
     CaptureCommand::class . '::toArray' => [false, [], 'array'],
     LeadIdGenerator::class . '::generate' => [false, ['callable'], ValidationResult::class],
     LeadRecord::class . '::fromCommand' => [true, [CaptureCommand::class, 'callable', 'callable'], ValidationResult::class],
+    LeadRecord::class . '::fromCommandWithIdempotency' => [true, [CaptureCommand::class, 'callable', 'callable', '?int', '?string', '?string'], ValidationResult::class],
     LeadRecord::class . '::id' => [false, [], 'string'],
     LeadRecord::class . '::capturedAt' => [false, [], 'string'],
     LeadRecord::class . '::status' => [false, [], 'string'],

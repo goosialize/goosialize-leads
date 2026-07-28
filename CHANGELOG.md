@@ -12,3 +12,4 @@
 - Added inert plugin-owned Twig and native Admin2 component-mode entry points.
 - Updated clean-load and package regressions for the two-subscription, nine-file contract.
 - Added the Phase 3A handwritten autoloader and immutable Lead validation, command, ID, record, and canonical-serialization primitives.
+- Added Phase 3B secure filesystem persistence primitives, idempotency key-ring and sidecar handling, hard-link no-replace publication, collision orchestration, and immediate temporary cleanup without adding capture routes or later-phase functionality.

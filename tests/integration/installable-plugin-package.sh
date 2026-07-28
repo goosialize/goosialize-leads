@@ -54,8 +54,15 @@ required = [
     "autoload.php",
     "blueprints.yaml",
     "classes/Application/CaptureCommand.php",
+    "classes/Application/LeadPersistenceCoordinator.php",
     "classes/Domain/LeadIdGenerator.php",
     "classes/Domain/LeadRecord.php",
+    "classes/Security/IdempotencyKeyRing.php",
+    "classes/Storage/FilesystemLeadRepository.php",
+    "classes/Storage/LeadRepository.php",
+    "classes/Storage/PersistenceRequest.php",
+    "classes/Storage/PersistenceResult.php",
+    "classes/Storage/StorageException.php",
     "classes/Validation/LeadInputValidator.php",
     "classes/Validation/LeadNormalizer.php",
     "classes/Validation/ValidationError.php",
@@ -66,10 +73,10 @@ required = [
     "languages/en.yaml",
     "templates/phase-2d-skeleton.html.twig",
 ]
-if files != required: raise SystemExit("manifest does not match the independent 17-file allowlist")
+if files != required: raise SystemExit("manifest does not match the independent 24-file allowlist")
 expected = {root + "/", root + "/languages/"} | {f"{root}/{name}" for name in files}
 expected |= {root + "/admin-next/", root + "/admin-next/pages/", root + "/templates/"}
-expected |= {root + "/classes/", root + "/classes/Application/", root + "/classes/Domain/", root + "/classes/Validation/"}
+expected |= {root + "/classes/", root + "/classes/Application/", root + "/classes/Domain/", root + "/classes/Security/", root + "/classes/Storage/", root + "/classes/Validation/"}
 with zipfile.ZipFile(archive_path) as archive:
     infos = archive.infolist(); names = [item.filename for item in infos]
     if len(names) != len(set(names)): raise SystemExit("duplicate ZIP entry")
@@ -88,7 +95,8 @@ PY
 fixture="${TEMP_ROOT}/fixture"
 mkdir -p "${fixture}/packaging" "${fixture}/scripts" "${fixture}/languages" \
     "${fixture}/admin-next/pages" "${fixture}/templates" \
-    "${fixture}/classes/Application" "${fixture}/classes/Domain" "${fixture}/classes/Validation"
+    "${fixture}/classes/Application" "${fixture}/classes/Domain" "${fixture}/classes/Security" \
+    "${fixture}/classes/Storage" "${fixture}/classes/Validation"
 cp "${REPOSITORY_ROOT}/packaging/package-files.txt" "${fixture}/packaging/"
 cp "${REPOSITORY_ROOT}/scripts/build-plugin-package.sh" "${fixture}/scripts/"
 while IFS= read -r path; do cp "${REPOSITORY_ROOT}/${path}" "${fixture}/${path}"; done < "${REPOSITORY_ROOT}/packaging/package-files.txt"
@@ -127,7 +135,7 @@ for nested in "$root/goosialize-leads" "$root/grav-plugin-goosialize-leads"; do
 done
 test ! -d user/themes/goosialize
 test -f user/plugins/api/api.php; test -f user/plugins/admin2/admin2.php
-expected="CHANGELOG.md README.md admin-next/pages/goosialize-leads.js autoload.php blueprints.yaml classes/Application/CaptureCommand.php classes/Domain/LeadIdGenerator.php classes/Domain/LeadRecord.php classes/Validation/LeadInputValidator.php classes/Validation/LeadNormalizer.php classes/Validation/ValidationError.php classes/Validation/ValidationResult.php composer.json goosialize-leads.php goosialize-leads.yaml languages/en.yaml templates/phase-2d-skeleton.html.twig"
+expected="CHANGELOG.md README.md admin-next/pages/goosialize-leads.js autoload.php blueprints.yaml classes/Application/CaptureCommand.php classes/Application/LeadPersistenceCoordinator.php classes/Domain/LeadIdGenerator.php classes/Domain/LeadRecord.php classes/Security/IdempotencyKeyRing.php classes/Storage/FilesystemLeadRepository.php classes/Storage/LeadRepository.php classes/Storage/PersistenceRequest.php classes/Storage/PersistenceResult.php classes/Storage/StorageException.php classes/Validation/LeadInputValidator.php classes/Validation/LeadNormalizer.php classes/Validation/ValidationError.php classes/Validation/ValidationResult.php composer.json goosialize-leads.php goosialize-leads.yaml languages/en.yaml templates/phase-2d-skeleton.html.twig"
 actual="$(find "$root" -type f -printf "%P\n" | LC_ALL=C sort | tr "\n" " " | sed "s/ $//")"
 test "$actual" = "$expected"
 test -f "$root/templates/phase-2d-skeleton.html.twig"
@@ -182,14 +190,21 @@ $grav["plugins"]->init(); if ($plugin->config()===[]) throw new RuntimeException
 $plugin->autoload();
 $classes=[
     "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureCommand",
+    "Grav\\Plugin\\GoosializeLeads\\Application\\LeadPersistenceCoordinator",
     "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadIdGenerator",
     "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadRecord",
+    "Grav\\Plugin\\GoosializeLeads\\Security\\IdempotencyKeyRing",
+    "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadRepository",
+    "Grav\\Plugin\\GoosializeLeads\\Storage\\PersistenceRequest",
+    "Grav\\Plugin\\GoosializeLeads\\Storage\\PersistenceResult",
+    "Grav\\Plugin\\GoosializeLeads\\Storage\\StorageException",
     "Grav\\Plugin\\GoosializeLeads\\Validation\\LeadInputValidator",
     "Grav\\Plugin\\GoosializeLeads\\Validation\\LeadNormalizer",
     "Grav\\Plugin\\GoosializeLeads\\Validation\\ValidationError",
     "Grav\\Plugin\\GoosializeLeads\\Validation\\ValidationResult",
 ];
 foreach($classes as $class){if(!class_exists($class)||!(new ReflectionClass($class))->isFinal())throw new RuntimeException("Phase 3A reflection failed: ".$class);}
+if(!interface_exists("Grav\\Plugin\\GoosializeLeads\\Storage\\LeadRepository"))throw new RuntimeException("Phase 3B repository interface missing");
 if(is_dir("/app/www/public/user/plugins/goosialize-leads/vendor"))throw new RuntimeException("vendor directory must not exist");
 $plugin->onTwigTemplatePaths();
 if (end($grav["twig"]->twig_paths)!=="/app/www/public/user/plugins/goosialize-leads/templates") throw new RuntimeException("Twig entry point inactive");
