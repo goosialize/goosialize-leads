@@ -9,7 +9,17 @@ classes/Application/LeadCaptureService.php
 classes/Application/LeadPersistenceCoordinator.php
 classes/Domain/LeadIdGenerator.php
 classes/Domain/LeadRecord.php
+classes/Http/ApiParseResult.php
+classes/Http/ApiRequestMapper.php
+classes/Http/ApiRequestResult.php
+classes/Http/ApiResponseMapper.php
+classes/Http/EndpointRateLimiter.php
 classes/Http/FormsLeadCaptureAdapter.php
+classes/Http/OriginPolicy.php
+classes/Http/PublicApiRawBodyMiddleware.php
+classes/Http/PublicLeadApiController.php
+classes/Http/RateLimitResult.php
+classes/Http/RawJsonParser.php
 classes/Security/IdempotencyKeyRing.php
 classes/Storage/FilesystemLeadRepository.php
 classes/Storage/LeadRepository.php

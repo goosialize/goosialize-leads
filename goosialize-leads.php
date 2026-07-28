@@ -5,9 +5,16 @@ declare(strict_types=1);
 namespace Grav\Plugin;
 
 use Grav\Common\Plugin;
+use Grav\Common\Processors\Events\RequestHandlerEvent;
 use Grav\Plugin\GoosializeLeads\Application\LeadCaptureService;
 use Grav\Plugin\GoosializeLeads\Application\LeadPersistenceCoordinator;
 use Grav\Plugin\GoosializeLeads\Http\FormsLeadCaptureAdapter;
+use Grav\Plugin\GoosializeLeads\Http\ApiResponseMapper;
+use Grav\Plugin\GoosializeLeads\Http\EndpointRateLimiter;
+use Grav\Plugin\GoosializeLeads\Http\OriginPolicy;
+use Grav\Plugin\GoosializeLeads\Http\PublicApiRawBodyMiddleware;
+use Grav\Plugin\GoosializeLeads\Http\PublicLeadApiController;
+use Grav\Plugin\GoosializeLeads\Http\RawJsonParser;
 use Grav\Plugin\GoosializeLeads\Security\IdempotencyKeyRing;
 use Grav\Plugin\GoosializeLeads\Storage\FilesystemLeadRepository;
 use Grav\Plugin\GoosializeLeads\Validation\LeadInputValidator;
@@ -25,16 +32,50 @@ final class GoosializeLeadsPlugin extends Plugin
     {
         return [
             'onApiRegisterRoutes' => ['onApiRegisterRoutes', 0],
+            'onApiCollectPublicRoutes' => ['onApiCollectPublicRoutes', 0],
+            'onRequestHandlerInit' => ['onRequestHandlerInit', 98000],
             'onTwigTemplatePaths' => ['onTwigTemplatePaths', 0],
             'onFormProcessed' => ['onFormProcessed', 0],
         ];
     }
 
-    /**
-     * Establish the Phase 2 route-provider contract without registering routes.
-     */
     public function onApiRegisterRoutes(Event $event): void
     {
+        if (!$this->publicApiConfigurationValid()) return;
+        $routes = $event['routes'] ?? null;
+        if (!is_object($routes) || !method_exists($routes, 'post')) return;
+        $routes->post('/goosialize-leads/capture', [PublicLeadApiController::class, 'capture']);
+    }
+
+    public function onApiCollectPublicRoutes(Event $event): void
+    {
+        if (!$this->publicApiConfigurationValid()) return;
+        $exact = $event['exact'] ?? null;
+        if (!is_array($exact)) return;
+        $route = 'POST /api/v1/goosialize-leads/capture';
+        if (!in_array($route, $exact, true)) $exact[] = $route;
+        $event['exact'] = $exact;
+    }
+
+    public function onRequestHandlerInit(RequestHandlerEvent $event): void
+    {
+        if (!$this->publicApiConfigurationValid()) return;
+        if ($event->getRoute()->getRoute() !== '/api/v1/goosialize-leads/capture') return;
+        try {
+            $config = $this->config()['public_api'];
+            $root = $this->grav['locator']->findResource('user-data://', true);
+            if (!is_string($root) || $root === '') return;
+            $middleware = new PublicApiRawBodyMiddleware(
+                new RawJsonParser(),
+                new OriginPolicy(),
+                new EndpointRateLimiter($root, static fn (): int => time()),
+                new ApiResponseMapper(),
+                $config
+            );
+            $event->addMiddleware('goosialize_leads_public_api', $middleware);
+        } catch (\Throwable) {
+            if (isset($this->grav['log'])) $this->grav['log']->warning('public_api_configuration_unavailable');
+        }
     }
 
     /**
@@ -96,5 +137,55 @@ final class GoosializeLeadsPlugin extends Plugin
                 $this->grav['log']->warning('forms_configuration_invalid');
             }
         }
+    }
+
+    private function publicApiConfigurationValid(): bool
+    {
+        $config = $this->config()['public_api'] ?? null;
+        if (!is_array($config) || ($config['enabled'] ?? null) !== true) return false;
+        if (($config['body_max_bytes'] ?? null) !== 16384
+            || ($config['json_max_depth'] ?? null) !== 4
+            || ($config['rate_limit_count'] ?? null) !== 10
+            || ($config['rate_limit_window_seconds'] ?? null) !== 60
+            || !is_array($config['allowed_origins'] ?? null)
+            || !array_is_list($config['allowed_origins'])
+            || !is_string($config['consent_version'] ?? null)
+            || preg_match('/\A[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?\z/D', $config['consent_version']) !== 1
+        ) return false;
+        $locale = $config['locale'] ?? null;
+        if ($locale !== null && (!is_string($locale)
+            || preg_match('/\A[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*\z/D', $locale) !== 1)) return false;
+        $origins = $config['allowed_origins'];
+        if (count($origins) !== count(array_unique($origins, SORT_STRING))) return false;
+        foreach ($origins as $origin) {
+            if (!is_string($origin) || str_contains($origin, '*') || !$this->configuredOriginValid($origin)) return false;
+        }
+        $idempotency = $this->config()['idempotency'] ?? null;
+        if (!is_array($idempotency)) return false;
+        $active = $idempotency['active_key_version'] ?? null;
+        if (is_string($active) && ctype_digit($active)) $active = (int) $active;
+        $keys = $idempotency['keys'] ?? null;
+        if (!is_int($active) || $active < 1 || !is_array($keys)
+            || !array_key_exists($active, $keys) && !array_key_exists((string) $active, $keys)) return false;
+        return true;
+    }
+
+    private function configuredOriginValid(string $origin): bool
+    {
+        if (trim($origin) !== $origin || preg_match('/[^\x20-\x7e]/', $origin) === 1
+            || str_contains($origin, '*') || str_ends_with($origin, '.')) return false;
+        $parts = parse_url($origin);
+        if (!is_array($parts) || !isset($parts['scheme'], $parts['host'])
+            || isset($parts['user'], $parts['pass'], $parts['path'], $parts['query'], $parts['fragment'])) return false;
+        if (!in_array($parts['scheme'], ['http', 'https'], true)
+            || strtolower((string) $parts['host']) !== (string) $parts['host']) return false;
+        $host = (string) $parts['host'];
+        if (str_starts_with($host, '[') && str_ends_with($host, ']')) $host = substr($host, 1, -1);
+        if (!filter_var($host, FILTER_VALIDATE_IP)
+            && (preg_match('/\A[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\z/D', $host) !== 1
+                || str_contains($host, '..'))) return false;
+        $port = $parts['port'] ?? null;
+        if (($parts['scheme'] === 'http' && $port === 80) || ($parts['scheme'] === 'https' && $port === 443)) return false;
+        return true;
     }
 }

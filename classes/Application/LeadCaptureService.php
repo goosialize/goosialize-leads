@@ -46,6 +46,30 @@ final class LeadCaptureService
         }
     }
 
+    /**
+     * @param array{source:string,form_name:string,locale:?string,consent_version:string} $trusted
+     * @param callable(int):string $entropy
+     * @param callable():\DateTimeInterface $clock
+     */
+    public function captureApi(
+        mixed $submitted,
+        array $trusted,
+        string $idempotencyKey,
+        callable $entropy,
+        callable $clock
+    ): CaptureResult {
+        try {
+            $derived = $this->keyRing->deriveApiIdempotencyKey($idempotencyKey);
+            return $this->mapPersistenceResult(
+                $this->coordinator->persist($submitted, $trusted, $derived, $entropy, $clock)
+            );
+        } catch (StorageException) {
+            return CaptureResult::failure('storage_unavailable');
+        } catch (\InvalidArgumentException) {
+            return CaptureResult::failure('invalid_submission_id');
+        }
+    }
+
     private function mapPersistenceResult(PersistenceResult $result): CaptureResult
     {
         $record = $result->record();

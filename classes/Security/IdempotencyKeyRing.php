@@ -58,6 +58,21 @@ final class IdempotencyKeyRing
         );
     }
 
+    public function deriveApiIdempotencyKey(string $idempotencyKey): string
+    {
+        if (preg_match('/\A[A-Za-z0-9._~-]{16,128}\z/D', $idempotencyKey) !== 1) {
+            throw new \InvalidArgumentException('Invalid API idempotency input.');
+        }
+        if (!$this->enabled() || !isset($this->keys[$this->activeVersion])) {
+            throw new StorageException('key_configuration_invalid');
+        }
+        return hash_hmac(
+            'sha256',
+            "public-api-v1\n" . $idempotencyKey . "\n",
+            $this->keys[$this->activeVersion]
+        );
+    }
+
     public function keyDigest(?string $idempotencyKey): ?string
     {
         if ($idempotencyKey === null) return null;

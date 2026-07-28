@@ -71,6 +71,8 @@ $enabled = (bool) $grav["config"]->get("plugins.goosialize-leads.enabled");
 if ($enabled !== $expectedEnabled) throw new RuntimeException("Merged enabled state mismatch");
 $expectedSubscriptions = [
     "onApiRegisterRoutes" => ["onApiRegisterRoutes", 0],
+    "onApiCollectPublicRoutes" => ["onApiCollectPublicRoutes", 0],
+    "onRequestHandlerInit" => ["onRequestHandlerInit", 98000],
     "onTwigTemplatePaths" => ["onTwigTemplatePaths", 0],
     "onFormProcessed" => ["onFormProcessed", 0],
 ];
@@ -101,6 +103,16 @@ if ($expectedEnabled) {
         "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadIdGenerator",
         "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadRecord",
         "Grav\\Plugin\\GoosializeLeads\\Http\\FormsLeadCaptureAdapter",
+        "Grav\\Plugin\\GoosializeLeads\\Http\\ApiParseResult",
+        "Grav\\Plugin\\GoosializeLeads\\Http\\ApiRequestMapper",
+        "Grav\\Plugin\\GoosializeLeads\\Http\\ApiRequestResult",
+        "Grav\\Plugin\\GoosializeLeads\\Http\\ApiResponseMapper",
+        "Grav\\Plugin\\GoosializeLeads\\Http\\EndpointRateLimiter",
+        "Grav\\Plugin\\GoosializeLeads\\Http\\OriginPolicy",
+        "Grav\\Plugin\\GoosializeLeads\\Http\\PublicApiRawBodyMiddleware",
+        "Grav\\Plugin\\GoosializeLeads\\Http\\PublicLeadApiController",
+        "Grav\\Plugin\\GoosializeLeads\\Http\\RateLimitResult",
+        "Grav\\Plugin\\GoosializeLeads\\Http\\RawJsonParser",
         "Grav\\Plugin\\GoosializeLeads\\Security\\IdempotencyKeyRing",
         "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadRepository",
         "Grav\\Plugin\\GoosializeLeads\\Storage\\PersistenceRequest",

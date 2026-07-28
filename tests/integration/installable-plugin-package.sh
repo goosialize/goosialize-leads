@@ -59,7 +59,17 @@ required = [
     "classes/Application/LeadPersistenceCoordinator.php",
     "classes/Domain/LeadIdGenerator.php",
     "classes/Domain/LeadRecord.php",
+    "classes/Http/ApiParseResult.php",
+    "classes/Http/ApiRequestMapper.php",
+    "classes/Http/ApiRequestResult.php",
+    "classes/Http/ApiResponseMapper.php",
+    "classes/Http/EndpointRateLimiter.php",
     "classes/Http/FormsLeadCaptureAdapter.php",
+    "classes/Http/OriginPolicy.php",
+    "classes/Http/PublicApiRawBodyMiddleware.php",
+    "classes/Http/PublicLeadApiController.php",
+    "classes/Http/RateLimitResult.php",
+    "classes/Http/RawJsonParser.php",
     "classes/Security/IdempotencyKeyRing.php",
     "classes/Storage/FilesystemLeadRepository.php",
     "classes/Storage/LeadRepository.php",
@@ -76,7 +86,7 @@ required = [
     "languages/en.yaml",
     "templates/phase-2d-skeleton.html.twig",
 ]
-if files != required: raise SystemExit("manifest does not match the independent 27-file allowlist")
+if files != required: raise SystemExit("manifest does not match the independent 37-file allowlist")
 expected = {root + "/", root + "/languages/"} | {f"{root}/{name}" for name in files}
 expected |= {root + "/admin-next/", root + "/admin-next/pages/", root + "/templates/"}
 expected |= {root + "/classes/", root + "/classes/Application/", root + "/classes/Domain/", root + "/classes/Http/", root + "/classes/Security/", root + "/classes/Storage/", root + "/classes/Validation/"}
@@ -138,7 +148,7 @@ for nested in "$root/goosialize-leads" "$root/grav-plugin-goosialize-leads"; do
 done
 test ! -d user/themes/goosialize
 test -f user/plugins/api/api.php; test -f user/plugins/admin2/admin2.php
-expected="CHANGELOG.md README.md admin-next/pages/goosialize-leads.js autoload.php blueprints.yaml classes/Application/CaptureCommand.php classes/Application/CaptureResult.php classes/Application/LeadCaptureService.php classes/Application/LeadPersistenceCoordinator.php classes/Domain/LeadIdGenerator.php classes/Domain/LeadRecord.php classes/Http/FormsLeadCaptureAdapter.php classes/Security/IdempotencyKeyRing.php classes/Storage/FilesystemLeadRepository.php classes/Storage/LeadRepository.php classes/Storage/PersistenceRequest.php classes/Storage/PersistenceResult.php classes/Storage/StorageException.php classes/Validation/LeadInputValidator.php classes/Validation/LeadNormalizer.php classes/Validation/ValidationError.php classes/Validation/ValidationResult.php composer.json goosialize-leads.php goosialize-leads.yaml languages/en.yaml templates/phase-2d-skeleton.html.twig"
+expected="CHANGELOG.md README.md admin-next/pages/goosialize-leads.js autoload.php blueprints.yaml classes/Application/CaptureCommand.php classes/Application/CaptureResult.php classes/Application/LeadCaptureService.php classes/Application/LeadPersistenceCoordinator.php classes/Domain/LeadIdGenerator.php classes/Domain/LeadRecord.php classes/Http/ApiParseResult.php classes/Http/ApiRequestMapper.php classes/Http/ApiRequestResult.php classes/Http/ApiResponseMapper.php classes/Http/EndpointRateLimiter.php classes/Http/FormsLeadCaptureAdapter.php classes/Http/OriginPolicy.php classes/Http/PublicApiRawBodyMiddleware.php classes/Http/PublicLeadApiController.php classes/Http/RateLimitResult.php classes/Http/RawJsonParser.php classes/Security/IdempotencyKeyRing.php classes/Storage/FilesystemLeadRepository.php classes/Storage/LeadRepository.php classes/Storage/PersistenceRequest.php classes/Storage/PersistenceResult.php classes/Storage/StorageException.php classes/Validation/LeadInputValidator.php classes/Validation/LeadNormalizer.php classes/Validation/ValidationError.php classes/Validation/ValidationResult.php composer.json goosialize-leads.php goosialize-leads.yaml languages/en.yaml templates/phase-2d-skeleton.html.twig"
 actual="$(find "$root" -type f -printf "%P\n" | LC_ALL=C sort | tr "\n" " " | sed "s/ $//")"
 test "$actual" = "$expected"
 test -f "$root/templates/phase-2d-skeleton.html.twig"
@@ -187,6 +197,8 @@ if (!$plugin || get_class($plugin)!=="Grav\\Plugin\\GoosializeLeadsPlugin") thro
 if ($grav["config"]->get("plugins.goosialize-leads.enabled")!==true) throw new RuntimeException("plugin disabled");
 if (Grav\Plugin\GoosializeLeadsPlugin::getSubscribedEvents()!==[
     "onApiRegisterRoutes"=>["onApiRegisterRoutes",0],
+    "onApiCollectPublicRoutes"=>["onApiCollectPublicRoutes",0],
+    "onRequestHandlerInit"=>["onRequestHandlerInit",98000],
     "onTwigTemplatePaths"=>["onTwigTemplatePaths",0],
     "onFormProcessed"=>["onFormProcessed",0],
 ]) throw new RuntimeException("unexpected plugin subscriptions");
@@ -199,7 +211,17 @@ $classes=[
     "Grav\\Plugin\\GoosializeLeads\\Application\\LeadPersistenceCoordinator",
     "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadIdGenerator",
     "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadRecord",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\ApiParseResult",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\ApiRequestMapper",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\ApiRequestResult",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\ApiResponseMapper",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\EndpointRateLimiter",
     "Grav\\Plugin\\GoosializeLeads\\Http\\FormsLeadCaptureAdapter",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\OriginPolicy",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\PublicApiRawBodyMiddleware",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\PublicLeadApiController",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\RateLimitResult",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\RawJsonParser",
     "Grav\\Plugin\\GoosializeLeads\\Security\\IdempotencyKeyRing",
     "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadRepository",
     "Grav\\Plugin\\GoosializeLeads\\Storage\\PersistenceRequest",

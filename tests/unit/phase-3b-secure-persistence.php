@@ -54,6 +54,11 @@ check(
     'Forms idempotency active-key derivation mismatch'
 );
 check(
+    $ring->deriveApiIdempotencyKey('synthetic-key-01')
+        === hash_hmac('sha256', "public-api-v1\nsynthetic-key-01\n", str_repeat('K', 32)),
+    'API idempotency active-key derivation mismatch'
+);
+check(
     $rotated->deriveFormsIdempotencyKey('contact', '0123456789abcdefghij')
         === hash_hmac('sha256', $formsBytes, str_repeat('R', 32)),
     'Forms idempotency key-version selection mismatch'
@@ -130,7 +135,7 @@ foreach ($classes as $class) check((new ReflectionClass($class))->isFinal(), 'cl
 check((new ReflectionClass(LeadRepository::class))->isInterface(), 'repository is not interface');
 $methods = [
     LeadPersistenceCoordinator::class => ['__construct', 'persist'],
-    IdempotencyKeyRing::class => ['__construct', 'enabled', 'activeVersion', 'deriveFormsIdempotencyKey', 'keyDigest', 'canonicalPayload', 'payloadDigest', 'verify'],
+    IdempotencyKeyRing::class => ['__construct', 'enabled', 'activeVersion', 'deriveFormsIdempotencyKey', 'deriveApiIdempotencyKey', 'keyDigest', 'canonicalPayload', 'payloadDigest', 'verify'],
     \Grav\Plugin\GoosializeLeads\Storage\FilesystemLeadRepository::class => ['__construct', 'persist'],
     PersistenceRequest::class => ['create', 'record', 'recordBytes', 'keyDigest', 'payloadBytes', 'hasIdempotency'],
     PersistenceResult::class => ['created', 'replayed', 'idCollision', 'failure', 'status', 'record', 'code', 'errors', 'errorsAsArray', 'isSuccess', 'toArray'],

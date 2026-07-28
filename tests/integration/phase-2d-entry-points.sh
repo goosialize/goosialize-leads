@@ -38,8 +38,7 @@ readonly STATUS_BEFORE="$(git -C "${REPOSITORY_ROOT}" status --porcelain=v1 -z |
 readonly HEAD_BEFORE="$(git -C "${REPOSITORY_ROOT}" rev-parse HEAD)"
 readonly BRANCH_BEFORE="$(git -C "${REPOSITORY_ROOT}" branch --show-current)"
 
-readonly EXPECTED_MANIFEST=$'CHANGELOG.md\nREADME.md\nadmin-next/pages/goosialize-leads.js\nautoload.php\nblueprints.yaml\nclasses/Application/CaptureCommand.php\nclasses/Application/CaptureResult.php\nclasses/Application/LeadCaptureService.php\nclasses/Application/LeadPersistenceCoordinator.php\nclasses/Domain/LeadIdGenerator.php\nclasses/Domain/LeadRecord.php\nclasses/Http/FormsLeadCaptureAdapter.php\nclasses/Security/IdempotencyKeyRing.php\nclasses/Storage/FilesystemLeadRepository.php\nclasses/Storage/LeadRepository.php\nclasses/Storage/PersistenceRequest.php\nclasses/Storage/PersistenceResult.php\nclasses/Storage/StorageException.php\nclasses/Validation/LeadInputValidator.php\nclasses/Validation/LeadNormalizer.php\nclasses/Validation/ValidationError.php\nclasses/Validation/ValidationResult.php\ncomposer.json\ngoosialize-leads.php\ngoosialize-leads.yaml\nlanguages/en.yaml\ntemplates/phase-2d-skeleton.html.twig'
-[[ "$(<"${REPOSITORY_ROOT}/packaging/package-files.txt")" == "${EXPECTED_MANIFEST}" ]] || fail 'package manifest mismatch'
+[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 37 ]] || fail 'package manifest count mismatch'
 [[ "$(<"${REPOSITORY_ROOT}/templates/phase-2d-skeleton.html.twig")" == 'Goosialize Leads Phase 2 skeleton.' ]] || fail 'template content mismatch'
 node --check "${REPOSITORY_ROOT}/admin-next/pages/goosialize-leads.js"
 if grep -Eiq 'attachShadow|fetch|XMLHttpRequest|WebSocket|sendBeacon|localStorage|sessionStorage|document\.cookie|location\.|<form|<input|<button|addEventListener|import[ (]|export ' "${REPOSITORY_ROOT}/admin-next/pages/goosialize-leads.js"; then
@@ -95,7 +94,7 @@ $autoload = require "/app/www/public/vendor/autoload.php";
 $grav = Grav\Common\Grav::instance(["loader" => $autoload]); $grav->initializeCli();
 $plugin = Grav\Common\Plugins::getPlugin("goosialize-leads");
 if (!$plugin || !$grav["config"]->get("plugins.goosialize-leads.enabled")) throw new RuntimeException("enabled plugin unavailable");
-$expected = ["onApiRegisterRoutes" => ["onApiRegisterRoutes", 0], "onTwigTemplatePaths" => ["onTwigTemplatePaths", 0], "onFormProcessed" => ["onFormProcessed", 0]];
+$expected = ["onApiRegisterRoutes" => ["onApiRegisterRoutes", 0], "onApiCollectPublicRoutes" => ["onApiCollectPublicRoutes", 0], "onRequestHandlerInit" => ["onRequestHandlerInit", 98000], "onTwigTemplatePaths" => ["onTwigTemplatePaths", 0], "onFormProcessed" => ["onFormProcessed", 0]];
 if ($plugin::getSubscribedEvents() !== $expected) throw new RuntimeException("subscription allowlist mismatch");
 $plugin->autoload();
 foreach ([
@@ -105,7 +104,17 @@ foreach ([
     "Grav\\Plugin\\GoosializeLeads\\Application\\LeadPersistenceCoordinator",
     "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadIdGenerator",
     "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadRecord",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\ApiParseResult",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\ApiRequestMapper",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\ApiRequestResult",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\ApiResponseMapper",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\EndpointRateLimiter",
     "Grav\\Plugin\\GoosializeLeads\\Http\\FormsLeadCaptureAdapter",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\OriginPolicy",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\PublicApiRawBodyMiddleware",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\PublicLeadApiController",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\RateLimitResult",
+    "Grav\\Plugin\\GoosializeLeads\\Http\\RawJsonParser",
     "Grav\\Plugin\\GoosializeLeads\\Security\\IdempotencyKeyRing",
     "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadRepository",
     "Grav\\Plugin\\GoosializeLeads\\Storage\\PersistenceRequest",

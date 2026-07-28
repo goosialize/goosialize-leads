@@ -73,3 +73,48 @@ form:
       default: /
       validate:
         required: true
+    public_api.enabled:
+      type: toggle
+      label: Public JSON API
+      default: 0
+      options:
+        1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
+        0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
+      validate:
+        type: bool
+    public_api.allowed_origins:
+      type: array
+      label: Allowed Origins
+      default: []
+      value_only: true
+      validate:
+        type: array
+    public_api.locale:
+      type: text
+      label: Public API locale
+      default: null
+      validate:
+        pattern: '^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$'
+    public_api.consent_version:
+      type: text
+      label: Public API consent version
+      default: privacy-v1
+      validate:
+        required: true
+        pattern: '^[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?$'
+    public_api.body_max_bytes:
+      type: display
+      label: Maximum raw body bytes
+      default: 16384
+    public_api.json_max_depth:
+      type: display
+      label: Maximum JSON depth
+      default: 4
+    public_api.rate_limit_count:
+      type: display
+      label: Requests per window
+      default: 10
+    public_api.rate_limit_window_seconds:
+      type: display
+      label: Rate-limit window seconds
+      default: 60

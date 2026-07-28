@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add the opt-in Phase 3C.2 public JSON Lead capture endpoint with raw-body,
+  Origin, idempotency, and local fixed-window abuse controls.
 - Add opt-in native Grav Forms Lead capture backed by the Phase 3A validation
   and Phase 3B secure filesystem persistence services.
 
