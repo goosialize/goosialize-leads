@@ -7,3 +7,5 @@ actions:
         label: View leads
       export:
         label: Export leads
+      operations:
+        label: View notification operations

@@ -107,7 +107,7 @@ printf "PASS_PHASE_5B_COMMAND_RUNTIME\n"
 ')"
 grep -qx 'PASS_PHASE_5B_COMMAND_RUNTIME' <<<"${command_output}" || fail 'command runtime'
 
-test "$(wc -l < "${ROOT}/packaging/package-files.txt")" -eq 75
+test "$(wc -l < "${ROOT}/packaging/package-files.txt")" -eq 82
 grep -qx 'cli/DeliverNotificationsCommand.php' "${ROOT}/packaging/package-files.txt"
 grep -q "setName('deliver-notifications')" "${ROOT}/cli/DeliverNotificationsCommand.php"
 grep -q "InputOption::VALUE_REQUIRED" "${ROOT}/cli/DeliverNotificationsCommand.php"
@@ -116,3 +116,4 @@ grep -q "InputOption::VALUE_REQUIRED" "${ROOT}/cli/DeliverNotificationsCommand.p
 
 printf 'PASS_PHASE_5B_REGRESSIONS\n'
 printf 'PASS_PHASE_5B_PACKAGE\n'
+# Phase 5C.2 preserves manual delivery behavior.

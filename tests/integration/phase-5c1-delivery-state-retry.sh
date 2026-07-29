@@ -7,8 +7,9 @@ output="$(docker run --rm --network none --mount "type=bind,src=${ROOT},dst=/sou
 for marker in PASS_PHASE_5C1_PENDING_INTERFACE_METHODS PASS_PHASE_5C1_PENDING_IMPLEMENTATION_METHODS PASS_PHASE_5C1_PENDING_SIGNATURES PASS_PHASE_5C1_PENDING_INTERFACE_PARITY PASS_PHASE_5C1_REFLECTION_EXACT PASS_PHASE_5C1_WORKER_USES_PENDING_INTERFACE PASS_PHASE_5C1_NO_CONCRETE_PENDING_BYPASS PASS_PHASE_5C1_STATE_SCHEMA PASS_PHASE_5C1_STATE_ATOMIC PASS_PHASE_5C1_CLASSIFICATION PASS_PHASE_5C1_BACKOFF PASS_PHASE_5C1_ELIGIBILITY PASS_PHASE_5C1_PERMANENT_FAILURE PASS_PHASE_5C1_UNCERTAIN PASS_PHASE_5C1_DUPLICATE_RISK_RETRY PASS_PHASE_5C1_RECONCILIATION PASS_PHASE_5C1_DEAD_LETTER PASS_PHASE_5C1_CONCURRENCY PASS_PHASE_5C1_NO_SCHEDULER PASS_PHASE_5C1_REGRESSIONS PASS_PHASE_5C1_PACKAGE; do
   grep -qx "${marker}" <<<"${output}" || fail "missing ${marker}"
 done
-test "$(wc -l < "${ROOT}/packaging/package-files.txt")" -eq 75
-test "$(find "${ROOT}/tests/unit" -maxdepth 1 -type f | wc -l)" -eq 9
-test "$(find "${ROOT}/tests/integration" -maxdepth 1 -type f | wc -l)" -eq 11
+test "$(wc -l < "${ROOT}/packaging/package-files.txt")" -eq 82
+test "$(find "${ROOT}/tests/unit" -maxdepth 1 -type f | wc -l)" -eq 10
+test "$(find "${ROOT}/tests/integration" -maxdepth 1 -type f | wc -l)" -eq 12
 ! rg -n 'method_exists|onSchedulerInitialized|addFunction|addCommand' "${ROOT}/classes/Notification" "${ROOT}/cli"
 printf '%s\n' "${output}"
+# Phase 5C.2 preserves retry-state and reconciliation behavior.

@@ -1,5 +1,7 @@
 # Changelog
 
+- Add optional bounded core-scheduler delivery registration and read-only notification operational inventory surfaces.
+
 ## Unreleased
 
 - Add opt-in durable notification delivery state, deterministic retry,

@@ -3,6 +3,7 @@ README.md
 admin-next/pages/goosialize-leads.js
 admin/blueprints/goosialize-leads-index-export.yaml
 admin/blueprints/goosialize-leads-index.yaml
+admin/blueprints/goosialize-leads-notification-operations.yaml
 autoload.php
 blueprints.yaml
 classes/Admin/LeadCsvExporter.php
@@ -11,6 +12,7 @@ classes/Admin/LeadIndexQuery.php
 classes/Admin/LeadSummary.php
 classes/Admin/LeadsCsvExportController.php
 classes/Admin/LeadsIndexController.php
+classes/Admin/NotificationOperationsController.php
 classes/Application/CaptureCommand.php
 classes/Application/CaptureResult.php
 classes/Application/LeadCaptureService.php
@@ -38,6 +40,7 @@ classes/Notification/DeliveryState.php
 classes/Notification/DeliveryStateRepository.php
 classes/Notification/FilesystemDeadLetterRepository.php
 classes/Notification/FilesystemDeliveryStateRepository.php
+classes/Notification/FilesystemNotificationOperationalInventoryRepository.php
 classes/Notification/FilesystemNotificationOutbox.php
 classes/Notification/FilesystemPendingNotificationRepository.php
 classes/Notification/GravEmailNotificationTransport.php
@@ -48,6 +51,9 @@ classes/Notification/NotificationEnqueueResult.php
 classes/Notification/NotificationEvent.php
 classes/Notification/NotificationMessage.php
 classes/Notification/NotificationMessageFactory.php
+classes/Notification/NotificationOperationalInventory.php
+classes/Notification/NotificationOperationalInventoryRepository.php
+classes/Notification/NotificationOperationalItem.php
 classes/Notification/NotificationOutbox.php
 classes/Notification/NotificationTransport.php
 classes/Notification/NotificationTransportResult.php
@@ -66,6 +72,7 @@ classes/Validation/LeadNormalizer.php
 classes/Validation/ValidationError.php
 classes/Validation/ValidationResult.php
 cli/DeliverNotificationsCommand.php
+cli/NotificationStatusCommand.php
 cli/ReconcileNotificationCommand.php
 composer.json
 goosialize-leads.php

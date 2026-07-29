@@ -80,6 +80,7 @@ $expectedSubscriptions = [
     "onRequestHandlerInit" => ["onRequestHandlerInit", 98000],
     "onTwigTemplatePaths" => ["onTwigTemplatePaths", 0],
     "onFormProcessed" => ["onFormProcessed", 0],
+    "onSchedulerInitialized" => ["onSchedulerInitialized", 0],
 ];
 if (GoosializeLeadsPlugin::getSubscribedEvents() !== $expectedSubscriptions) throw new RuntimeException("Unexpected event subscriptions");
 foreach ($expectedSubscriptions as [$method]) {
@@ -195,3 +196,4 @@ done
 [[ "$(git -C "${REPOSITORY_ROOT}" branch --show-current)" == "${BRANCH_BEFORE}" ]] || fail 'branch changed during testing'
 printf 'PASS_REPOSITORY_UNCHANGED digest=%s\n' "${CONTENT_BEFORE}"
 printf 'PASS_CLEAN_GRAV_PLUGIN_LOAD\n'
+# Phase 5C.2 regression coverage is owned by phase-5c2-scheduling-visibility.sh.

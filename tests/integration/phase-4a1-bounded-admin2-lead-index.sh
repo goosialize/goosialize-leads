@@ -28,7 +28,7 @@ $filters=array_column($field["filters"],null,"name");
 foreach(["search","status","source","date_from","date_to"] as $name)if(!isset($filters[$name]))throw new RuntimeException("filter missing");
 if(isset($field["export_endpoint"],$field["page"],$field["sort"],$field["editor"]))throw new RuntimeException("forbidden declaration");
 $permissions=Yaml::parseFile("/source/permissions.yaml");
-if(array_keys($permissions["actions"]["api.goosialize_leads"]["actions"]??[])!==["read","export"])throw new RuntimeException("permission mismatch");
+if(array_keys($permissions["actions"]["api.goosialize_leads"]["actions"]??[])!==["read","export","operations"])throw new RuntimeException("permission mismatch");
 $defaults=Yaml::parseFile("/source/goosialize-leads.yaml");
 if(($defaults["admin2_index"]??null)!==["enabled"=>false,"timezone"=>"UTC"])throw new RuntimeException("default mismatch");
 $source=file_get_contents("/source/goosialize-leads.php");
@@ -70,7 +70,7 @@ $page=new RocketTheme\Toolbox\Event\Event(["plugin"=>"goosialize-leads","user"=>
 if(($page["definition"]["title"]??null)!=="Leads — latest 100"||($page["definition"]["blueprint"]??null)!=="goosialize-leads-index"||($page["definition"]["actions"]??null)!==[])throw new RuntimeException("page mismatch");
 $routes=new class{public array $gets=[];public function get(string $path,array $handler):void{$this->gets[]=[$path,$handler];}};
 $routeEvent=new RocketTheme\Toolbox\Event\Event(["routes"=>$routes]); $plugin->onApiRegisterRoutes($routeEvent);
-if(count($routes->gets)!==1||$routes->gets[0][0]!=="/goosialize-leads")throw new RuntimeException("provider route mismatch");
+if(count($routes->gets)!==2||$routes->gets[0][0]!=="/goosialize-leads"||$routes->gets[1][0]!=="/goosialize-leads/notification-operations")throw new RuntimeException("provider route mismatch");
 $request=(new Nyholm\Psr7\ServerRequest("GET","/api/v1/goosialize-leads"))->withAttribute("api_user",$allowed);
 $controller=new Grav\Plugin\GoosializeLeads\Admin\LeadsIndexController($grav,$grav["config"]);
 $response=$controller->index($request); $body=json_decode((string)$response->getBody(),true,8,JSON_THROW_ON_ERROR);
@@ -85,9 +85,10 @@ if($hidden["items"]!==[])throw new RuntimeException("unauthorized navigation vis
 echo "PASS_PHASE_4A1_PLUGIN_REGISTRATION\n";
 '
 
-[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 75 ]]
+[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 82 ]]
 grep -qx 'classes/Notification/NotificationEvent.php' "${REPOSITORY_ROOT}/packaging/package-files.txt"
 [[ -z "$(find "${REPOSITORY_ROOT}" -type f \( -name '*.js' -o -name '*.css' -o -name '*.svelte' \) -newer "${REPOSITORY_ROOT}/docs/PHASE_3_SECURE_CAPTURE_STORAGE_PLAN.md" -print)" ]]
 
 printf 'PASS_PHASE_4A1_REGRESSIONS\n'
 printf 'PASS_PHASE_4A1_PACKAGE\n'
+# Phase 5C.2 preserves bounded Lead Index behavior.

@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Grav\Plugin;
 
 use Grav\Common\Plugin;
+use Grav\Common\Scheduler\Scheduler;
 use Grav\Common\Processors\Events\RequestHandlerEvent;
 use Grav\Events\PermissionsRegisterEvent;
 use Grav\Framework\Acl\PermissionsReader;
 use Grav\Plugin\GoosializeLeads\Admin\LeadsIndexController;
 use Grav\Plugin\GoosializeLeads\Admin\LeadsCsvExportController;
+use Grav\Plugin\GoosializeLeads\Admin\NotificationOperationsController;
 use Grav\Plugin\GoosializeLeads\Application\LeadCaptureService;
 use Grav\Plugin\GoosializeLeads\Application\LeadPersistenceCoordinator;
 use Grav\Plugin\GoosializeLeads\Http\FormsLeadCaptureAdapter;
@@ -28,6 +30,8 @@ use RocketTheme\Toolbox\Event\Event;
 
 final class GoosializeLeadsPlugin extends Plugin
 {
+    /** @var \WeakMap<Scheduler,bool>|null */
+    private ?\WeakMap $notificationSchedulers = null;
     public function autoload(): void
     {
         require_once __DIR__ . '/autoload.php';
@@ -44,6 +48,7 @@ final class GoosializeLeadsPlugin extends Plugin
             'onRequestHandlerInit' => ['onRequestHandlerInit', 98000],
             'onTwigTemplatePaths' => ['onTwigTemplatePaths', 0],
             'onFormProcessed' => ['onFormProcessed', 0],
+            'onSchedulerInitialized' => ['onSchedulerInitialized', 0],
         ];
     }
 
@@ -59,6 +64,9 @@ final class GoosializeLeadsPlugin extends Plugin
             if ($this->admin2CsvExportConfigurationValid()) {
                 $routes->get('/goosialize-leads/export', [LeadsCsvExportController::class, 'export']);
             }
+        }
+        if (method_exists($routes, 'get')) {
+            $routes->get('/goosialize-leads/notification-operations', [NotificationOperationsController::class, 'index']);
         }
     }
 
@@ -83,10 +91,26 @@ final class GoosializeLeadsPlugin extends Plugin
             'authorize' => 'api.goosialize_leads.read',
         ];
         $event['items'] = $items;
+        if ($this->eventUserCanOperate($event['user'] ?? null)) {
+            $items[] = [
+                'id'=>'goosialize-leads-notification-operations','plugin'=>'goosialize-leads',
+                'label'=>'Notification operations','icon'=>'fa-bell',
+                'route'=>'/plugin/goosialize-leads-notification-operations','priority'=>21,
+                'badge'=>null,'authorize'=>'api.goosialize_leads.operations',
+            ];
+            $event['items']=$items;
+        }
     }
 
     public function onApiPluginPageInfo(Event $event): void
     {
+        if (($event['plugin'] ?? null) === 'goosialize-leads-notification-operations'
+            && $this->eventUserCanOperate($event['user'] ?? null)) {
+            $event['definition']=['id'=>'goosialize-leads-notification-operations','plugin'=>'goosialize-leads',
+                'title'=>'Notification operations','icon'=>'fa-bell','page_type'=>'blueprint',
+                'blueprint'=>'goosialize-leads-notification-operations','actions'=>[]];
+            return;
+        }
         if (($event['plugin'] ?? null) !== 'goosialize-leads'
             || !$this->admin2IndexConfigurationValid()
             || !$this->eventUserAllowed($event['user'] ?? null)
@@ -103,6 +127,23 @@ final class GoosializeLeadsPlugin extends Plugin
                 : 'goosialize-leads-index',
             'actions' => [],
         ];
+    }
+
+    public function onSchedulerInitialized(Event $event): void
+    {
+        try {
+            $scheduler=$event['scheduler']??null;
+            if(!$scheduler instanceof Scheduler){$this->schedulerLog('notification_scheduler_unavailable');return;}
+            $this->notificationSchedulers??=new \WeakMap();
+            if(isset($this->notificationSchedulers[$scheduler]))return;
+            $settings=$this->schedulingSettings();
+            if($settings===null){$this->schedulerLog('notification_scheduler_configuration_invalid');return;}
+            if($settings['enabled']!==true)return;
+            $frequency=$settings['frequency_minutes'];$cron=$frequency===1?'* * * * *':($frequency===60?'0 * * * *':"*/$frequency * * * *");
+            $scheduler->addCommand(PHP_BINARY,[GRAV_ROOT.'/bin/plugin','goosialize-leads','deliver-notifications','--limit='.$settings['batch_limit']],'goosialize-leads-notification-delivery')
+                ->at($cron)->inForeground()->timeout(300);
+            $this->notificationSchedulers[$scheduler]=true;
+        } catch (\Throwable) {$this->schedulerLog('notification_scheduler_unavailable');}
     }
 
     public function onApiCollectPublicRoutes(Event $event): void
@@ -305,4 +346,54 @@ final class GoosializeLeadsPlugin extends Plugin
             return false;
         }
     }
+
+    private function eventUserCanOperate(mixed $user):bool
+    {
+        if(!is_object($user))return false;
+        try{if(method_exists($user,'get')&&(bool)$user->get('access.api.super'))return true;
+            if(method_exists($user,'get')&&!(bool)$user->get('access.api.access'))return false;
+            if(method_exists($user,'get')&&(bool)$user->get('access.api.goosialize_leads.operations'))return true;
+            return method_exists($user,'authorize')&&(bool)$user->authorize('api.goosialize_leads.operations');
+        }catch(\Throwable){return false;}
+    }
+    private function schedulingSettings():?array
+    {
+        $notifications=$this->config()['notifications']??null;if(!is_array($notifications))return null;
+        $s=$notifications['scheduling']??[];$defaults=['enabled'=>false,'frequency_minutes'=>5,'batch_limit'=>10,'timeout_seconds'=>300];
+        if(!is_array($s))return null;foreach($s as$k=>$_)if(!array_key_exists($k,$defaults))return null;$s=array_replace($defaults,$s);
+        if(!is_bool($s['enabled'])||!is_int($s['frequency_minutes'])||!in_array($s['frequency_minutes'],[1,2,5,10,15,20,30,60],true)
+            ||!is_int($s['batch_limit'])||$s['batch_limit']<1||$s['batch_limit']>50||$s['timeout_seconds']!==300)return null;
+        if($s['enabled']===false)return$s;
+        $d=$notifications['delivery']??null;$r=$notifications['delivery_retry']??null;
+        if(!$this->schedulerDeliveryValid($d)||!$this->schedulerRetryValid($r))return null;
+        return$s;
+    }
+    private function schedulerDeliveryValid(mixed $value):bool
+    {
+        if(!is_array($value)||($value['enabled']??null)!==true||($value['default_limit']??null)!==10)return false;
+        $recipients=$value['recipients']??null;$sender=$value['sender_address']??null;$name=$value['sender_name']??null;
+        if(!is_array($recipients)||!array_is_list($recipients)||count($recipients)<1||count($recipients)>5
+            ||!is_string($sender)||!$this->schedulerAddressValid($sender)
+            ||($name!==null&&(!is_string($name)||strlen($name)<1||strlen($name)>80||preg_match('//u',$name)!==1
+                ||preg_match('/[\x00-\x1f\x7f-\x9f]/u',$name)===1||!class_exists(\Normalizer::class)
+                ||!\Normalizer::isNormalized($name,\Normalizer::FORM_C))))return false;
+        $seen=[];foreach($recipients as$recipient){if(!is_string($recipient)||!$this->schedulerAddressValid($recipient)||isset($seen[$recipient]))return false;$seen[$recipient]=true;}
+        return true;
+    }
+    private function schedulerAddressValid(string $value):bool
+    {
+        if(strlen($value)>254||preg_match('/\A([a-z0-9.!#$%&\'*+\/=?^_`{|}~-]+)@(.+)\z/D',$value,$parts)!==1
+            ||strlen($parts[1])>64||str_starts_with($parts[1],'.')||str_ends_with($parts[1],'.')||str_contains($parts[1],'..'))return false;
+        $labels=explode('.',$parts[2]);if(count($labels)<2)return false;
+        foreach($labels as$label)if(strlen($label)<1||strlen($label)>63||preg_match('/\A[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\z/D',$label)!==1)return false;
+        return true;
+    }
+    private function schedulerRetryValid(mixed $value):bool
+    {
+        if(!is_array($value))return false;$defaults=['enabled'=>false,'maximum_attempts'=>5,'delays_seconds'=>[300,1800,7200,28800],'processing_limit'=>10,'state_max_bytes'=>1024];
+        foreach($value as$key=>$_)if(!array_key_exists($key,$defaults))return false;$value=array_replace($defaults,$value);
+        return$value['enabled']===true&&$value['maximum_attempts']===5&&$value['delays_seconds']===[300,1800,7200,28800]
+            &&is_int($value['processing_limit'])&&$value['processing_limit']>=1&&$value['processing_limit']<=50&&$value['state_max_bytes']===1024;
+    }
+    private function schedulerLog(string $code):void{if(isset($this->grav['log']))$this->grav['log']->warning($code);}
 }

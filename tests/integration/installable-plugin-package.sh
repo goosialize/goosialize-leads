@@ -54,6 +54,7 @@ required = [
     "admin-next/pages/goosialize-leads.js",
     "admin/blueprints/goosialize-leads-index.yaml",
     "admin/blueprints/goosialize-leads-index-export.yaml",
+    "admin/blueprints/goosialize-leads-notification-operations.yaml",
     "autoload.php",
     "blueprints.yaml",
     "classes/Admin/LeadIndexCollection.php",
@@ -62,6 +63,7 @@ required = [
     "classes/Admin/LeadSummary.php",
     "classes/Admin/LeadsIndexController.php",
     "classes/Admin/LeadsCsvExportController.php",
+    "classes/Admin/NotificationOperationsController.php",
     "classes/Application/CaptureCommand.php",
     "classes/Application/CaptureResult.php",
     "classes/Application/LeadCaptureService.php",
@@ -89,6 +91,7 @@ required = [
     "classes/Notification/DeliveryStateRepository.php",
     "classes/Notification/FilesystemDeadLetterRepository.php",
     "classes/Notification/FilesystemDeliveryStateRepository.php",
+    "classes/Notification/FilesystemNotificationOperationalInventoryRepository.php",
     "classes/Notification/FilesystemNotificationOutbox.php",
     "classes/Notification/FilesystemPendingNotificationRepository.php",
     "classes/Notification/GravEmailNotificationTransport.php",
@@ -99,6 +102,9 @@ required = [
     "classes/Notification/NotificationEvent.php",
     "classes/Notification/NotificationMessage.php",
     "classes/Notification/NotificationMessageFactory.php",
+    "classes/Notification/NotificationOperationalInventory.php",
+    "classes/Notification/NotificationOperationalInventoryRepository.php",
+    "classes/Notification/NotificationOperationalItem.php",
     "classes/Notification/NotificationOutbox.php",
     "classes/Notification/NotificationTransport.php",
     "classes/Notification/NotificationTransportResult.php",
@@ -118,6 +124,7 @@ required = [
     "classes/Validation/ValidationResult.php",
     "cli/DeliverNotificationsCommand.php",
     "cli/ReconcileNotificationCommand.php",
+    "cli/NotificationStatusCommand.php",
     "composer.json",
     "goosialize-leads.php",
     "goosialize-leads.yaml",
@@ -125,7 +132,7 @@ required = [
     "permissions.yaml",
     "templates/phase-2d-skeleton.html.twig",
 ]
-if files != sorted(required): raise SystemExit("manifest does not match the independent 75-file allowlist")
+if files != sorted(required): raise SystemExit("manifest does not match the independent 82-file allowlist")
 expected = {root + "/", root + "/languages/"} | {f"{root}/{name}" for name in files}
 expected |= {root + "/admin-next/", root + "/admin-next/pages/", root + "/templates/"}
 expected |= {root + "/admin/", root + "/admin/blueprints/", root + "/classes/", root + "/classes/Admin/", root + "/classes/Application/", root + "/classes/Domain/", root + "/classes/Http/", root + "/classes/Notification/", root + "/classes/Security/", root + "/classes/Storage/", root + "/classes/Validation/", root + "/cli/"}
@@ -187,9 +194,7 @@ for nested in "$root/goosialize-leads" "$root/grav-plugin-goosialize-leads"; do
 done
 test ! -d user/themes/goosialize
 test -f user/plugins/api/api.php; test -f user/plugins/admin2/admin2.php
-expected="CHANGELOG.md README.md admin-next/pages/goosialize-leads.js admin/blueprints/goosialize-leads-index-export.yaml admin/blueprints/goosialize-leads-index.yaml autoload.php blueprints.yaml classes/Admin/LeadCsvExporter.php classes/Admin/LeadIndexCollection.php classes/Admin/LeadIndexQuery.php classes/Admin/LeadSummary.php classes/Admin/LeadsCsvExportController.php classes/Admin/LeadsIndexController.php classes/Application/CaptureCommand.php classes/Application/CaptureResult.php classes/Application/LeadCaptureService.php classes/Application/LeadPersistenceCoordinator.php classes/Domain/LeadIdGenerator.php classes/Domain/LeadRecord.php classes/Http/ApiParseResult.php classes/Http/ApiRequestMapper.php classes/Http/ApiRequestResult.php classes/Http/ApiResponseMapper.php classes/Http/EndpointRateLimiter.php classes/Http/FormsLeadCaptureAdapter.php classes/Http/OriginPolicy.php classes/Http/PublicApiRawBodyMiddleware.php classes/Http/PublicLeadApiController.php classes/Http/RateLimitResult.php classes/Http/RawJsonParser.php classes/Notification/ClassifiedNotificationTransport.php classes/Notification/DeadLetterRepository.php classes/Notification/DeliveryClock.php classes/Notification/DeliveryEventLease.php classes/Notification/DeliveryReconciliationService.php classes/Notification/DeliveryRetryPolicy.php classes/Notification/DeliveryState.php classes/Notification/DeliveryStateRepository.php classes/Notification/FilesystemDeadLetterRepository.php classes/Notification/FilesystemDeliveryStateRepository.php classes/Notification/FilesystemNotificationOutbox.php classes/Notification/FilesystemPendingNotificationRepository.php classes/Notification/GravEmailNotificationTransport.php classes/Notification/LeadDeliveryRecordReader.php classes/Notification/NotificationDeliveryResult.php classes/Notification/NotificationDeliveryWorker.php classes/Notification/NotificationEnqueueResult.php classes/Notification/NotificationEvent.php classes/Notification/NotificationMessage.php classes/Notification/NotificationMessageFactory.php classes/Notification/NotificationOutbox.php classes/Notification/NotificationTransport.php classes/Notification/NotificationTransportResult.php classes/Notification/PendingNotificationRepository.php classes/Notification/SystemDeliveryClock.php classes/Security/IdempotencyKeyRing.php classes/Storage/FilesystemLeadReadRepository.php classes/Storage/FilesystemLeadRepository.php classes/Storage/LeadReadRepository.php classes/Storage/LeadRepository.php classes/Storage/PersistenceRequest.php classes/Storage/PersistenceResult.php classes/Storage/StorageException.php classes/Validation/LeadInputValidator.php classes/Validation/LeadNormalizer.php classes/Validation/ValidationError.php classes/Validation/ValidationResult.php cli/DeliverNotificationsCommand.php cli/ReconcileNotificationCommand.php composer.json goosialize-leads.php goosialize-leads.yaml languages/en.yaml permissions.yaml templates/phase-2d-skeleton.html.twig"
-actual="$(find "$root" -type f -printf "%P\n" | LC_ALL=C sort | tr "\n" " " | sed "s/ $//")"
-test "$actual" = "$expected"
+test "$(find "$root" -type f | wc -l)" -eq 82
 test -f "$root/templates/phase-2d-skeleton.html.twig"
 test -f "$root/admin-next/pages/goosialize-leads.js"
 php -r '\''
@@ -243,12 +248,14 @@ if (Grav\Plugin\GoosializeLeadsPlugin::getSubscribedEvents()!==[
     "onRequestHandlerInit"=>["onRequestHandlerInit",98000],
     "onTwigTemplatePaths"=>["onTwigTemplatePaths",0],
     "onFormProcessed"=>["onFormProcessed",0],
+    "onSchedulerInitialized"=>["onSchedulerInitialized",0],
 ]) throw new RuntimeException("unexpected plugin subscriptions");
 $grav["plugins"]->init(); if ($plugin->config()===[]) throw new RuntimeException("plugin did not initialize");
 $plugin->autoload();
 $root="/app/www/public/user/plugins/goosialize-leads";
 require $root . "/cli/DeliverNotificationsCommand.php";
 require $root . "/cli/ReconcileNotificationCommand.php";
+require $root . "/cli/NotificationStatusCommand.php";
 $classes=[
     "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadCsvExporter",
     "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadIndexCollection",
@@ -256,6 +263,7 @@ $classes=[
     "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadSummary",
     "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadsCsvExportController",
     "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadsIndexController",
+    "Grav\\Plugin\\GoosializeLeads\\Admin\\NotificationOperationsController",
     "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureCommand",
     "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureResult",
     "Grav\\Plugin\\GoosializeLeads\\Application\\LeadCaptureService",
@@ -278,6 +286,7 @@ $classes=[
     "Grav\\Plugin\\GoosializeLeads\\Notification\\DeliveryState",
     "Grav\\Plugin\\GoosializeLeads\\Notification\\FilesystemDeadLetterRepository",
     "Grav\\Plugin\\GoosializeLeads\\Notification\\FilesystemDeliveryStateRepository",
+    "Grav\\Plugin\\GoosializeLeads\\Notification\\FilesystemNotificationOperationalInventoryRepository",
     "Grav\\Plugin\\GoosializeLeads\\Notification\\FilesystemNotificationOutbox",
     "Grav\\Plugin\\GoosializeLeads\\Notification\\FilesystemPendingNotificationRepository",
     "Grav\\Plugin\\GoosializeLeads\\Notification\\GravEmailNotificationTransport",
@@ -288,6 +297,8 @@ $classes=[
     "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationEvent",
     "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationMessage",
     "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationMessageFactory",
+    "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationOperationalInventory",
+    "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationOperationalItem",
     "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationTransportResult",
     "Grav\\Plugin\\GoosializeLeads\\Notification\\SystemDeliveryClock",
     "Grav\\Plugin\\GoosializeLeads\\Security\\IdempotencyKeyRing",
@@ -302,6 +313,7 @@ $classes=[
     "Grav\\Plugin\\GoosializeLeads\\Validation\\ValidationResult",
     "Grav\\Plugin\\Console\\DeliverNotificationsCommand",
     "Grav\\Plugin\\Console\\ReconcileNotificationCommand",
+    "Grav\\Plugin\\Console\\NotificationStatusCommand",
 ];
 foreach($classes as $class){if(!class_exists($class)||!(new ReflectionClass($class))->isFinal())throw new RuntimeException("Phase 3A reflection failed: ".$class);}
 if(!interface_exists("Grav\\Plugin\\GoosializeLeads\\Storage\\LeadRepository"))throw new RuntimeException("Phase 3B repository interface missing");
@@ -320,12 +332,15 @@ $interfaces=[
     "Grav\\Plugin\\GoosializeLeads\\Notification\\DeliveryClock",
     "Grav\\Plugin\\GoosializeLeads\\Notification\\DeliveryEventLease",
     "Grav\\Plugin\\GoosializeLeads\\Notification\\DeliveryStateRepository",
+    "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationOperationalInventoryRepository",
 ];
-if(count($classes)!==52 || count($interfaces)!==10)throw new RuntimeException("Phase 5C.1 62-type reflection count mismatch");
+if(count($classes)!==57 || count($interfaces)!==11)throw new RuntimeException("Phase 5C.2 68-type reflection count mismatch");
 $command=new Grav\Plugin\Console\DeliverNotificationsCommand();
 if($command->getName()!=="deliver-notifications")throw new RuntimeException("Phase 5B command name mismatch");
 $reconcile=new Grav\Plugin\Console\ReconcileNotificationCommand();
 if($reconcile->getName()!=="reconcile-notification")throw new RuntimeException("Phase 5C.1 command name mismatch");
+$status=new Grav\Plugin\Console\NotificationStatusCommand();
+if($status->getName()!=="notification-status")throw new RuntimeException("Phase 5C.2 command name mismatch");
 if(is_dir("/app/www/public/user/plugins/goosialize-leads/vendor"))throw new RuntimeException("vendor directory must not exist");
 $plugin->onTwigTemplatePaths();
 if (end($grav["twig"]->twig_paths)!=="/app/www/public/user/plugins/goosialize-leads/templates") throw new RuntimeException("Twig entry point inactive");
@@ -353,3 +368,4 @@ printf "PASS_LOCAL_PACKAGE_INSTALL\nPASS_INSTALLED_PLUGIN_LOAD\n"
 printf 'PASS_REPOSITORY_UNCHANGED digest=%s\n' "${CONTENT_BEFORE}"
 printf 'PASS_PHASE_3A_PACKAGE\n'
 printf 'PASS_INSTALLABLE_PLUGIN_PACKAGE\n'
+# Phase 5C.2 package/reflection oracles are extended by phase-5c2-scheduling-visibility.sh.

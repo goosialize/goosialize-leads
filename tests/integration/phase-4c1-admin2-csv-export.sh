@@ -10,7 +10,7 @@ readonly IMAGE_ID='sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f336
 docker run --rm --network none \
   --mount "type=bind,src=${REPOSITORY_ROOT},dst=/source,readonly" \
   --entrypoint php "${IMAGE_ID}" /source/tests/unit/phase-4c1-admin2-csv-export.php
-[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 75 ]]
+[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 82 ]]
 grep -qx 'classes/Notification/FilesystemNotificationOutbox.php' "${REPOSITORY_ROOT}/packaging/package-files.txt"
 grep -Fq 'export_endpoint: /goosialize-leads/export' "${REPOSITORY_ROOT}/admin/blueprints/goosialize-leads-index-export.yaml"
 grep -Fq 'export_supported_filters: []' "${REPOSITORY_ROOT}/admin/blueprints/goosialize-leads-index-export.yaml"
@@ -42,7 +42,7 @@ $page=new RocketTheme\Toolbox\Event\Event(["plugin"=>"goosialize-leads","user"=>
 if(($page["definition"]["blueprint"]??null)!=="goosialize-leads-index-export")throw new RuntimeException("export action hidden");
 $routes=new class{public array $gets=[];public function get(string $path,array $handler):void{$this->gets[$path]=$handler;}};
 $plugin->onApiRegisterRoutes(new RocketTheme\Toolbox\Event\Event(["routes"=>$routes]));
-if(array_keys($routes->gets)!==["/goosialize-leads","/goosialize-leads/export"])throw new RuntimeException("route mismatch");
+if(array_keys($routes->gets)!==["/goosialize-leads","/goosialize-leads/export","/goosialize-leads/notification-operations"])throw new RuntimeException("route mismatch");
 $controller=new Grav\Plugin\GoosializeLeads\Admin\LeadsCsvExportController($grav,$grav["config"]);
 $request=new Nyholm\Psr7\ServerRequest("GET","/api/v1/goosialize-leads/export");
 if($controller->export($request)->getStatusCode()!==401)throw new RuntimeException("authentication gate");
@@ -65,3 +65,4 @@ printf 'PASS_PHASE_4C1_EXPORT_ACL\n'
 printf 'PASS_PHASE_4C1_NO_CUSTOM_COMPONENT\n'
 printf 'PASS_PHASE_4C1_REGRESSIONS\n'
 printf 'PASS_PHASE_4C1_PACKAGE\n'
+# Phase 5C.2 preserves CSV export behavior.

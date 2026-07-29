@@ -39,7 +39,7 @@ readonly STATUS_BEFORE="$(git -C "${REPOSITORY_ROOT}" status --porcelain=v1 -z |
 readonly HEAD_BEFORE="$(git -C "${REPOSITORY_ROOT}" rev-parse HEAD)"
 readonly BRANCH_BEFORE="$(git -C "${REPOSITORY_ROOT}" branch --show-current)"
 
-[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 75 ]] || fail 'package manifest count mismatch'
+[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 82 ]] || fail 'package manifest count mismatch'
 [[ "$(<"${REPOSITORY_ROOT}/templates/phase-2d-skeleton.html.twig")" == 'Goosialize Leads Phase 2 skeleton.' ]] || fail 'template content mismatch'
 node --check "${REPOSITORY_ROOT}/admin-next/pages/goosialize-leads.js"
 if grep -Eiq 'attachShadow|fetch|XMLHttpRequest|WebSocket|sendBeacon|localStorage|sessionStorage|document\.cookie|location\.|<form|<input|<button|addEventListener|import[ (]|export ' "${REPOSITORY_ROOT}/admin-next/pages/goosialize-leads.js"; then
@@ -95,7 +95,7 @@ $autoload = require "/app/www/public/vendor/autoload.php";
 $grav = Grav\Common\Grav::instance(["loader" => $autoload]); $grav->initializeCli();
 $plugin = Grav\Common\Plugins::getPlugin("goosialize-leads");
 if (!$plugin || !$grav["config"]->get("plugins.goosialize-leads.enabled")) throw new RuntimeException("enabled plugin unavailable");
-$expected = ["Grav\\Events\\PermissionsRegisterEvent" => ["onRegisterPermissions", 1000], "onApiRegisterRoutes" => ["onApiRegisterRoutes", 0], "onApiSidebarItems" => ["onApiSidebarItems", 0], "onApiPluginPageInfo" => ["onApiPluginPageInfo", 0], "onApiCollectPublicRoutes" => ["onApiCollectPublicRoutes", 0], "onRequestHandlerInit" => ["onRequestHandlerInit", 98000], "onTwigTemplatePaths" => ["onTwigTemplatePaths", 0], "onFormProcessed" => ["onFormProcessed", 0]];
+$expected = ["Grav\\Events\\PermissionsRegisterEvent" => ["onRegisterPermissions", 1000], "onApiRegisterRoutes" => ["onApiRegisterRoutes", 0], "onApiSidebarItems" => ["onApiSidebarItems", 0], "onApiPluginPageInfo" => ["onApiPluginPageInfo", 0], "onApiCollectPublicRoutes" => ["onApiCollectPublicRoutes", 0], "onRequestHandlerInit" => ["onRequestHandlerInit", 98000], "onTwigTemplatePaths" => ["onTwigTemplatePaths", 0], "onFormProcessed" => ["onFormProcessed", 0], "onSchedulerInitialized" => ["onSchedulerInitialized", 0]];
 if ($plugin::getSubscribedEvents() !== $expected) throw new RuntimeException("subscription allowlist mismatch");
 $plugin->autoload();
 foreach ([
@@ -252,3 +252,4 @@ fi
 printf 'PASS_REPOSITORY_UNCHANGED digest=%s\n' "${CONTENT_BEFORE}"
 printf 'PASS_PHASE_2D_REGRESSION\n'
 printf 'PASS_PHASE_2D_NATIVE_ENTRY_POINTS\n'
+# Phase 5C.2 preserves this entry-point regression.

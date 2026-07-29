@@ -20,6 +20,42 @@ compatibility:
 form:
   validation: strict
   fields:
+    notifications.scheduling.enabled:
+      type: toggle
+      label: Scheduled notification delivery
+      default: 0
+      options:
+        1: PLUGIN_ADMIN.ENABLED
+        0: PLUGIN_ADMIN.DISABLED
+      validate:
+        type: bool
+    notifications.scheduling.frequency_minutes:
+      type: select
+      label: Delivery frequency in minutes
+      default: 5
+      options:
+        1: '1'
+        2: '2'
+        5: '5'
+        10: '10'
+        15: '15'
+        20: '20'
+        30: '30'
+        60: '60'
+      validate:
+        type: int
+    notifications.scheduling.batch_limit:
+      type: number
+      label: Scheduled delivery batch limit
+      default: 10
+      validate:
+        type: int
+        min: 1
+        max: 50
+    notifications.scheduling.timeout_seconds:
+      type: display
+      label: Scheduled process timeout
+      default: 300
     notifications.delivery_retry.enabled:
       type: toggle
       label: Durable notification retries

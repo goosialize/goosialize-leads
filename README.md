@@ -1,5 +1,7 @@
 # Goosialize Leads
 
+Phase 5C.2 adds optional bounded Grav core scheduling plus read-only notification operational visibility through `notification-status` and a native Admin2 resource table. Scheduling is disabled by default; manual delivery and reconciliation remain separate CLI authorities.
+
 Phase 5C.1 adds opt-in durable delivery state, deterministic bounded manual
 retries, immutable dead-letter recovery, and operator-only reconciliation of
 uncertain delivery outcomes. It adds no scheduler and does not claim

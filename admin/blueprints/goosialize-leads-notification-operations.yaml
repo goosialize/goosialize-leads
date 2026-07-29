@@ -1,0 +1,21 @@
+name: Goosialize Leads Notification Operations
+form:
+  validation: strict
+  fields:
+    operations:
+      type: resource-table
+      endpoint: /goosialize-leads/notification-operations
+      id_key: event_id
+      columns:
+        - { name: updated_at, label: Updated }
+        - { name: state, label: State }
+        - { name: attempt_count, label: Attempts }
+        - { name: next_eligible_at, label: Next eligible }
+        - { name: last_result_code, label: Result }
+      actions:
+        clear: true
+        refresh: true
+        export: false
+      empty_message: No notification operations are available.
+      filtered_empty_message: No notification operations match.
+      load_error_message: Notification operations could not be loaded.

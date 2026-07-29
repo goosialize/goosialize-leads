@@ -44,3 +44,8 @@ notifications:
       - 28800
     processing_limit: 10
     state_max_bytes: 1024
+  scheduling:
+    enabled: false
+    frequency_minutes: 5
+    batch_limit: 10
+    timeout_seconds: 300

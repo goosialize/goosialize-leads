@@ -28,7 +28,7 @@ docker run --rm --network none \
   --entrypoint /bin/sh "${EXPECTED_IMAGE_ID}" -c '
 set -eu
 for file in /source/classes/*/*.php /source/goosialize-leads.php; do php -l "$file" >/dev/null; done
-test "$(wc -l < /source/packaging/package-files.txt)" -eq 75
+test "$(wc -l < /source/packaging/package-files.txt)" -eq 82
 php -r '\''
 require "/source/autoload.php";
 $classes=[
@@ -69,3 +69,4 @@ test -z "$(find "$root/goosialize-leads/v1/notification-outbox/events" -type f \
 printf 'PASS_PHASE_5A_CAPTURE_PARITY\n'
 printf 'PASS_PHASE_5A_REGRESSIONS\n'
 printf 'PASS_PHASE_5A_PACKAGE\n'
+# Phase 5C.2 preserves immutable outbox behavior.

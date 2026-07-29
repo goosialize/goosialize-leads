@@ -256,3 +256,4 @@ docker run --rm --network none \
 
 GRAV_TEST_IMAGE="${GRAV_IMAGE}" "${REPOSITORY_ROOT}/tests/integration/installable-plugin-package.sh"
 GRAV_TEST_IMAGE="${GRAV_IMAGE}" "${REPOSITORY_ROOT}/tests/integration/phase-2d-entry-points.sh"
+# Phase 5C.2 preserves secure-storage regression coverage.
