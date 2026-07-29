@@ -65,7 +65,8 @@
 - Document configuration and failure behavior.
 - Phase 5A owns only durable immutable `lead.accepted` outbox-event creation after successful Lead persistence. It performs no delivery or network operation.
 - Phase 5B owns one manually invoked, bounded, single-attempt CLI delivery worker using explicit at-least-once semantics. It has no scheduler, daemon, automatic retry or capture-time delivery.
-- Phase 5C owns scheduling, retry metadata/backoff, uncertain-delivery reconciliation, dead-letter handling and operational visibility under a separate contract.
+- Phase 5C.1 owns separate durable delivery state, bounded manual retries, deterministic backoff, operator-only uncertain-delivery reconciliation, immutable dead-letter movement, concurrency and crash recovery. It never claims exactly-once delivery.
+- Phase 5C.2 owns automatic scheduling and read-only operational visibility. Grav 2.0.12 has a source-proven core scheduler, but integration, configuration, locking and operational presentation remain pending a separate contract; Phase 5C.1 has no scheduler dependency.
 - Phase 4A.1 and Phase 4C.1 remain complete; Phase 4B.1 and Phase 4B.2 remain `BLOCKED_BY_ADMIN2_2_0_15`.
 
 ## Phase 6: Permissions and security hardening
