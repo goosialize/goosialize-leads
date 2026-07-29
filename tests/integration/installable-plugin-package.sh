@@ -78,6 +78,10 @@ required = [
     "classes/Http/PublicLeadApiController.php",
     "classes/Http/RateLimitResult.php",
     "classes/Http/RawJsonParser.php",
+    "classes/Notification/FilesystemNotificationOutbox.php",
+    "classes/Notification/NotificationEnqueueResult.php",
+    "classes/Notification/NotificationEvent.php",
+    "classes/Notification/NotificationOutbox.php",
     "classes/Security/IdempotencyKeyRing.php",
     "classes/Storage/FilesystemLeadReadRepository.php",
     "classes/Storage/FilesystemLeadRepository.php",
@@ -97,10 +101,10 @@ required = [
     "permissions.yaml",
     "templates/phase-2d-skeleton.html.twig",
 ]
-if files != sorted(required): raise SystemExit("manifest does not match the independent 48-file allowlist")
+if files != sorted(required): raise SystemExit("manifest does not match the independent 52-file allowlist")
 expected = {root + "/", root + "/languages/"} | {f"{root}/{name}" for name in files}
 expected |= {root + "/admin-next/", root + "/admin-next/pages/", root + "/templates/"}
-expected |= {root + "/admin/", root + "/admin/blueprints/", root + "/classes/", root + "/classes/Admin/", root + "/classes/Application/", root + "/classes/Domain/", root + "/classes/Http/", root + "/classes/Security/", root + "/classes/Storage/", root + "/classes/Validation/"}
+expected |= {root + "/admin/", root + "/admin/blueprints/", root + "/classes/", root + "/classes/Admin/", root + "/classes/Application/", root + "/classes/Domain/", root + "/classes/Http/", root + "/classes/Notification/", root + "/classes/Security/", root + "/classes/Storage/", root + "/classes/Validation/"}
 with zipfile.ZipFile(archive_path) as archive:
     infos = archive.infolist(); names = [item.filename for item in infos]
     if len(names) != len(set(names)): raise SystemExit("duplicate ZIP entry")
@@ -119,7 +123,7 @@ PY
 fixture="${TEMP_ROOT}/fixture"
 mkdir -p "${fixture}/packaging" "${fixture}/scripts" "${fixture}/languages" \
     "${fixture}/admin-next/pages" "${fixture}/admin/blueprints" "${fixture}/templates" \
-    "${fixture}/classes/Admin" "${fixture}/classes/Application" "${fixture}/classes/Domain" "${fixture}/classes/Http" "${fixture}/classes/Security" \
+    "${fixture}/classes/Admin" "${fixture}/classes/Application" "${fixture}/classes/Domain" "${fixture}/classes/Http" "${fixture}/classes/Notification" "${fixture}/classes/Security" \
     "${fixture}/classes/Storage" "${fixture}/classes/Validation"
 cp "${REPOSITORY_ROOT}/packaging/package-files.txt" "${fixture}/packaging/"
 cp "${REPOSITORY_ROOT}/scripts/build-plugin-package.sh" "${fixture}/scripts/"
@@ -159,7 +163,7 @@ for nested in "$root/goosialize-leads" "$root/grav-plugin-goosialize-leads"; do
 done
 test ! -d user/themes/goosialize
 test -f user/plugins/api/api.php; test -f user/plugins/admin2/admin2.php
-expected="CHANGELOG.md README.md admin-next/pages/goosialize-leads.js admin/blueprints/goosialize-leads-index.yaml autoload.php blueprints.yaml classes/Admin/LeadIndexCollection.php classes/Admin/LeadIndexQuery.php classes/Admin/LeadSummary.php classes/Admin/LeadsIndexController.php classes/Application/CaptureCommand.php classes/Application/CaptureResult.php classes/Application/LeadCaptureService.php classes/Application/LeadPersistenceCoordinator.php classes/Domain/LeadIdGenerator.php classes/Domain/LeadRecord.php classes/Http/ApiParseResult.php classes/Http/ApiRequestMapper.php classes/Http/ApiRequestResult.php classes/Http/ApiResponseMapper.php classes/Http/EndpointRateLimiter.php classes/Http/FormsLeadCaptureAdapter.php classes/Http/OriginPolicy.php classes/Http/PublicApiRawBodyMiddleware.php classes/Http/PublicLeadApiController.php classes/Http/RateLimitResult.php classes/Http/RawJsonParser.php classes/Security/IdempotencyKeyRing.php classes/Storage/FilesystemLeadReadRepository.php classes/Storage/FilesystemLeadRepository.php classes/Storage/LeadReadRepository.php classes/Storage/LeadRepository.php classes/Storage/PersistenceRequest.php classes/Storage/PersistenceResult.php classes/Storage/StorageException.php classes/Validation/LeadInputValidator.php classes/Validation/LeadNormalizer.php classes/Validation/ValidationError.php classes/Validation/ValidationResult.php composer.json goosialize-leads.php goosialize-leads.yaml languages/en.yaml permissions.yaml templates/phase-2d-skeleton.html.twig"
+expected="CHANGELOG.md README.md admin-next/pages/goosialize-leads.js admin/blueprints/goosialize-leads-index-export.yaml admin/blueprints/goosialize-leads-index.yaml autoload.php blueprints.yaml classes/Admin/LeadCsvExporter.php classes/Admin/LeadIndexCollection.php classes/Admin/LeadIndexQuery.php classes/Admin/LeadSummary.php classes/Admin/LeadsCsvExportController.php classes/Admin/LeadsIndexController.php classes/Application/CaptureCommand.php classes/Application/CaptureResult.php classes/Application/LeadCaptureService.php classes/Application/LeadPersistenceCoordinator.php classes/Domain/LeadIdGenerator.php classes/Domain/LeadRecord.php classes/Http/ApiParseResult.php classes/Http/ApiRequestMapper.php classes/Http/ApiRequestResult.php classes/Http/ApiResponseMapper.php classes/Http/EndpointRateLimiter.php classes/Http/FormsLeadCaptureAdapter.php classes/Http/OriginPolicy.php classes/Http/PublicApiRawBodyMiddleware.php classes/Http/PublicLeadApiController.php classes/Http/RateLimitResult.php classes/Http/RawJsonParser.php classes/Notification/FilesystemNotificationOutbox.php classes/Notification/NotificationEnqueueResult.php classes/Notification/NotificationEvent.php classes/Notification/NotificationOutbox.php classes/Security/IdempotencyKeyRing.php classes/Storage/FilesystemLeadReadRepository.php classes/Storage/FilesystemLeadRepository.php classes/Storage/LeadReadRepository.php classes/Storage/LeadRepository.php classes/Storage/PersistenceRequest.php classes/Storage/PersistenceResult.php classes/Storage/StorageException.php classes/Validation/LeadInputValidator.php classes/Validation/LeadNormalizer.php classes/Validation/ValidationError.php classes/Validation/ValidationResult.php composer.json goosialize-leads.php goosialize-leads.yaml languages/en.yaml permissions.yaml templates/phase-2d-skeleton.html.twig"
 actual="$(find "$root" -type f -printf "%P\n" | LC_ALL=C sort | tr "\n" " " | sed "s/ $//")"
 test "$actual" = "$expected"
 test -f "$root/templates/phase-2d-skeleton.html.twig"
@@ -240,6 +244,9 @@ $classes=[
     "Grav\\Plugin\\GoosializeLeads\\Http\\PublicLeadApiController",
     "Grav\\Plugin\\GoosializeLeads\\Http\\RateLimitResult",
     "Grav\\Plugin\\GoosializeLeads\\Http\\RawJsonParser",
+    "Grav\\Plugin\\GoosializeLeads\\Notification\\FilesystemNotificationOutbox",
+    "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationEnqueueResult",
+    "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationEvent",
     "Grav\\Plugin\\GoosializeLeads\\Security\\IdempotencyKeyRing",
     "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadRepository",
     "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadReadRepository",
@@ -254,6 +261,7 @@ $classes=[
 foreach($classes as $class){if(!class_exists($class)||!(new ReflectionClass($class))->isFinal())throw new RuntimeException("Phase 3A reflection failed: ".$class);}
 if(!interface_exists("Grav\\Plugin\\GoosializeLeads\\Storage\\LeadRepository"))throw new RuntimeException("Phase 3B repository interface missing");
 if(!interface_exists("Grav\\Plugin\\GoosializeLeads\\Storage\\LeadReadRepository"))throw new RuntimeException("Phase 4A.1 read repository interface missing");
+if(!interface_exists("Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationOutbox"))throw new RuntimeException("Phase 5A outbox interface missing");
 if(is_dir("/app/www/public/user/plugins/goosialize-leads/vendor"))throw new RuntimeException("vendor directory must not exist");
 $plugin->onTwigTemplatePaths();
 if (end($grav["twig"]->twig_paths)!=="/app/www/public/user/plugins/goosialize-leads/templates") throw new RuntimeException("Twig entry point inactive");

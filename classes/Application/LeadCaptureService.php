@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Grav\Plugin\GoosializeLeads\Application;
 
 use Grav\Plugin\GoosializeLeads\Security\IdempotencyKeyRing;
+use Grav\Plugin\GoosializeLeads\Notification\NotificationEvent;
+use Grav\Plugin\GoosializeLeads\Notification\NotificationOutbox;
 use Grav\Plugin\GoosializeLeads\Storage\PersistenceResult;
 use Grav\Plugin\GoosializeLeads\Storage\StorageException;
 
@@ -12,9 +14,15 @@ final class LeadCaptureService
 {
     public function __construct(
         private readonly LeadPersistenceCoordinator $coordinator,
-        private readonly IdempotencyKeyRing $keyRing
+        private readonly IdempotencyKeyRing $keyRing,
+        private readonly ?NotificationOutbox $outbox = null,
+        ?callable $outboxLogger = null
     ) {
+        $this->outboxLogger = $outboxLogger === null ? null : \Closure::fromCallable($outboxLogger);
     }
+
+    /** @var \Closure(string):void|null */
+    private readonly ?\Closure $outboxLogger;
 
     /**
      * @param array{source:string,form_name:string,locale:?string,consent_version:string} $trusted
@@ -82,6 +90,18 @@ final class LeadCaptureService
                 || !is_string($record['created_at'])
             ) {
                 return CaptureResult::failure('storage_unavailable');
+            }
+            if ($this->outbox !== null) {
+                try {
+                    $enqueued = $this->outbox->ensure(NotificationEvent::fromLeadRecord($record));
+                    if (!$enqueued->isSuccess() && $this->outboxLogger !== null) {
+                        ($this->outboxLogger)((string) $enqueued->code());
+                    }
+                } catch (\Throwable) {
+                    if ($this->outboxLogger !== null) {
+                        ($this->outboxLogger)('outbox_unavailable');
+                    }
+                }
             }
             return CaptureResult::success(
                 ['id' => $record['id'], 'status' => $record['status'], 'created_at' => $record['created_at']],

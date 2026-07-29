@@ -28,6 +28,10 @@ classes/Http/PublicApiRawBodyMiddleware.php
 classes/Http/PublicLeadApiController.php
 classes/Http/RateLimitResult.php
 classes/Http/RawJsonParser.php
+classes/Notification/FilesystemNotificationOutbox.php
+classes/Notification/NotificationEnqueueResult.php
+classes/Notification/NotificationEvent.php
+classes/Notification/NotificationOutbox.php
 classes/Security/IdempotencyKeyRing.php
 classes/Storage/FilesystemLeadReadRepository.php
 classes/Storage/FilesystemLeadRepository.php

@@ -148,3 +148,20 @@ form:
         type: int
         min: 131072
         max: 131072
+    notifications.outbox.enabled:
+      type: toggle
+      label: Durable notification outbox
+      default: 0
+      options:
+        1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
+        0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
+      validate:
+        type: bool
+    notifications.outbox.max_event_bytes:
+      type: number
+      label: Maximum notification event bytes
+      default: 512
+      validate:
+        type: int
+        min: 512
+        max: 512

@@ -19,6 +19,7 @@ use Grav\Plugin\GoosializeLeads\Http\OriginPolicy;
 use Grav\Plugin\GoosializeLeads\Http\PublicApiRawBodyMiddleware;
 use Grav\Plugin\GoosializeLeads\Http\PublicLeadApiController;
 use Grav\Plugin\GoosializeLeads\Http\RawJsonParser;
+use Grav\Plugin\GoosializeLeads\Notification\FilesystemNotificationOutbox;
 use Grav\Plugin\GoosializeLeads\Security\IdempotencyKeyRing;
 use Grav\Plugin\GoosializeLeads\Storage\FilesystemLeadRepository;
 use Grav\Plugin\GoosializeLeads\Validation\LeadInputValidator;
@@ -184,7 +185,22 @@ final class GoosializeLeadsPlugin extends Plugin
             $normalizer = new LeadNormalizer();
             $validator = new LeadInputValidator($normalizer);
             $coordinator = new LeadPersistenceCoordinator($validator, $repository, $keyRing);
-            $service = new LeadCaptureService($coordinator, $keyRing);
+            $outboxConfig = $config['notifications']['outbox'] ?? null;
+            $logger = isset($this->grav['log'])
+                ? fn (string $code): mixed => $this->grav['log']->warning($code)
+                : null;
+            $outbox = null;
+            if (is_array($outboxConfig)
+                && ($outboxConfig['enabled'] ?? null) === true
+                && ($outboxConfig['max_event_bytes'] ?? null) === 512
+            ) {
+                try {
+                    $outbox = new FilesystemNotificationOutbox($root, $entropy);
+                } catch (\Throwable) {
+                    if ($logger !== null) $logger('outbox_unavailable');
+                }
+            }
+            $service = new LeadCaptureService($coordinator, $keyRing, $outbox, $logger);
             $adapter = new FormsLeadCaptureAdapter($service, $forms, $entropy, $clock);
             $adapter->process($event);
         } catch (\Throwable) {

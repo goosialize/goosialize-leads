@@ -120,6 +120,9 @@ if ($expectedEnabled) {
         "Grav\\Plugin\\GoosializeLeads\\Http\\PublicLeadApiController",
         "Grav\\Plugin\\GoosializeLeads\\Http\\RateLimitResult",
         "Grav\\Plugin\\GoosializeLeads\\Http\\RawJsonParser",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\FilesystemNotificationOutbox",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationEnqueueResult",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationEvent",
         "Grav\\Plugin\\GoosializeLeads\\Security\\IdempotencyKeyRing",
         "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadRepository",
         "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadReadRepository",
@@ -136,6 +139,7 @@ if ($expectedEnabled) {
     }
     if (!interface_exists("Grav\\Plugin\\GoosializeLeads\\Storage\\LeadRepository")) throw new RuntimeException("Phase 3B repository interface missing");
     if (!interface_exists("Grav\\Plugin\\GoosializeLeads\\Storage\\LeadReadRepository")) throw new RuntimeException("Phase 4A.1 read repository interface missing");
+    if (!interface_exists("Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationOutbox")) throw new RuntimeException("Phase 5A outbox interface missing");
     if (is_dir($root . "/vendor")) throw new RuntimeException("Packaged vendor directory exists");
     echo "PASS_PHASE_3A_AUTOLOAD\n";
     echo "PASS_ENABLED_DISCOVERY_LOAD\n";

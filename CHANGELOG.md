@@ -1,5 +1,7 @@
 # Changelog
 
+- Add the Phase 5A durable notification outbox boundary without delivery behavior.
+
 ## Unreleased
 
 - Add the bounded authenticated native Admin2 Lead CSV export.

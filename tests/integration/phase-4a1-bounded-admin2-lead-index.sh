@@ -84,7 +84,8 @@ if($hidden["items"]!==[])throw new RuntimeException("unauthorized navigation vis
 echo "PASS_PHASE_4A1_PLUGIN_REGISTRATION\n";
 '
 
-[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 48 ]]
+[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 52 ]]
+grep -qx 'classes/Notification/NotificationEvent.php' "${REPOSITORY_ROOT}/packaging/package-files.txt"
 [[ -z "$(find "${REPOSITORY_ROOT}" -type f \( -name '*.js' -o -name '*.css' -o -name '*.svelte' \) -newer "${REPOSITORY_ROOT}/docs/PHASE_3_SECURE_CAPTURE_STORAGE_PLAN.md" -print)" ]]
 
 printf 'PASS_PHASE_4A1_REGRESSIONS\n'

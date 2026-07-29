@@ -6,6 +6,7 @@ require dirname(__DIR__, 2) . '/autoload.php';
 
 use Grav\Plugin\GoosializeLeads\Application\CaptureResult;
 use Grav\Plugin\GoosializeLeads\Application\LeadCaptureService;
+use Grav\Plugin\GoosializeLeads\Notification\NotificationOutbox;
 use Grav\Plugin\GoosializeLeads\Application\LeadPersistenceCoordinator;
 use Grav\Plugin\GoosializeLeads\Http\FormsLeadCaptureAdapter;
 use Grav\Plugin\GoosializeLeads\Security\IdempotencyKeyRing;
@@ -146,6 +147,12 @@ phase3cCheck(
     array_map(static fn (ReflectionParameter $parameter): string => (string) $parameter->getType(), $adapterConstructor->getParameters())
         === [LeadCaptureService::class, 'array', 'callable', 'callable'],
     'adapter constructor signature mismatch'
+);
+$serviceConstructor = new ReflectionMethod(LeadCaptureService::class, '__construct');
+phase3cCheck(
+    array_map(static fn (ReflectionParameter $parameter): string => (string) $parameter->getType(), $serviceConstructor->getParameters())
+        === [LeadPersistenceCoordinator::class, IdempotencyKeyRing::class, '?' . NotificationOutbox::class, '?callable'],
+    'service constructor signature mismatch'
 );
 
 $serialized = json_encode([$created->toArray(), $failure->toArray()], JSON_THROW_ON_ERROR);

@@ -1,5 +1,7 @@
 # Goosialize Leads
 
+Phase 5A adds an optional, disabled-by-default durable filesystem notification outbox. It records one immutable `lead.accepted` event after successful Lead persistence; it performs no notification delivery or network access.
+
 Phase 4C.1 adds a permission-gated native Admin2 export of the deterministic latest-100 Lead summary collection. CSV export is disabled by default, uses no plugin-owned Admin2 JavaScript, and does not modify Lead storage.
 
 Phase 3C.1 adds opt-in, server-rendered Grav Forms capture. Configure

@@ -8,6 +8,7 @@ use Grav\Common\Config\Config;
 use Grav\Common\Grav;
 use Grav\Plugin\GoosializeLeads\Application\LeadCaptureService;
 use Grav\Plugin\GoosializeLeads\Application\LeadPersistenceCoordinator;
+use Grav\Plugin\GoosializeLeads\Notification\FilesystemNotificationOutbox;
 use Grav\Plugin\GoosializeLeads\Security\IdempotencyKeyRing;
 use Grav\Plugin\GoosializeLeads\Storage\FilesystemLeadRepository;
 use Grav\Plugin\GoosializeLeads\Validation\LeadInputValidator;
@@ -61,7 +62,25 @@ final class PublicLeadApiController
                 $repository,
                 $ring
             );
-            $service = new LeadCaptureService($coordinator, $ring);
+            $outboxConfig = $this->config->get('plugins.goosialize-leads.notifications.outbox');
+            $logger = isset($this->grav['log'])
+                ? fn (string $code): mixed => $this->grav['log']->warning($code)
+                : null;
+            $outbox = null;
+            if (is_array($outboxConfig)
+                && ($outboxConfig['enabled'] ?? null) === true
+                && ($outboxConfig['max_event_bytes'] ?? null) === 512
+            ) {
+                try {
+                    $outbox = new FilesystemNotificationOutbox(
+                        $root,
+                        static fn (int $n): string => random_bytes($n)
+                    );
+                } catch (\Throwable) {
+                    if ($logger !== null) $logger('outbox_unavailable');
+                }
+            }
+            $service = new LeadCaptureService($coordinator, $ring, $outbox, $logger);
             $result = $service->captureApi(
                 $mapped->submitted(),
                 $mapped->trusted(),

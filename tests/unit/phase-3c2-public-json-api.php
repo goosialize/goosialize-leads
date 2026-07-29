@@ -8,6 +8,9 @@ if (is_file('/app/www/public/vendor/autoload.php')) {
 require dirname(__DIR__, 2) . '/autoload.php';
 
 use Grav\Plugin\GoosializeLeads\Application\LeadCaptureService;
+use Grav\Plugin\GoosializeLeads\Notification\NotificationEnqueueResult;
+use Grav\Plugin\GoosializeLeads\Notification\NotificationEvent;
+use Grav\Plugin\GoosializeLeads\Notification\NotificationOutbox;
 use Grav\Plugin\GoosializeLeads\Application\LeadPersistenceCoordinator;
 use Grav\Plugin\GoosializeLeads\Http\ApiParseResult;
 use Grav\Plugin\GoosializeLeads\Http\ApiRequestMapper;
@@ -95,7 +98,15 @@ $repository = new class implements LeadRepository {
 };
 $service = new LeadCaptureService(
     new LeadPersistenceCoordinator(new LeadInputValidator(new LeadNormalizer()), $repository, $ring),
-    $ring
+    $ring,
+    new class implements NotificationOutbox {
+        public int $calls = 0;
+        public function ensure(NotificationEvent $event): NotificationEnqueueResult
+        {
+            $this->calls++;
+            return NotificationEnqueueResult::existing();
+        }
+    }
 );
 $entropy = static fn (int $n): string => str_repeat("\x01", $n);
 $clock = static fn (): DateTimeInterface => new DateTimeImmutable('2026-07-28T00:00:00.000000Z');
