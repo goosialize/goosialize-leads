@@ -102,3 +102,14 @@ These omissions do not make v1.0.0 incomplete. The blocked mutation features
 remain unavailable on the pinned Admin2 release, and every deferred integration
 is an optional expansion rather than a prerequisite for secure capture,
 storage, inspection, export or notification operations.
+
+## Manual browser release gate
+
+`docs/MANUAL_BROWSER_ACCEPTANCE_CHECKLIST.md` is a required development-only
+release-governance artifact. It is not packaged or installed and has no
+version, runtime or test-count impact. Automated checks must leave its result
+`PENDING`; only an operator may record browser results. Release, annotated tag
+creation and publication are prohibited until the checklist records `PASS`
+against the exact candidate commit and package SHA-256. Any source correction
+after acceptance invalidates the affected results and requires those browser
+checks to be repeated.

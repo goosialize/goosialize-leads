@@ -129,3 +129,23 @@ acceptance, exact staging, the release commit, fast-forward merge, post-merge
 rebuild/smoke tests, final ZIP generation and final SHA-256 recording may the
 operator run `git tag -a v1.0.0 -m "Goosialize Leads 1.0.0"`. No tag or final
 checksum is predeclared by this contract.
+
+## Manual browser checklist lifecycle
+
+The sole browser acceptance record is
+`docs/MANUAL_BROWSER_ACCEPTANCE_CHECKLIST.md`, classified
+`DEVELOPMENT_ONLY_RELEASE_GATE`. Before testing it exists with every visual
+item unchecked or `PENDING`; candidate commit and package fields may remain
+pending until available, and automated tests cannot mark an item `PASS`.
+
+During testing an operator records the candidate version, commit, package
+SHA-256, Grav and Admin2 versions, browser/version, operating system, date and
+operator identifier. Each item receives an individual result and failures have
+notes. Source and package content must not be changed merely to mark a test
+passing. The record ends with overall `PASS` or `FAIL` and explicit release/tag
+approval or rejection.
+
+Only a `PASS` record containing the exact candidate commit and package SHA-256
+permits final release review. Any later source correction invalidates the
+previous acceptance and requires affected checks to be repeated. Tag creation
+and publication remain prohibited while the result is `PENDING` or `FAIL`.

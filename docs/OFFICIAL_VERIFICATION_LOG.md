@@ -338,11 +338,13 @@ Email and scheduling failures isolated from capture.
 
 ## Exact future implementation manifest
 
-New paths are the nineteen packaged documentation files listed in
-`ROADMAP.md` plus development-only
-`tests/integration/v1-release-readiness.sh`. The test path has no version or
+New paths are the nineteen packaged documentation files listed in `ROADMAP.md`,
+development-only `tests/integration/v1-release-readiness.sh`, and
+development-only release gate
+`docs/MANUAL_BROWSER_ACCEPTANCE_CHECKLIST.md`. The test path has no version or
 package impact; it verifies documentation, metadata, regression, package and
-artifact gates. Thus the new-path count is 20.
+artifact gates. The checklist has no version, runtime or test-count impact and
+is excluded from the package and installed tree. Thus the new-path count is 21.
 
 The exact seventeen modified paths are:
 
@@ -366,7 +368,7 @@ The exact seventeen modified paths are:
 | `tests/integration/phase-5c1-delivery-state-retry.sh` | Preserve state/retry regressions with 101-file manifest | Development-only; regression/package test impact |
 | `tests/integration/phase-5c2-scheduling-visibility.sh` | Preserve scheduling/inventory regressions with 101-file manifest | Development-only; regression/package test impact |
 
-The future closure is therefore 20 new + 17 modified = 37 changed paths.
+The future closure is therefore 21 new + 17 modified = 38 changed paths.
 Nineteen packaged additions make package and installed-tree counts exactly 101.
 No runtime or command type changes, so that count remains 68. No unit file is
 added, so the count remains 10. One integration file makes that count 13.
@@ -409,3 +411,26 @@ installed-tree inventory, runtime/reflection inventory, command inventory,
 scheduler-job inventory, configuration inventory, permission inventory and
 release notes. The final checksum is recorded only from the post-merge release
 artifact; it is not predicted here.
+
+## Manual-browser checklist manifest correction
+
+The original v1 release-readiness contract is
+`90abeef161e7672ca8d9bbff28c0ff680708fa8d`. Its implementation-readiness audit
+stopped before editing after verifying a clean repository and no existing
+release-readiness implementation. The contract required a distinct mandatory
+browser checklist but assigned no path while closing the manifest at 20 new and
+37 total paths.
+
+The corrected path is exactly
+`docs/MANUAL_BROWSER_ACCEPTANCE_CHECKLIST.md`: new,
+`DEVELOPMENT_ONLY_RELEASE_GATE`, not packaged, not installed, not a runtime
+type, not a test file, and required before release, tag and publication. Its
+sole responsibility is manual-browser release acceptance. It is excluded from
+`packaging/package-files.txt`, the ZIP, installed tree, and runtime/reflection,
+command, scheduler, unit and integration inventories.
+
+The corrected manifest is 21 new, 17 modified and 38 total paths. Package and
+installed-tree counts remain 101; runtime/command types remain 68; unit files
+remain 10; integration files remain 13. The Phase 5C.2 package baseline remains
+`04277b3beb650c3869c3619fda2b5182c4e28bdb02c107d279e5dc871f7c01f7`.
+No runtime scope, package input or plugin version changes in this correction.

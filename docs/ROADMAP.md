@@ -138,6 +138,18 @@ Each path is packaged documentation, has version impact `1.0.0`, changes
 operator documentation, is exercised by the new release-readiness integration
 suite, and is part of the ZIP/manifest/installed-tree integrity checks.
 
+One additional new path is required but is not packaged:
+
+| Path | Responsibility | Classification |
+|---|---|---|
+| `docs/MANUAL_BROWSER_ACCEPTANCE_CHECKLIST.md` | Mandatory manual-browser release acceptance | `DEVELOPMENT_ONLY_RELEASE_GATE`; no version, runtime, test-count, ZIP or installed-tree impact |
+
+The checklist is required before release, annotated tag creation and
+publication. It remains in source and release-review history but is excluded
+from `packaging/package-files.txt`, the distributable ZIP, installed tree, and
+runtime/reflection, command, scheduler, unit-test and integration-test
+inventories.
+
 ## Synthetic acceptance scenarios
 
 `docs/EXAMPLES.md` and the release-readiness suite must use synthetic values to
@@ -158,15 +170,35 @@ of Shadow DOM, iframe and legacy Admin v1 UI; denial for unauthorized users;
 correct scheduler enabled/disabled fields; no plugin console errors; and
 desktop/tablet responsiveness. This contract records
 `MANUAL_BROWSER_ACCEPTANCE_REQUIRED_BEFORE_RELEASE=YES` and
-`MANUAL_BROWSER_ACCEPTANCE_PERFORMED=NO`.
+`MANUAL_BROWSER_ACCEPTANCE_PERFORMED=NO`, with initial result
+`MANUAL_BROWSER_ACCEPTANCE_RESULT=PENDING`.
+
+The checklist must record candidate version, commit SHA, package SHA-256, Grav,
+Admin2, browser/version, operating system, date and operator identifier. Its
+individual unchecked or `PENDING` items are: plugin discovery; configuration
+page load; native fields; Lead index; correct bounded filters; ACL-protected CSV
+control; operational page and classifications; read-only behavior; no mutation
+controls, Shadow DOM, iframe or legacy Admin v1 UI; denied-user protection;
+scheduler disabled and enabled states; absence of plugin console errors; and
+desktop and tablet layouts. Failures require notes, and the record ends with
+overall `PASS` or `FAIL` plus explicit release/tag approval or rejection.
+Automated tests may not mark an item `PASS`.
 
 ## Closed workflow
 
-The only allowed sequence is implementation on the release branch; automated
-validation; manual browser acceptance; exact staging; commit with
-`release: prepare Goosialize Leads 1.0.0`; fast-forward-only merge to `main`;
-post-merge rebuild and smoke tests; final distributable ZIP; final SHA-256
-recording; and annotated `v1.0.0` tag creation only after every gate passes.
+The only allowed sequence is: implement and validate the exact 38-path manifest
+unstaged and uncommitted; perform manual browser acceptance against that
+working-tree candidate; record results; correct in-scope defects and invalidate
+and repeat affected browser checks; rerun automated regressions and
+deterministic builds; perform final security review; stage exactly and commit
+with `release: prepare Goosialize Leads 1.0.0`; fast-forward-only merge to
+`main`; rebuild the committed package; verify its recorded SHA-256; and create
+the annotated `v1.0.0` tag only after every gate passes.
+
+The automated implementation checkpoint must report
+`READY_FOR_MANUAL_BROWSER_ACCEPTANCE=YES` and
+`READY_FOR_FINAL_V1_REVIEW_COMMIT_MERGE_TAG=NO`; it must not claim browser
+acceptance, merge, publish, tag or mark the checklist `PASS`.
 
 The acceptance record must emit exact `PASS` values for scope closure, version
 consistency, fresh install, upgrade/data preservation, uninstall retention,
