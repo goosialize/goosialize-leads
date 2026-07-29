@@ -45,3 +45,87 @@ Testing is layered:
 - Clean-install, upgrade, rollback or failure-recovery, and removal scenarios using both automation and documented manual verification.
 
 Tests must run before commits at a level proportionate to the change, with full release checks required before packaging.
+# v1.0.0 release invariants
+
+## Version and compatibility
+
+The target version is `1.0.0`. Semantic versioning is normative: patch releases
+may contain compatible fixes, minor releases may add compatible features, and
+breaking public-contract or stored-data changes require a major release.
+`blueprints.yaml:version`, `composer.json:version` and
+`scripts/build-plugin-package.sh` must contain the identical canonical version.
+The ZIP name, changelog heading and release-notes heading must be derived from
+that value and must agree exactly. No prerelease suffix is allowed for this
+release.
+
+The release metadata must state Grav `>=2.0.12 <2.1.0`, Admin2 2.0.15 as the
+only verified Admin2 version, and PHP `^8.3`; PHP 8.5.8 is an observed test
+runtime, not a broadened compatibility promise. The package is
+`goosialize-leads-1.0.0.zip`, its root is
+`grav-plugin-goosialize-leads/`, its changelog heading is
+`## 1.0.0 — YYYY-MM-DD`, and release dates use ISO 8601 calendar form
+`YYYY-MM-DD`. The future release commit subject is exactly
+`release: prepare Goosialize Leads 1.0.0`.
+
+## Install, upgrade and removal
+
+A fresh install must be exercised with `docker run --rm --network none` and
+local `php bin/gpm direct-install -y <local ZIP>`. Acceptance requires exact
+extraction and discovery; dependency, enablement, default configuration,
+permission, Admin2 page, CLI command and scheduler registration checks; no
+runtime data before first capture; and lazy creation of data directories only
+when needed. Missing Grav Email, disabled scheduling or disabled delivery must
+fail closed for that optional capability while capture remains available.
+
+There is no earlier public release. The only supported upgrade evidence for
+v1.0.0 is the validated Phase 5C.2 package baseline at commit
+`db34a6008da54ed013ab02950830572e04239018`. Prior internal development
+packages are not claimed as supported upgrade origins. Before upgrade,
+operators must back up configuration and `user-data://goosialize-leads`.
+Upgrade must preserve existing Leads, Phase 3B sidecars, pending events, sent
+archives, delivery states, dead letters, configuration and ACL assignments.
+It performs no destructive migration and rewrites none of those records.
+Malformed historical material continues to fail closed under redacted error
+codes.
+
+Removal deletes plugin code only. All Lead and operational data is preserved by
+default. Data removal requires a separate, explicit operator action after a
+verified backup; the plugin must not automate or silently perform it. The
+uninstall guide must warn about every retained record class before code removal
+and provide a separate confirmation checklist for any later manual deletion.
+
+## Credential and availability isolation
+
+Functional, notification, scheduler, permission and optional-dependency
+settings remain separate. Goosialize Leads stores no SMTP password, provider
+API credential or SendPulse credential, has no hardcoded recipient, and copies
+no credential into Leads or notification records. Sender and recipient routing
+are configuration values, never documentation examples from a real system.
+Invalid optional settings disable only the affected optional facility; capture
+continues when notification or scheduling is unavailable.
+
+## Release security and artifact gates
+
+The final security review covers every packaged runtime file and proves path
+containment, symlink rejection, pre/post `lstat` and `fstat` identity, path
+replacement resistance, no-overwrite atomic publication, immutable records,
+CAS, lock ownership, concurrency, rate limiting, Origin and nonce validation,
+ACL separation, CSV formula protection, command argument bounds, scheduler
+bounds, output redaction, credential isolation, and absence of Lead or
+recipient leakage. Tests use synthetic roots, clocks, transports and scheduler
+objects and perform no network or real transport.
+
+Compatibility gates cover only Grav 2.0.12, Admin2 2.0.15, PHP `^8.3`
+(observed 8.5.8), Email absent, Email present with fake transport, scheduling
+disabled, scheduling enabled with a synthetic scheduler, and offline install.
+Two independent builds must be byte-identical. The package must contain exactly
+the manifest, no tests, fixtures, credentials, real data, temporary files or
+Git metadata. Inventories of installed files, PHP runtime/command types,
+commands, scheduler jobs, configuration and permissions must match the release
+contract.
+
+An annotated tag is mandatory. Only after automated validation, manual browser
+acceptance, exact staging, the release commit, fast-forward merge, post-merge
+rebuild/smoke tests, final ZIP generation and final SHA-256 recording may the
+operator run `git tag -a v1.0.0 -m "Goosialize Leads 1.0.0"`. No tag or final
+checksum is predeclared by this contract.

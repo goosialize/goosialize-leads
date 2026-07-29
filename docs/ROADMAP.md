@@ -58,10 +58,10 @@
 - Notifications remain later.
 - Test accessibility, authorization, bounded reads, source compatibility, deterministic packaging, and all completed regressions.
 
-## Phase 5: Lead magnet delivery
+## Phase 5: Notification delivery
 
-- Implement controlled delivery of lead magnets or protected resources.
-- Prevent direct-path bypasses, replay abuse, and information leakage.
+- Implement controlled delivery of Lead-accepted notifications.
+- Prevent replay abuse and information leakage.
 - Document configuration and failure behavior.
 - Phase 5A owns only durable immutable `lead.accepted` outbox-event creation after successful Lead persistence. It performs no delivery or network operation.
 - Phase 5B owns one manually invoked, bounded, single-attempt CLI delivery worker using explicit at-least-once semantics. It has no scheduler, daemon, automatic retry or capture-time delivery.
@@ -101,3 +101,77 @@
 - Phase 3C.2 owns exactly one anonymous POST JSON endpoint, raw-body parsing, Origin enforcement, direct-client fixed-window rate limiting, API idempotency, deterministic JSON responses, package integration, and synthetic regression tests.
 - Phase 3C.2 does not add Forms behavior, frontend rendering or JavaScript, notifications, Admin2, ACL UI, CSV/export, themes, delivery, accounts, OAuth, CAPTCHA providers, or external rate-limit storage.
 - Notifications remain Phase 3D. Full security/integration acceptance remains Phase 3E. Admin2 management, permissions, reads, search, status changes, retention execution, deletion, and CSV/export remain Phase 4.
+# v1.0.0 release-readiness execution contract
+
+The future implementation branch is exactly `release/v1.0.0-readiness`. It
+changes release metadata, documentation and verification only; it adds no
+runtime class, command, route, permission, scheduler job, configuration field,
+provider or mutation.
+
+## Required packaged documentation
+
+The following nineteen new packaged paths are required:
+
+| Path | Responsibility |
+|---|---|
+| `docs/INSTALLATION.md` | Offline and normal fresh installation and dependency checks |
+| `docs/CONFIGURATION.md` | Every functional, notification and scheduler setting |
+| `docs/FORMS_INTEGRATION.md` | Grav Forms action, fields, success and failure behavior |
+| `docs/JSON_API_INTEGRATION.md` | Request, Origin, rate-limit, response and error contract |
+| `docs/ADMIN2_LEAD_INDEX.md` | Native read-only index and filters |
+| `docs/CSV_EXPORT.md` | ACL, bounds and spreadsheet-safety behavior |
+| `docs/NOTIFICATION_DELIVERY.md` | Manual versus scheduled delivery and Email dependency |
+| `docs/SCHEDULER.md` | Registration, enablement, bounds and disablement |
+| `docs/RETRY_DEAD_LETTER.md` | Retryable, waiting, eligible and dead-letter states |
+| `docs/RECONCILIATION.md` | Explicit uncertain-delivery operator decisions |
+| `docs/CLI_REFERENCE.md` | Exact delivery, reconciliation and status commands |
+| `docs/PERMISSIONS.md` | Default-deny read, export and operations ACLs |
+| `docs/OPERATIONAL_STATUS.md` | Redacted CLI and native Admin2 inventory |
+| `docs/UPGRADE.md` | Supported baseline, backup and preservation checks |
+| `docs/UNINSTALL_DATA_RETENTION.md` | Code-only removal and separate data deletion warning |
+| `docs/SECURITY.md` | Threat model and enforced security invariants |
+| `docs/TROUBLESHOOTING.md` | Redacted diagnosis without record or credential disclosure |
+| `docs/EXAMPLES.md` | The seventeen mandatory synthetic scenarios |
+| `docs/RELEASE_NOTES_1.0.0.md` | Closed scope, compatibility and known blocked/deferred work |
+
+Each path is packaged documentation, has version impact `1.0.0`, changes
+operator documentation, is exercised by the new release-readiness integration
+suite, and is part of the ZIP/manifest/installed-tree integrity checks.
+
+## Synthetic acceptance scenarios
+
+`docs/EXAMPLES.md` and the release-readiness suite must use synthetic values to
+prove exactly: (1) Grav Form capture, (2) JSON capture, (3) notification
+disabled, (4) Email unavailable, (5) scheduled delivery enabled, (6) manual CLI
+delivery, (7) retry waiting, (8) retry eligible, (9) permanent pre-transport
+dead letter, (10) uncertain delivery, (11) confirm-delivered reconciliation,
+(12) explicit duplicate-risk retry, (13) explicit dead-letter reconciliation,
+(14) read-only Admin2 operations, (15) CSV export, (16) backup and upgrade, and
+(17) uninstall with data preserved.
+
+## Mandatory browser gate
+
+Publication is blocked until a human verifies in the pinned browser/runtime:
+plugin discovery; native Admin2 configuration; Lead index and read-only
+filters; ACL-protected CSV control; native read-only operations page; absence
+of Shadow DOM, iframe and legacy Admin v1 UI; denial for unauthorized users;
+correct scheduler enabled/disabled fields; no plugin console errors; and
+desktop/tablet responsiveness. This contract records
+`MANUAL_BROWSER_ACCEPTANCE_REQUIRED_BEFORE_RELEASE=YES` and
+`MANUAL_BROWSER_ACCEPTANCE_PERFORMED=NO`.
+
+## Closed workflow
+
+The only allowed sequence is implementation on the release branch; automated
+validation; manual browser acceptance; exact staging; commit with
+`release: prepare Goosialize Leads 1.0.0`; fast-forward-only merge to `main`;
+post-merge rebuild and smoke tests; final distributable ZIP; final SHA-256
+recording; and annotated `v1.0.0` tag creation only after every gate passes.
+
+The acceptance record must emit exact `PASS` values for scope closure, version
+consistency, fresh install, upgrade/data preservation, uninstall retention,
+configuration safety, documentation, all synthetic scenarios, security,
+compatibility, full regressions, deterministic package, offline install, manual
+browser acceptance, artifact integrity and clean Git state. It must also record
+`NO` for real send, network access, secrets, real data, remote/push and
+premature tag creation.

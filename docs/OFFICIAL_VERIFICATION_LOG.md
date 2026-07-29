@@ -317,3 +317,95 @@ The correction needs no additional implementation path. The future manifest rema
 The Phase 5C.1 package baseline is `f80f2dcd745a82d5a6b36c2bb10d984caa3eb98b0161092e358676e3fd10922f`. Following final security-review corrections to complete scheduler prerequisite validation and operational-root containment, two independent Phase 5C.2 builds produced `04277b3beb650c3869c3619fda2b5182c4e28bdb02c107d279e5dc871f7c01f7` and `04277b3beb650c3869c3619fda2b5182c4e28bdb02c107d279e5dc871f7c01f7`; archive bytes and SHA-256 values were identical. The package and genuine offline-installed tree each contain exactly 82 regular files, reflection contains exactly 68 runtime/command types, and the repository contains exactly 10 unit-test files and 12 integration-test files. Commands are exactly `deliver-notifications`, `reconcile-notification`, and `notification-status`; the scheduler job is exactly `goosialize-leads-notification-delivery`. Verification used the pinned immutable Grav 2.0.12 image with networking disabled and synthetic operational data only.
 
 ShellCheck was unavailable in the pinned local environment; this documented exception is limited to ShellCheck. `bash -n` passed for every integration script.
+# v1.0.0 release-readiness contract verification
+
+## Source-proven baseline
+
+The complete packaged source, commands, native Admin2 definitions, unit tests,
+integration tests and packaging scripts at Phase 5C.2 establish the capability
+inventory and scope recorded in `PROJECT_SCOPE.md`. The immutable checkpoint is
+commit `db34a6008da54ed013ab02950830572e04239018`, package SHA-256
+`04277b3beb650c3869c3619fda2b5182c4e28bdb02c107d279e5dc871f7c01f7`,
+82 package and installed files, 68 runtime/command types, 10 unit files and 12
+integration files. This documentation contract changes no package input,
+version, runtime behavior or baseline checksum.
+
+Configuration review found functional capture, idempotency, Forms, public API,
+Admin2 index/export, outbox, delivery/retry and scheduler groups plus three
+default-deny ACLs. No Goosialize-owned SMTP password, provider credential,
+SendPulse credential or hardcoded recipient exists. The source keeps optional
+Email and scheduling failures isolated from capture.
+
+## Exact future implementation manifest
+
+New paths are the nineteen packaged documentation files listed in
+`ROADMAP.md` plus development-only
+`tests/integration/v1-release-readiness.sh`. The test path has no version or
+package impact; it verifies documentation, metadata, regression, package and
+artifact gates. Thus the new-path count is 20.
+
+The exact seventeen modified paths are:
+
+| Path or exact group | Responsibility | Status and impact |
+|---|---|---|
+| `CHANGELOG.md` | Dated 1.0.0 release entry | Packaged; version, documentation and artifact impact; release test |
+| `README.md` | Supported capabilities and documentation navigation | Packaged; version/documentation/artifact impact; release test |
+| `blueprints.yaml` | Canonical plugin metadata version | Packaged; version/artifact impact; metadata and install tests |
+| `composer.json` | Matching package version and unchanged PHP requirements | Packaged; version/artifact impact; consistency and load tests |
+| `packaging/package-files.txt` | Add exactly nineteen sorted documentation paths | Development-only manifest; package/install inventory impact; package test |
+| `scripts/build-plugin-package.sh` | Build exact 1.0.0 filename from matching metadata | Development-only; version/artifact impact; deterministic-build test |
+| `docs/OFFICIAL_VERIFICATION_LOG.md` | Final gate evidence and final checksum | Development-only; documentation/release evidence impact; release test |
+| `tests/integration/clean-grav-plugin-load.sh` | Version/dependency/load and 68-type oracle | Development-only; version/load test impact; no package content |
+| `tests/integration/installable-plugin-package.sh` | 1.0.0 ZIP, 101-file and offline-install oracle | Development-only; version/package/artifact test impact |
+| `tests/integration/phase-2d-entry-points.sh` | Preserve entry-point regressions with 101-file manifest | Development-only; regression/package test impact |
+| `tests/integration/phase-3c2-public-json-api.sh` | Preserve API regressions with 101-file manifest | Development-only; regression/package test impact |
+| `tests/integration/phase-4a1-bounded-admin2-lead-index.sh` | Preserve index regressions with 101-file manifest | Development-only; regression/package test impact |
+| `tests/integration/phase-4c1-admin2-csv-export.sh` | Preserve export regressions with 101-file manifest | Development-only; regression/package test impact |
+| `tests/integration/phase-5a-notification-outbox.sh` | Preserve outbox regressions with 101-file manifest | Development-only; regression/package test impact |
+| `tests/integration/phase-5b-notification-delivery.sh` | Preserve delivery regressions with 101-file manifest | Development-only; regression/package test impact |
+| `tests/integration/phase-5c1-delivery-state-retry.sh` | Preserve state/retry regressions with 101-file manifest | Development-only; regression/package test impact |
+| `tests/integration/phase-5c2-scheduling-visibility.sh` | Preserve scheduling/inventory regressions with 101-file manifest | Development-only; regression/package test impact |
+
+The future closure is therefore 20 new + 17 modified = 37 changed paths.
+Nineteen packaged additions make package and installed-tree counts exactly 101.
+No runtime or command type changes, so that count remains 68. No unit file is
+added, so the count remains 10. One integration file makes that count 13.
+Commands remain exactly `deliver-notifications`, `reconcile-notification` and
+`notification-status`; the scheduler job remains exactly
+`goosialize-leads-notification-delivery`; configuration and permission
+inventories remain unchanged.
+
+## Release acceptance record
+
+Before release, the final evidence must record:
+
+| Marker | Required value |
+|---|---|
+| `PASS_V1_SCOPE_CLOSURE` | `PASS` |
+| `PASS_V1_VERSION_CONSISTENCY` | `PASS` |
+| `PASS_V1_FRESH_INSTALL` | `PASS` |
+| `PASS_V1_UPGRADE_DATA_PRESERVATION` | `PASS` |
+| `PASS_V1_UNINSTALL_RETENTION` | `PASS` |
+| `PASS_V1_CONFIGURATION_SAFETY` | `PASS` |
+| `PASS_V1_DOCUMENTATION` | `PASS` |
+| `PASS_V1_SYNTHETIC_SCENARIOS` | `PASS` |
+| `PASS_V1_SECURITY_REVIEW` | `PASS` |
+| `PASS_V1_COMPATIBILITY_REVIEW` | `PASS` |
+| `PASS_V1_FULL_REGRESSIONS` | `PASS` |
+| `PASS_V1_DETERMINISTIC_PACKAGE` | `PASS` |
+| `PASS_V1_OFFLINE_INSTALL` | `PASS` |
+| `PASS_V1_MANUAL_BROWSER_ACCEPTANCE` | `PASS` |
+| `PASS_V1_RELEASE_ARTIFACT_INTEGRITY` | `PASS` |
+| `PASS_V1_CLEAN_GIT_STATE` | `PASS` |
+| `REAL_NOTIFICATION_SENT` | `NO` |
+| `NETWORK_ACCESS_PERFORMED` | `NO` |
+| `SECRETS_PRESENT` | `NO` |
+| `REAL_DATA_PRESENT` | `NO` |
+| `REMOTE_OR_PUSH_USED` | `NO` |
+| `TAG_CREATED_BEFORE_FINAL_APPROVAL` | `NO` |
+
+The release artifact set is the distributable ZIP, SHA-256, package manifest,
+installed-tree inventory, runtime/reflection inventory, command inventory,
+scheduler-job inventory, configuration inventory, permission inventory and
+release notes. The final checksum is recorded only from the post-merge release
+artifact; it is not predicted here.
