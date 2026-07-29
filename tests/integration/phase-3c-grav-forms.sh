@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Phase 5C.1 preserves the Phase 3C.1 Forms capture contract.
 
 grep -Fq 'notifications:' "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)/goosialize-leads.yaml"
 

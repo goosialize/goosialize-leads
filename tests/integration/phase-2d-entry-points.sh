@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Phase 5C.1 preserves the Phase 2D entry-point regression.
 
 readonly EXPECTED_IMAGE_ID='sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351'
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -38,7 +39,7 @@ readonly STATUS_BEFORE="$(git -C "${REPOSITORY_ROOT}" status --porcelain=v1 -z |
 readonly HEAD_BEFORE="$(git -C "${REPOSITORY_ROOT}" rev-parse HEAD)"
 readonly BRANCH_BEFORE="$(git -C "${REPOSITORY_ROOT}" branch --show-current)"
 
-[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 62 ]] || fail 'package manifest count mismatch'
+[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 75 ]] || fail 'package manifest count mismatch'
 [[ "$(<"${REPOSITORY_ROOT}/templates/phase-2d-skeleton.html.twig")" == 'Goosialize Leads Phase 2 skeleton.' ]] || fail 'template content mismatch'
 node --check "${REPOSITORY_ROOT}/admin-next/pages/goosialize-leads.js"
 if grep -Eiq 'attachShadow|fetch|XMLHttpRequest|WebSocket|sendBeacon|localStorage|sessionStorage|document\.cookie|location\.|<form|<input|<button|addEventListener|import[ (]|export ' "${REPOSITORY_ROOT}/admin-next/pages/goosialize-leads.js"; then

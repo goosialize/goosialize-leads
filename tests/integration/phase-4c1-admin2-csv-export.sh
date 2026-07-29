@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Phase 5C.1 preserves authenticated CSV export behavior.
 
 readonly REPOSITORY_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 readonly IMAGE='lscr.io/linuxserver/grav:2.0.12'
@@ -9,7 +10,7 @@ readonly IMAGE_ID='sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f336
 docker run --rm --network none \
   --mount "type=bind,src=${REPOSITORY_ROOT},dst=/source,readonly" \
   --entrypoint php "${IMAGE_ID}" /source/tests/unit/phase-4c1-admin2-csv-export.php
-[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 62 ]]
+[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 75 ]]
 grep -qx 'classes/Notification/FilesystemNotificationOutbox.php' "${REPOSITORY_ROOT}/packaging/package-files.txt"
 grep -Fq 'export_endpoint: /goosialize-leads/export' "${REPOSITORY_ROOT}/admin/blueprints/goosialize-leads-index-export.yaml"
 grep -Fq 'export_supported_filters: []' "${REPOSITORY_ROOT}/admin/blueprints/goosialize-leads-index-export.yaml"

@@ -20,6 +20,48 @@ compatibility:
 form:
   validation: strict
   fields:
+    notifications.delivery_retry.enabled:
+      type: toggle
+      label: Durable notification retries
+      highlight: 1
+      default: 0
+      options:
+        1: PLUGIN_ADMIN.ENABLED
+        0: PLUGIN_ADMIN.DISABLED
+      validate:
+        type: bool
+    notifications.delivery_retry.maximum_attempts:
+      type: number
+      label: Maximum delivery attempts
+      default: 5
+      validate:
+        type: int
+        min: 5
+        max: 5
+    notifications.delivery_retry.delays_seconds:
+      type: array
+      label: Retry delays in seconds
+      default:
+        - 300
+        - 1800
+        - 7200
+        - 28800
+    notifications.delivery_retry.processing_limit:
+      type: number
+      label: Retry processing limit
+      default: 10
+      validate:
+        type: int
+        min: 1
+        max: 50
+    notifications.delivery_retry.state_max_bytes:
+      type: number
+      label: Delivery-state maximum bytes
+      default: 1024
+      validate:
+        type: int
+        min: 1024
+        max: 1024
     enabled:
       type: toggle
       label: PLUGIN_GOOSIALIZE_LEADS.ENABLED

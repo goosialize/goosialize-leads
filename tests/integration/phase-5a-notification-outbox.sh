@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Phase 5C.1 preserves immutable Phase 5A outbox events.
 
 readonly EXPECTED_IMAGE_ID='sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351'
 readonly REPOSITORY_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)"
@@ -27,7 +28,7 @@ docker run --rm --network none \
   --entrypoint /bin/sh "${EXPECTED_IMAGE_ID}" -c '
 set -eu
 for file in /source/classes/*/*.php /source/goosialize-leads.php; do php -l "$file" >/dev/null; done
-test "$(wc -l < /source/packaging/package-files.txt)" -eq 62
+test "$(wc -l < /source/packaging/package-files.txt)" -eq 75
 php -r '\''
 require "/source/autoload.php";
 $classes=[

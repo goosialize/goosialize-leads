@@ -34,3 +34,13 @@ notifications:
     sender_address: null
     sender_name: null
     default_limit: 10
+  delivery_retry:
+    enabled: false
+    maximum_attempts: 5
+    delays_seconds:
+      - 300
+      - 1800
+      - 7200
+      - 28800
+    processing_limit: 10
+    state_max_bytes: 1024

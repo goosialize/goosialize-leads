@@ -28,6 +28,16 @@ classes/Http/PublicApiRawBodyMiddleware.php
 classes/Http/PublicLeadApiController.php
 classes/Http/RateLimitResult.php
 classes/Http/RawJsonParser.php
+classes/Notification/ClassifiedNotificationTransport.php
+classes/Notification/DeadLetterRepository.php
+classes/Notification/DeliveryClock.php
+classes/Notification/DeliveryEventLease.php
+classes/Notification/DeliveryReconciliationService.php
+classes/Notification/DeliveryRetryPolicy.php
+classes/Notification/DeliveryState.php
+classes/Notification/DeliveryStateRepository.php
+classes/Notification/FilesystemDeadLetterRepository.php
+classes/Notification/FilesystemDeliveryStateRepository.php
 classes/Notification/FilesystemNotificationOutbox.php
 classes/Notification/FilesystemPendingNotificationRepository.php
 classes/Notification/GravEmailNotificationTransport.php
@@ -40,7 +50,9 @@ classes/Notification/NotificationMessage.php
 classes/Notification/NotificationMessageFactory.php
 classes/Notification/NotificationOutbox.php
 classes/Notification/NotificationTransport.php
+classes/Notification/NotificationTransportResult.php
 classes/Notification/PendingNotificationRepository.php
+classes/Notification/SystemDeliveryClock.php
 classes/Security/IdempotencyKeyRing.php
 classes/Storage/FilesystemLeadReadRepository.php
 classes/Storage/FilesystemLeadRepository.php
@@ -54,6 +66,7 @@ classes/Validation/LeadNormalizer.php
 classes/Validation/ValidationError.php
 classes/Validation/ValidationResult.php
 cli/DeliverNotificationsCommand.php
+cli/ReconcileNotificationCommand.php
 composer.json
 goosialize-leads.php
 goosialize-leads.yaml

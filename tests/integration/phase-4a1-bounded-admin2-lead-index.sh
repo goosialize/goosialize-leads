@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Phase 5C.1 preserves the bounded read-only Admin2 index.
 
 readonly EXPECTED_IMAGE_ID='sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351'
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -84,7 +85,7 @@ if($hidden["items"]!==[])throw new RuntimeException("unauthorized navigation vis
 echo "PASS_PHASE_4A1_PLUGIN_REGISTRATION\n";
 '
 
-[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 62 ]]
+[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 75 ]]
 grep -qx 'classes/Notification/NotificationEvent.php' "${REPOSITORY_ROOT}/packaging/package-files.txt"
 [[ -z "$(find "${REPOSITORY_ROOT}" -type f \( -name '*.js' -o -name '*.css' -o -name '*.svelte' \) -newer "${REPOSITORY_ROOT}/docs/PHASE_3_SECURE_CAPTURE_STORAGE_PLAN.md" -print)" ]]
 

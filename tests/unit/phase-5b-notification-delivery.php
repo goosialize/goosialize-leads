@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require dirname(__DIR__, 2) . '/autoload.php';
+// Phase 5C.1 retains this complete Phase 5B behavioral regression oracle.
 
 use Grav\Plugin\GoosializeLeads\Notification\FilesystemNotificationOutbox;
 use Grav\Plugin\GoosializeLeads\Notification\FilesystemPendingNotificationRepository;
@@ -79,11 +80,11 @@ if (($argv[1] ?? null) === '--concurrent-worker') {
 $api = [
     NotificationMessage::class => ['create','subject','body'],
     NotificationMessageFactory::class => ['create'],
-    NotificationDeliveryResult::class => ['create','discovered','delivered','contended','failed','uncertain','codes','isComplete'],
-    FilesystemPendingNotificationRepository::class => ['__construct','pending','process'],
+    NotificationDeliveryResult::class => ['create','discovered','delivered','deadLettered','deferred','contended','failed','uncertain','codes','isComplete'],
+    FilesystemPendingNotificationRepository::class => ['__construct','pending','process','eligible','withLockedEvent'],
     LeadDeliveryRecordReader::class => ['__construct','read'],
     NotificationDeliveryWorker::class => ['__construct','deliver'],
-    GravEmailNotificationTransport::class => ['__construct','send'],
+    GravEmailNotificationTransport::class => ['__construct','send','sendClassified'],
 ];
 foreach ($api as $class => $methods) {
     $reflection = new ReflectionClass($class);
@@ -94,7 +95,7 @@ foreach ($api as $class => $methods) {
     }
     phase5bCheck($actual === $methods, 'API ' . $class);
 }
-foreach ([NotificationTransport::class=>['send'], PendingNotificationRepository::class=>['pending','process']] as $class=>$methods) {
+foreach ([NotificationTransport::class=>['send'], PendingNotificationRepository::class=>['pending','process','eligible','withLockedEvent']] as $class=>$methods) {
     $reflection = new ReflectionClass($class);
     phase5bCheck($reflection->isInterface(), 'interface ' . $class);
     phase5bCheck(array_map(static fn (ReflectionMethod $m): string => $m->getName(), $reflection->getMethods()) === $methods, 'interface API');

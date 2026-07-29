@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add opt-in durable notification delivery state, deterministic retry,
+  immutable dead-letter recovery, and uncertain-delivery reconciliation.
+
 - Add bounded, manually invoked Phase 5B notification delivery with deterministic plain-text messages, exclusive event locking, and immutable success archival.
 - Add the Phase 5A durable notification outbox boundary without delivery behavior.
 

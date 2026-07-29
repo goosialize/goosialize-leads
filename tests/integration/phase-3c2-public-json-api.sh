@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Phase 5C.1 preserves the Phase 3C.2 public response contract.
 
 readonly EXPECTED_IMAGE_ID='sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351'
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -85,7 +86,7 @@ docker run --rm --network none \
     --mount "type=bind,src=${REPOSITORY_ROOT},dst=/plugin,readonly" \
     --entrypoint /bin/sh "${EXPECTED_IMAGE_ID}" -c \
     'set -eu; for f in /plugin/classes/*/*.php /plugin/goosialize-leads.php; do php -l "$f" >/dev/null; done'
-[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 62 ]] || fail 'package count'
+[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 75 ]] || fail 'package count'
 for path in classes/Http/ApiParseResult.php classes/Http/RawJsonParser.php classes/Http/PublicLeadApiController.php classes/Notification/NotificationOutbox.php; do
     grep -qx "${path}" "${REPOSITORY_ROOT}/packaging/package-files.txt" || fail "missing ${path}"
 done

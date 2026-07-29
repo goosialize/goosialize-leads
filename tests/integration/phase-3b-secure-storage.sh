@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Phase 5C.1 preserves immutable Phase 3B Lead storage.
 
 grep -qx 'classes/Notification/NotificationOutbox.php' "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)/packaging/package-files.txt"
 grep -qx 'classes/Notification/PendingNotificationRepository.php' "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)/packaging/package-files.txt"

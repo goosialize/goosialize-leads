@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Phase 5C.1 runtime and command reflection is closed by the package oracle.
 
 readonly PLUGIN_MOUNT='/app/www/public/user/plugins/goosialize-leads'
 readonly EXPECTED_IMAGE_ID='sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351'

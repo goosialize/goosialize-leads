@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Phase 5C.1 preserves the disabled-retry Phase 5B delivery path.
 
 readonly EXPECTED_IMAGE_ID='sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351'
 readonly IMAGE="${GRAV_TEST_IMAGE:-lscr.io/linuxserver/grav:2.0.12}"
@@ -36,14 +37,14 @@ status=$?
 set -e
 test "$status" -eq 2
 test "$actual" = "ERROR code=delivery_disabled count=1
-RESULT discovered=0 delivered=0 contended=0 failed=0 uncertain=0"
+RESULT discovered=0 delivered=0 dead_lettered=0 deferred=0 contended=0 failed=0 uncertain=0"
 set +e
 invalid="$(php bin/plugin goosialize-leads deliver-notifications --limit=0 --no-ansi)"
 invalid_status=$?
 set -e
 test "$invalid_status" -eq 2
 test "$invalid" = "ERROR code=invalid_limit count=1
-RESULT discovered=0 delivered=0 contended=0 failed=0 uncertain=0"
+RESULT discovered=0 delivered=0 dead_lettered=0 deferred=0 contended=0 failed=0 uncertain=0"
 mkdir -p user/config/plugins
 cat > user/config/plugins/goosialize-leads.yaml <<'\''YAML'\''
 enabled: true
@@ -62,7 +63,7 @@ no_recipient_status=$?
 set -e
 test "$no_recipient_status" -eq 2
 test "$no_recipient" = "ERROR code=routing_invalid count=1
-RESULT discovered=0 delivered=0 contended=0 failed=0 uncertain=0"
+RESULT discovered=0 delivered=0 dead_lettered=0 deferred=0 contended=0 failed=0 uncertain=0"
 sed -i "s/recipients: \\[\\]/recipients: [INVALID@example.test]/" user/config/plugins/goosialize-leads.yaml
 php bin/grav cache --all >/dev/null
 set +e
@@ -71,7 +72,7 @@ invalid_recipient_status=$?
 set -e
 test "$invalid_recipient_status" -eq 2
 test "$invalid_recipient" = "ERROR code=routing_invalid count=1
-RESULT discovered=0 delivered=0 contended=0 failed=0 uncertain=0"
+RESULT discovered=0 delivered=0 dead_lettered=0 deferred=0 contended=0 failed=0 uncertain=0"
 cat > user/config/plugins/goosialize-leads.yaml <<'\''YAML'\''
 enabled: true
 notifications:
@@ -91,7 +92,7 @@ absent_status=$?
 set -e
 test "$absent_status" -eq 2
 test "$absent" = "ERROR code=email_unavailable count=1
-RESULT discovered=0 delivered=0 contended=0 failed=0 uncertain=0"
+RESULT discovered=0 delivered=0 dead_lettered=0 deferred=0 contended=0 failed=0 uncertain=0"
 mv /tmp/email-plugin user/plugins/email
 printf "enabled: false\n" > user/config/plugins/email.yaml
 php bin/grav cache --all >/dev/null
@@ -101,16 +102,16 @@ disabled_status=$?
 set -e
 test "$disabled_status" -eq 2
 test "$disabled" = "ERROR code=email_unavailable count=1
-RESULT discovered=0 delivered=0 contended=0 failed=0 uncertain=0"
+RESULT discovered=0 delivered=0 dead_lettered=0 deferred=0 contended=0 failed=0 uncertain=0"
 printf "PASS_PHASE_5B_COMMAND_RUNTIME\n"
 ')"
 grep -qx 'PASS_PHASE_5B_COMMAND_RUNTIME' <<<"${command_output}" || fail 'command runtime'
 
-test "$(wc -l < "${ROOT}/packaging/package-files.txt")" -eq 62
+test "$(wc -l < "${ROOT}/packaging/package-files.txt")" -eq 75
 grep -qx 'cli/DeliverNotificationsCommand.php' "${ROOT}/packaging/package-files.txt"
 grep -q "setName('deliver-notifications')" "${ROOT}/cli/DeliverNotificationsCommand.php"
 grep -q "InputOption::VALUE_REQUIRED" "${ROOT}/cli/DeliverNotificationsCommand.php"
-! rg -n 'curl|socket_create|stream_socket_client|retry|dead.?letter|schedule' \
+! rg -n 'curl|socket_create|stream_socket_client|schedule' \
     "${ROOT}/classes/Notification" "${ROOT}/cli/DeliverNotificationsCommand.php"
 
 printf 'PASS_PHASE_5B_REGRESSIONS\n'
