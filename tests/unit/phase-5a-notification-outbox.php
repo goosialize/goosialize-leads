@@ -10,6 +10,8 @@ use Grav\Plugin\GoosializeLeads\Notification\FilesystemNotificationOutbox;
 use Grav\Plugin\GoosializeLeads\Notification\NotificationEnqueueResult;
 use Grav\Plugin\GoosializeLeads\Notification\NotificationEvent;
 use Grav\Plugin\GoosializeLeads\Notification\NotificationOutbox;
+use Grav\Plugin\GoosializeLeads\Notification\NotificationTransport;
+use Grav\Plugin\GoosializeLeads\Notification\PendingNotificationRepository;
 use Grav\Plugin\GoosializeLeads\Security\IdempotencyKeyRing;
 use Grav\Plugin\GoosializeLeads\Storage\LeadRepository;
 use Grav\Plugin\GoosializeLeads\Storage\PersistenceRequest;
@@ -83,6 +85,8 @@ foreach ($apis as $class => $expectedMethods) {
 $interface = new ReflectionClass(NotificationOutbox::class);
 phase5aCheck($interface->isInterface(), 'outbox interface');
 phase5aCheck(array_map(fn (ReflectionMethod $m): string => $m->getName(), $interface->getMethods()) === ['ensure'], 'interface API');
+phase5aCheck((new ReflectionClass(NotificationTransport::class))->isInterface(), 'delivery transport interface');
+phase5aCheck((new ReflectionClass(PendingNotificationRepository::class))->isInterface(), 'pending delivery interface');
 $outboxSource = file_get_contents(dirname(__DIR__, 2) . '/classes/Notification/FilesystemNotificationOutbox.php');
 phase5aCheck(is_string($outboxSource), 'outbox source');
 $compareStart = strpos($outboxSource, 'private function compareExisting');

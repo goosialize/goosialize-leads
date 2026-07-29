@@ -2,6 +2,8 @@
 
 Phase 5A adds an optional, disabled-by-default durable filesystem notification outbox. It records one immutable `lead.accepted` event after successful Lead persistence; it performs no notification delivery or network access.
 
+Phase 5B adds the explicitly invoked bounded command `php bin/plugin goosialize-leads deliver-notifications --limit=10`. It is disabled by default, uses the optional Grav Email plugin for transport configuration, and stores no SMTP/provider credentials. Delivery is single-attempt and at-least-once: a process termination after provider acceptance but before durable archival can cause a later manual run to deliver the same notification again. Scheduling, retries, reconciliation, dead-letter handling, and operational visibility remain Phase 5C.
+
 Phase 4C.1 adds a permission-gated native Admin2 export of the deterministic latest-100 Lead summary collection. CSV export is disabled by default, uses no plugin-owned Admin2 JavaScript, and does not modify Lead storage.
 
 Phase 3C.1 adds opt-in, server-rendered Grav Forms capture. Configure

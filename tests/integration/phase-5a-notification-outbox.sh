@@ -27,15 +27,24 @@ docker run --rm --network none \
   --entrypoint /bin/sh "${EXPECTED_IMAGE_ID}" -c '
 set -eu
 for file in /source/classes/*/*.php /source/goosialize-leads.php; do php -l "$file" >/dev/null; done
-test "$(wc -l < /source/packaging/package-files.txt)" -eq 52
+test "$(wc -l < /source/packaging/package-files.txt)" -eq 62
 php -r '\''
 require "/source/autoload.php";
 $classes=[
 "Grav\\Plugin\\GoosializeLeads\\Notification\\FilesystemNotificationOutbox",
+"Grav\\Plugin\\GoosializeLeads\\Notification\\FilesystemPendingNotificationRepository",
+"Grav\\Plugin\\GoosializeLeads\\Notification\\GravEmailNotificationTransport",
+"Grav\\Plugin\\GoosializeLeads\\Notification\\LeadDeliveryRecordReader",
+"Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationDeliveryResult",
+"Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationDeliveryWorker",
 "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationEnqueueResult",
-"Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationEvent"];
+"Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationEvent",
+"Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationMessage",
+"Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationMessageFactory"];
 foreach($classes as $class)if(!class_exists($class)||!(new ReflectionClass($class))->isFinal())throw new RuntimeException("class");
 if(!interface_exists("Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationOutbox"))throw new RuntimeException("interface");
+if(!interface_exists("Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationTransport"))throw new RuntimeException("transport interface");
+if(!interface_exists("Grav\\Plugin\\GoosializeLeads\\Notification\\PendingNotificationRepository"))throw new RuntimeException("pending interface");
 '\'''
 
 docker run --rm --network none \

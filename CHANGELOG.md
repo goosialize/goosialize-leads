@@ -1,5 +1,6 @@
 # Changelog
 
+- Add bounded, manually invoked Phase 5B notification delivery with deterministic plain-text messages, exclusive event locking, and immutable success archival.
 - Add the Phase 5A durable notification outbox boundary without delivery behavior.
 
 ## Unreleased

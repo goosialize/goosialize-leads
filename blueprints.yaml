@@ -165,3 +165,37 @@ form:
         type: int
         min: 512
         max: 512
+    notifications.delivery.enabled:
+      type: toggle
+      label: Manual notification delivery
+      default: 0
+      options:
+        1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
+        0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
+      validate:
+        type: bool
+    notifications.delivery.recipients:
+      type: array
+      label: Notification recipients
+      default: []
+      value_only: true
+      validate:
+        type: array
+    notifications.delivery.sender_address:
+      type: email
+      label: Notification sender address
+      default: null
+    notifications.delivery.sender_name:
+      type: text
+      label: Notification sender name
+      default: null
+      validate:
+        max: 80
+    notifications.delivery.default_limit:
+      type: number
+      label: Default delivery batch limit
+      default: 10
+      validate:
+        type: int
+        min: 10
+        max: 10

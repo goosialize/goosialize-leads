@@ -2,6 +2,7 @@
 set -euo pipefail
 
 grep -qx 'classes/Notification/NotificationOutbox.php' "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)/packaging/package-files.txt"
+grep -qx 'classes/Notification/PendingNotificationRepository.php' "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)/packaging/package-files.txt"
 
 readonly EXPECTED_IMAGE_ID='sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351'
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"

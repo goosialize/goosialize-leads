@@ -3,6 +3,7 @@ set -euo pipefail
 
 readonly PLUGIN_MOUNT='/app/www/public/user/plugins/goosialize-leads'
 readonly EXPECTED_IMAGE_ID='sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351'
+grep -qx 'cli/DeliverNotificationsCommand.php' "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)/packaging/package-files.txt"
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 readonly REPOSITORY_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd -P)"
 readonly ENABLED_CONTAINER="goosialize-leads-enabled-$$"

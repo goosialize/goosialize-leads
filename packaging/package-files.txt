@@ -29,9 +29,18 @@ classes/Http/PublicLeadApiController.php
 classes/Http/RateLimitResult.php
 classes/Http/RawJsonParser.php
 classes/Notification/FilesystemNotificationOutbox.php
+classes/Notification/FilesystemPendingNotificationRepository.php
+classes/Notification/GravEmailNotificationTransport.php
+classes/Notification/LeadDeliveryRecordReader.php
+classes/Notification/NotificationDeliveryResult.php
+classes/Notification/NotificationDeliveryWorker.php
 classes/Notification/NotificationEnqueueResult.php
 classes/Notification/NotificationEvent.php
+classes/Notification/NotificationMessage.php
+classes/Notification/NotificationMessageFactory.php
 classes/Notification/NotificationOutbox.php
+classes/Notification/NotificationTransport.php
+classes/Notification/PendingNotificationRepository.php
 classes/Security/IdempotencyKeyRing.php
 classes/Storage/FilesystemLeadReadRepository.php
 classes/Storage/FilesystemLeadRepository.php
@@ -44,6 +53,7 @@ classes/Validation/LeadInputValidator.php
 classes/Validation/LeadNormalizer.php
 classes/Validation/ValidationError.php
 classes/Validation/ValidationResult.php
+cli/DeliverNotificationsCommand.php
 composer.json
 goosialize-leads.php
 goosialize-leads.yaml

@@ -28,3 +28,9 @@ notifications:
   outbox:
     enabled: false
     max_event_bytes: 512
+  delivery:
+    enabled: false
+    recipients: []
+    sender_address: null
+    sender_name: null
+    default_limit: 10
