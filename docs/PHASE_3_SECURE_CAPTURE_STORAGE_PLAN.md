@@ -1084,3 +1084,115 @@ Thirteen packaged paths are added in lexical manifest order, producing 75 packag
 Acceptance requires every new marker and completed regression, syntax/structured integrity, exact API/reflection/command lists, two independent byte-identical builds, genuine offline install and final evidence solely in the verification log. Phase 5B SHA `c65825a8ad2656f6d75ae41a8b788ddb15aa2710f7e7b0c4a7c9cfd2ca5d720e` is retained; Phase 5C.1 SHA is not predeclared.
 
 The interface/API acceptance markers are exactly `PASS_PHASE_5C1_PENDING_INTERFACE_METHODS`, `PASS_PHASE_5C1_PENDING_IMPLEMENTATION_METHODS`, `PASS_PHASE_5C1_PENDING_SIGNATURES`, `PASS_PHASE_5C1_PENDING_INTERFACE_PARITY`, `PASS_PHASE_5C1_REFLECTION_EXACT`, `PASS_PHASE_5C1_WORKER_USES_PENDING_INTERFACE`, and `PASS_PHASE_5C1_NO_CONCRETE_PENDING_BYPASS`. Missing either method, any narrowed or widened parameter/return type, default implementation, dynamic fallback, `method_exists()` branch, or direct concrete-class bypass fails acceptance.
+
+## Phase 5C.2 scheduling and read-only operational visibility
+
+Phase 5C.2 is one implementation checkpoint on branch `feat/phase-5c2-scheduling-visibility`; its future implementation subject is `feat: add scheduled delivery and operational visibility`. It uses the source-proven Grav 2.0.12 core scheduler and adds a read-only CLI and native Admin2 operational inventory. It adds no transport, delivery state, mutation workflow, public route, daemon, watch loop, automatic reconciliation, automatic uncertain retry, notification-content change, capture-schema change, provider integration, or Lead/event/archive/dead-letter rewrite.
+
+### Pinned scheduler decision
+
+The one architecture is **Grav 2.0.12 core scheduler through `onSchedulerInitialized` and `Scheduler::addCommand()`**. It is not an optional plugin and has no alternate cron-only implementation. Exact pinned sources are:
+
+- `system/src/Grav/Common/Service/SchedulerServiceProvider.php`, which publishes `Grav\Common\Scheduler\Scheduler` as `$grav['scheduler']`.
+- `system/src/Grav/Common/Scheduler/Scheduler.php`, where `initializeJobs()` fires `onSchedulerInitialized`, `addCommand($command, $args = [], $id = null): Job` registers a process job, and `queueJob()` appends without duplicate suppression.
+- `system/src/Grav/Common/Scheduler/Job.php`, which hyphenizes IDs, accepts a five-field cron through `at()`, supports foreground process execution, applies `timeout(int $seconds)` to process jobs, and additionally honors `scheduler.status.<job-id>`.
+- `system/src/Grav/Console/Cli/SchedulerCommand.php`, which initializes plugins, fires the event, and runs due or selected jobs under the operating-system identity that invoked Grav.
+- `system/config/scheduler.yaml` and `system/blueprints/config/scheduler.yaml`, which remain the owners of scheduler defaults, status, custom jobs, triggers, queue/history and scheduler administration.
+
+The job ID is exactly `goosialize-leads-notification-delivery`. `GoosializeLeadsPlugin::onSchedulerInitialized(Event $event): void` accepts only an exact `Scheduler` event value. A private per-plugin `WeakMap` keyed by scheduler instance makes repeated event delivery idempotent because core does not deduplicate. A missing/wrong scheduler, disabled scheduling, or invalid/incomplete configuration registers nothing. Plugin load, manual commands and capture continue; only stable logger code `notification_scheduler_unavailable` or `notification_scheduler_configuration_invalid` may be emitted.
+
+Registration is a process job, never a callable:
+
+`$scheduler->addCommand(PHP_BINARY, [GRAV_ROOT . '/bin/plugin', 'goosialize-leads', 'deliver-notifications', '--limit=' . $batchLimit], 'goosialize-leads-notification-delivery')->at($cron)->inForeground()->timeout(300)`.
+
+Frequency `1` generates `* * * * *`; `2`, `5`, `10`, `15`, `20`, or `30` generates `*/N * * * *`; `60` generates `0 * * * *`. One due job starts one existing CLI invocation and one bounded `NotificationDeliveryWorker::deliver()` call. It never passes `--retries-only`, so first attempts, due retries and terminal recovery retain Phase 5C.1 behavior. `uncertain` remains excluded; reconciliation remains operator-only. The job configures no output file or scheduler email and adds no provider setting.
+
+Batch limit 1–50 is the work bound and 300 seconds is the hard process timeout. Two scheduled runs, or scheduled/manual overlap, may process disjoint IDs; same-ID ownership remains decided by existing nonblocking delivery locks and state CAS. Grav `Job::onlyOne()` is not used because its pathname lock can remain after a hard crash and is not a correctness primitive. A crash before process creation changes nothing; a timeout/crash after creation retains Phase 5C.1 attempting/uncertain recovery. Frequency changes no retry timestamp. Scheduling failure never reaches Forms/JSON capture.
+
+### Scheduling configuration
+
+| Key | Type/default | Exact validation and behavior |
+|---|---|---|
+| `notifications.scheduling.enabled` | boolean, `false` | Literal true requests registration; false registers nothing. |
+| `notifications.scheduling.frequency_minutes` | integer, `5` | Exact allowlist `1,2,5,10,15,20,30,60`; generates only the cron forms above. |
+| `notifications.scheduling.batch_limit` | integer, `10` | Inclusive 1–50 and passed once to the existing command. |
+| `notifications.scheduling.timeout_seconds` | integer, `300` | Sole allowed value 300 and shown by a native noneditable display field. |
+
+Registration additionally requires literal-valid existing delivery routing and Phase 5C.1 retry configuration with `notifications.delivery.enabled` and `notifications.delivery_retry.enabled` true. Invalid, unknown, wrongly typed or incomplete scheduling configuration registers no job and never degrades manual delivery, reconciliation, plugin load or capture. Absent keys equal defaults, so upgrades remain disabled. Core `scheduler.status.goosialize-leads-notification-delivery: disabled` can also disable execution. No key duplicates recipient, sender, SMTP/provider, Email, webhook-token or public-API configuration. Admin2 scheduling fields use existing plugin-config write/superuser authority; operational-view permission cannot save configuration.
+
+### Closed operational classification
+
+Inventory reads only canonical event/state metadata. It never reads a Lead, sidecar, Email configuration or message.
+
+| State | Source and precedence | Terminal / processable / actionable |
+|---|---|---|
+| `conflict` | Highest item precedence: incompatible same-ID placement, mismatched terminal state/archive, sent plus dead-letter, or cross-record invariant mismatch. A malformed record without a safe ID contributes only to invalid counters. | no / no / yes |
+| `recovery_required` | Pending plus matching sent/dead-letter terminal material, pending with terminal state awaiting cleanup, or orphan nonterminal state with matching sent archive. | no / yes / yes |
+| `dead_lettered` | Canonical dead-letter only with matching `dead_lettered` state and no pending. | yes / no / no |
+| `sent` | Canonical sent only with no state (historical Phase 5B) or matching `delivered` state. | yes / no / no |
+| `uncertain` | Canonical pending only plus exact `uncertain` state. | no / no / yes |
+| `attempting` | Canonical pending only plus exact `attempting` state; later batch recovery may make it uncertain without transport. | no / yes / no |
+| `eligible_retry` | Canonical pending only plus `eligible` with prior attempts, or `retry_wait` where the one inventory clock instant is at/after `next_eligible_at`. | no / yes / no |
+| `retry_wait` | Canonical pending only plus `retry_wait` where the one clock instant is before `next_eligible_at`. | no / no / no |
+| `pending_first_attempt` | Lowest precedence: canonical pending only and no state. | no / yes / no |
+
+Each safe ID increments exactly one state counter. `lock_contended` is deliberately not an inventory state: a lock pathname does not prove a live owner, and acquiring a delivery lock would exceed read-only authority. Unknown states/codes, symlinks, wrong modes, path replacement, capacity overflow and malformed canonical data fail closed under safe codes and never become invented item values.
+
+### Inventory, CLI and Admin2
+
+`FilesystemNotificationOperationalInventoryRepository` streams pending, delivery-state, sent and dead-letter trees with one combined maximum of 10,000 non-dot names and 256 shard-directory names. Candidate 10,001 returns `inventory_capacity_exceeded`, stops, and exposes no partial items. Directories remain contained non-symlink mode 0700; files retain exact grammar, containment, non-symlink regular mode 0600 and 512-byte event/1,024-byte state bounds. Reads require pre-open `lstat`, bounded read, post-open `lstat` plus `fstat` device/inode/mode/size identity and path-replacement rejection. No lock, chmod, mkdir, temp, rename, link, unlink, repair or state save occurs.
+
+One `DeliveryClock::now()` instant defines all due boundaries. Items sort by effective `updated_at` descending then event ID ascending. Effective update is state `updated_at`, otherwise event `created_at`. Input limit is 1–100, default 50; at most that many safe items return. `total_scanned` is 0–10,000; `truncated` is true exactly when more safe items exist; counters cover the bounded scan. Concurrent movement can make the snapshot stale. An identity change contributes `inventory_changed`; same-ID cross-root material is rechecked once and then becomes `recovery_required`, `conflict`, or `inventory_changed`.
+
+Item key order is `event_id`, `state`, `attempt_count`, `next_eligible_at`, `created_at`, `updated_at`, `last_result_code`, `revision`, `terminal`, `processable`, `operator_actionable`. Event ID is 64 lowercase hex; attempt count 0–5; timestamps canonical UTC or null; result null or Phase 5C.1 allowlist; revision 0 without state or 1–2147483647. Unknown values increment exact lexical codes `event_invalid`, `state_invalid`, `inventory_changed`, `inventory_conflict`, `inventory_capacity_exceeded` and are never echoed.
+
+The CLI surface is **INCLUDED** as `php bin/plugin goosialize-leads notification-status --limit=50 [--json]`. Limit accepts only decimal 1–100; `--json` is value-none. Text emits lexical positive `STATE name=<state> count=<n>` lines, ordered `ITEM` lines with null as `-`, then `RESULT scanned=<n> returned=<n> truncated=<0|1> invalid=<n> conflicts=<n>`. JSON is one compact UTF-8 object plus LF with top-level `items`, `meta`; meta order is `read_only`, `total_scanned`, `returned`, `limit`, `truncated`, `invalid`, `conflicts`, `counters`, `codes`. Stderr is empty. Exit 0 has no anomaly, exit 2 is invalid input/config/root, exit 3 is bounded data anomaly.
+
+The Admin2 operational surface is **INCLUDED**. Pinned API/Admin2 2.0.15 and completed Phase 4A.1 source prove `onApiSidebarItems`, `onApiPluginPageInfo`, authenticated plugin GET routes, plugin-owned `admin/blueprints/*.yaml`, blueprint page type and native `resource-table`. Page ID is `goosialize-leads-notification-operations`, route `/plugin/goosialize-leads-notification-operations`, endpoint `/api/v1/goosialize-leads/notification-operations`. It uses only native resource-table refresh/clear; export, row action, edit, polling and mutation are absent. No custom component/HTML/CSS/JavaScript, Shadow DOM, iframe or legacy Admin v1 is allowed. Response is the same bounded inventory with `Cache-Control: no-store`.
+
+The sole new ACL is `api.goosialize_leads.operations`, default deny and independent of read/export. It grants only sidebar/page/inventory GET and scheduler booleans `core_available`, `job_registered`, `job_enabled`. It grants no Lead read/export, config write, delivery, reconciliation or mutation. Manual delivery/reconciliation remain operating-system CLI authorities, not HTTP actions. Scheduling configuration remains existing plugin-config write/superuser authority.
+
+Forbidden output includes Lead content/status, recipient/sender, subject/body, raw event/state/archive/dead-letter, provider response, exception/stack, path, IP/header, key/token, SMTP detail, scheduler command/trigger URL/user. Maximum strings are 64 bytes event ID, 21 state, 27 timestamp and 35 safe result code. Unknown text is never exposed.
+
+### Exact future APIs
+
+| Type/path | Exact public API |
+|---|---|
+| `final NotificationOperationalItem`; `classes/Notification/NotificationOperationalItem.php` | Private constructor; `create(string $eventId, string $state, int $attemptCount, ?DateTimeImmutable $nextEligibleAt, DateTimeImmutable $createdAt, DateTimeImmutable $updatedAt, ?string $lastResultCode, int $revision, bool $terminal, bool $processable, bool $operatorActionable): self`; `eventId(): string`; `state(): string`; `attemptCount(): int`; `nextEligibleAt(): ?DateTimeImmutable`; `createdAt(): DateTimeImmutable`; `updatedAt(): DateTimeImmutable`; `lastResultCode(): ?string`; `revision(): int`; `terminal(): bool`; `processable(): bool`; `operatorActionable(): bool`; `toArray(): array`. Closed validation and no mutation API. |
+| `final NotificationOperationalInventory`; `classes/Notification/NotificationOperationalInventory.php` | Private constructor; `create(array $items, array $counters, array $codes, int $totalScanned, int $limit, bool $truncated): self` with PHPDoc `list<NotificationOperationalItem>` and `array<string,int>`; `items(): array`; `counters(): array`; `codes(): array`; `totalScanned(): int`; `limit(): int`; `truncated(): bool`; `hasAnomaly(): bool`; `toArray(): array`. It returns the exact `items`/`meta` shape and key order. |
+| `NotificationOperationalInventoryRepository`; `classes/Notification/NotificationOperationalInventoryRepository.php` | `inventory(int $limit, DeliveryClock $clock): NotificationOperationalInventory`. |
+| `final FilesystemNotificationOperationalInventoryRepository`; `classes/Notification/FilesystemNotificationOperationalInventoryRepository.php` | `__construct(string $userDataRoot)` and the exact interface method. Sole new filesystem reader; no write-capable dependency. |
+| `final NotificationOperationsController`; `classes/Admin/NotificationOperationsController.php` | `__construct(Grav $grav, Config $config)`; `index(ServerRequestInterface $request): ResponseInterface`. Requires API access and operations ACL before data location; GET only. |
+| `final NotificationStatusCommand`; `cli/NotificationStatusCommand.php` | Protected `configure(): void`, `serve(): int`; inherited public API only. |
+| `final GoosializeLeadsPlugin`; `goosialize-leads.php` | Adds subscription and public `onSchedulerInitialized(Event $event): void`, plus one authenticated route/sidebar/page provider. |
+
+Direct/reflection tests require exact APIs and interface use. There is no dynamic detection, `method_exists()` fallback, concrete repository bypass, `fromArray()` transition, generic mutation result, free result text, scheduler adapter alternative, or duplicated worker/state machine.
+
+Value-object construction rejects any unknown key/value, inconsistent flag/state matrix, bound, ordering or map invariant with redacted `InvalidArgumentException('operational_inventory_invalid')`. The filesystem repository throws only redacted `RuntimeException` codes from the exact inventory-code list; CLI/controller map them without exposing exception text. No inventory API returns or accepts a mutable runtime state object.
+
+### Exact future manifest and tests
+
+New files (9):
+
+- `admin/blueprints/goosialize-leads-notification-operations.yaml` — packaged native resource table.
+- `classes/Admin/NotificationOperationsController.php` — packaged controller, one type.
+- `classes/Notification/FilesystemNotificationOperationalInventoryRepository.php` — packaged reader, one type.
+- `classes/Notification/NotificationOperationalInventory.php` — packaged collection, one type.
+- `classes/Notification/NotificationOperationalInventoryRepository.php` — packaged interface, one type.
+- `classes/Notification/NotificationOperationalItem.php` — packaged item, one type.
+- `cli/NotificationStatusCommand.php` — packaged command, one type.
+- `tests/integration/phase-5c2-scheduling-visibility.sh` — development-only integration/package regression.
+- `tests/unit/phase-5c2-scheduling-visibility.php` — development-only synthetic direct suite.
+
+Modified files (19):
+
+- `CHANGELOG.md`, `README.md`, `blueprints.yaml`, `goosialize-leads.php`, `goosialize-leads.yaml`, `packaging/package-files.txt`, `permissions.yaml`, `docs/OFFICIAL_VERIFICATION_LOG.md`.
+- `tests/integration/clean-grav-plugin-load.sh`, `tests/integration/installable-plugin-package.sh`, `tests/integration/phase-2d-entry-points.sh`, `tests/integration/phase-3b-secure-storage.sh`, `tests/integration/phase-3c-grav-forms.sh`, `tests/integration/phase-3c2-public-json-api.sh`, `tests/integration/phase-4a1-bounded-admin2-lead-index.sh`, `tests/integration/phase-4c1-admin2-csv-export.sh`, `tests/integration/phase-5a-notification-outbox.sh`, `tests/integration/phase-5b-notification-delivery.sh`, `tests/integration/phase-5c1-delivery-state-retry.sh`.
+
+Counts are 9 new, 19 modified, 28 total. Seven packaged additions grow package/install 75→82. Six PHP types grow reflection 62→68. Unit files grow 9→10; integration files 11→12. Commands are exactly `deliver-notifications`, `reconcile-notification`, `notification-status`; scheduler jobs exactly `goosialize-leads-notification-delivery`; one permission is added; four configuration keys are added.
+
+Synthetic roots, fake clock, fake transport and fake scheduler-event fixtures prove dependency/type detection, enabled/disabled/invalid/idempotent registration, identifier/cron/argv/foreground/timeout, bounds/overlap, retry boundary, uncertain/reconciliation exclusion, classification/precedence, 10,000/10,001 limits, ordering, malformed/conflict/movement, symlink/mode/identity, zero writes, CLI/JSON/controller/ACL, native Admin2, redaction, and every Phase 2–5C.1 regression. Tests invoke no real transport or network.
+
+Exact markers are `PASS_PHASE_5C2_SCHEDULER_SOURCE`, `PASS_PHASE_5C2_SCHEDULER_REGISTRATION`, `PASS_PHASE_5C2_SCHEDULER_BOUNDS`, `PASS_PHASE_5C2_SCHEDULER_OVERLAP`, `PASS_PHASE_5C2_INVENTORY_CLASSIFICATION`, `PASS_PHASE_5C2_INVENTORY_SECURITY`, `PASS_PHASE_5C2_INVENTORY_BOUNDS`, `PASS_PHASE_5C2_INVENTORY_CONCURRENCY`, `PASS_PHASE_5C2_CLI_STATUS`, `PASS_PHASE_5C2_ADMIN2_NATIVE`, `PASS_PHASE_5C2_PERMISSION_SEPARATION`, `PASS_PHASE_5C2_REDACTION`, `PASS_PHASE_5C2_NO_REAL_DELIVERY`, `PASS_PHASE_5C2_REGRESSIONS`, `PASS_PHASE_5C2_PACKAGE`.
+
+Two independent archives must match, offline GPM installation must yield 82 files, all 68 types must load/reflect, and command/job/config/permission lists must be exact. Phase 5C.1 baseline remains `f80f2dcd745a82d5a6b36c2bb10d984caa3eb98b0161092e358676e3fd10922f`; documentation-only contract edits change no package input and must reproduce it before commit.

@@ -66,7 +66,8 @@
 - Phase 5A owns only durable immutable `lead.accepted` outbox-event creation after successful Lead persistence. It performs no delivery or network operation.
 - Phase 5B owns one manually invoked, bounded, single-attempt CLI delivery worker using explicit at-least-once semantics. It has no scheduler, daemon, automatic retry or capture-time delivery.
 - Phase 5C.1 owns separate durable delivery state, bounded manual retries, deterministic backoff, operator-only uncertain-delivery reconciliation, immutable dead-letter movement, concurrency and crash recovery. It never claims exactly-once delivery.
-- Phase 5C.2 owns automatic scheduling and read-only operational visibility. Grav 2.0.12 has a source-proven core scheduler, but integration, configuration, locking and operational presentation remain pending a separate contract; Phase 5C.1 has no scheduler dependency.
+- Phase 5C.2 is contract-complete: one implementation branch uses Grav 2.0.12 core `onSchedulerInitialized` plus a bounded foreground process job invoking the existing delivery command, while CLI and native Admin2 expose one secure read-only operational inventory. It adds no optional scheduler plugin, global correctness lock, polling, automatic reconciliation or uncertain retry. Contract branch: `docs/phase-5c2-scheduling-visibility-contract`; implementation branch: `feat/phase-5c2-scheduling-visibility`; future subject: `feat: add scheduled delivery and operational visibility`.
+- The exact future manifest is 9 new plus 19 modified paths, 28 total. Package/install become 82, runtime/command types 68, unit tests 10 and integration tests 12. Scheduling and visibility remain one checkpoint because they share one closed configuration/ACL/inventory oracle while unit and integration suites preserve test isolation.
 - Phase 4A.1 and Phase 4C.1 remain complete; Phase 4B.1 and Phase 4B.2 remain `BLOCKED_BY_ADMIN2_2_0_15`.
 
 ## Phase 6: Permissions and security hardening
