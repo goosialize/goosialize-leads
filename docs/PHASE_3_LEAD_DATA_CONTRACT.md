@@ -430,3 +430,13 @@ Canonical JSON key order is `schema_version`, `event_id`, `event_type`, `lead_id
 | 5 `created_at` | Canonical immutable primary-record `created_at`; UTC string `Y-m-d\TH:i:s.u\Z` | Exactly 27 ASCII characters; never null | Internal event time; future delivery may order or audit with it. |
 
 The primary Lead and Phase 3B sidecar schemas remain byte-identical. Capture responses remain exactly unchanged and never expose notification state.
+
+## Phase 5B notification-delivery projection
+
+Phase 5B never changes the immutable `lead.accepted` event or primary Lead schema. A delivery message is a transient UTF-8 plain-text projection of the referenced canonical Lead. Its subject is exactly `New Lead ` followed by the canonical 32-character lowercase hexadecimal Lead ID: 41 ASCII bytes, no CR/LF, null or alternate form.
+
+The body uses LF line endings, ends in exactly one LF, and contains these labels in this order: `Lead ID`, `Created (UTC)`, `Name`, `Email`, `Phone`, `Company`, `Source`, `Form`, `Message`. Each scalar line is `<label>: <value>\n`; null or empty is `-`. Message CRLF/CR normalizes to LF and every continuation line is prefixed by two ASCII spaces. Tab becomes one space; remaining C0/C1 controls and DEL are rejected. Values remain NFC UTF-8 and are never interpreted as Twig or headers.
+
+Maximum normalized values are: Lead ID 32 bytes, timestamp 27, name 256 UTF-8 bytes, email 320 ASCII bytes, phone 64 UTF-8 bytes, company 256 UTF-8 bytes, source 64 ASCII bytes, form 64 ASCII bytes and message 10,000 UTF-8 bytes. Subject maximum is 41 bytes and body maximum is 12,288 bytes; equality is accepted and one byte over fails with `message_invalid`. The message excludes consent, locale, campaign, resource/source paths, idempotency/HMAC data, request metadata, credentials and filesystem paths.
+
+Successful archival copies the original event bytes unchanged. Sent archives are not delivery metadata and contain no new field; Phase 5B creates no retry count, delivery timestamp, provider identifier or mutable status.

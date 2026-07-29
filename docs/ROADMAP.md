@@ -64,8 +64,8 @@
 - Prevent direct-path bypasses, replay abuse, and information leakage.
 - Document configuration and failure behavior.
 - Phase 5A owns only durable immutable `lead.accepted` outbox-event creation after successful Lead persistence. It performs no delivery or network operation.
-- Phase 5B owns notification delivery adapters and transport readiness under a separate contract.
-- Phase 5C owns retry scheduling, mutable delivery metadata, dead-letter handling and operational visibility under a separate contract.
+- Phase 5B owns one manually invoked, bounded, single-attempt CLI delivery worker using explicit at-least-once semantics. It has no scheduler, daemon, automatic retry or capture-time delivery.
+- Phase 5C owns scheduling, retry metadata/backoff, uncertain-delivery reconciliation, dead-letter handling and operational visibility under a separate contract.
 - Phase 4A.1 and Phase 4C.1 remain complete; Phase 4B.1 and Phase 4B.2 remain `BLOCKED_BY_ADMIN2_2_0_15`.
 
 ## Phase 6: Permissions and security hardening
