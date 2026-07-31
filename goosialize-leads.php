@@ -12,7 +12,9 @@ use Grav\Framework\Acl\PermissionsReader;
 use Grav\Plugin\GoosializeLeads\Admin\LeadsIndexController;
 use Grav\Plugin\GoosializeLeads\Admin\LeadsCsvExportController;
 use Grav\Plugin\GoosializeLeads\Admin\NotificationOperationsController;
+use Grav\Plugin\GoosializeLeads\Application\LeadCaptureRuntimeFactory;
 use Grav\Plugin\GoosializeLeads\Application\LeadCaptureService;
+use Grav\Plugin\GoosializeLeads\Integration\GoosializeLeadsCaptureCapabilityV1;
 use Grav\Plugin\GoosializeLeads\Application\LeadPersistenceCoordinator;
 use Grav\Plugin\GoosializeLeads\Http\FormsLeadCaptureAdapter;
 use Grav\Plugin\GoosializeLeads\Http\ApiResponseMapper;
@@ -40,6 +42,7 @@ final class GoosializeLeadsPlugin extends Plugin
     public static function getSubscribedEvents(): array
     {
         return [
+            'onPluginsInitialized' => ['onPluginsInitialized', 0],
             PermissionsRegisterEvent::class => ['onRegisterPermissions', 1000],
             'onApiRegisterRoutes' => ['onApiRegisterRoutes', 0],
             'onApiSidebarItems' => ['onApiSidebarItems', 0],
@@ -50,6 +53,72 @@ final class GoosializeLeadsPlugin extends Plugin
             'onFormProcessed' => ['onFormProcessed', 0],
             'onSchedulerInitialized' => ['onSchedulerInitialized', 0],
         ];
+    }
+
+    public function onPluginsInitialized(): void
+    {
+        $serviceKey = 'goosialize-leads.public-capture.v1';
+
+        if (isset($this->grav[$serviceKey])) {
+            if (isset($this->grav['log'])) {
+                $this->grav['log']->warning(
+                    'public_capture_capability_service_collision'
+                );
+            }
+
+            return;
+        }
+
+        $service = null;
+
+        try {
+            $config = $this->config();
+            $idempotency = $config['idempotency'] ?? null;
+            $outbox = $config['notifications']['outbox'] ?? null;
+
+            if (!is_array($idempotency)) {
+                throw new \InvalidArgumentException(
+                    'Invalid idempotency configuration.'
+                );
+            }
+
+            if ($outbox !== null && !is_array($outbox)) {
+                throw new \InvalidArgumentException(
+                    'Invalid outbox configuration.'
+                );
+            }
+
+            $root = $this->grav['locator']->findResource(
+                'user-data://',
+                true
+            );
+
+            if (!is_string($root) || $root === '') {
+                throw new \InvalidArgumentException(
+                    'Invalid storage root.'
+                );
+            }
+
+            $logger = isset($this->grav['log'])
+                ? fn (string $code): mixed => $this->grav['log']->warning($code)
+                : null;
+
+            $service = LeadCaptureRuntimeFactory::create(
+                $root,
+                $idempotency,
+                $outbox,
+                $logger
+            );
+        } catch (\Throwable) {
+            if (isset($this->grav['log'])) {
+                $this->grav['log']->warning(
+                    'public_capture_capability_unavailable'
+                );
+            }
+        }
+
+        $this->grav[$serviceKey] =
+            new GoosializeLeadsCaptureCapabilityV1($service);
     }
 
     public function onApiRegisterRoutes(Event $event): void
@@ -202,47 +271,51 @@ final class GoosializeLeadsPlugin extends Plugin
             if (!is_array($forms) || !is_array($idempotency)) {
                 throw new \InvalidArgumentException('Invalid plugin configuration.');
             }
-            $versions = [];
-            foreach (($idempotency['keys'] ?? []) as $version => $key) {
-                if (is_int($version) || (is_string($version) && ctype_digit($version))) {
-                    $versions[(int) $version] = $key;
-                } else {
-                    throw new \InvalidArgumentException('Invalid plugin configuration.');
-                }
-            }
-            $activeVersion = $idempotency['active_key_version'] ?? null;
-            if (is_string($activeVersion) && ctype_digit($activeVersion)) {
-                $activeVersion = (int) $activeVersion;
-            }
-            $root = $this->grav['locator']->findResource('user-data://', true);
+            $root = $this->grav['locator']->findResource(
+                'user-data://',
+                true
+            );
+
             if (!is_string($root) || $root === '') {
-                throw new \InvalidArgumentException('Invalid storage root.');
+                throw new \InvalidArgumentException(
+                    'Invalid storage root.'
+                );
             }
 
-            $entropy = static fn (int $length): string => random_bytes($length);
-            $clock = static fn (): \DateTimeInterface => new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-            $keyRing = new IdempotencyKeyRing($activeVersion, $versions);
-            $repository = new FilesystemLeadRepository($root, $entropy, $keyRing);
-            $normalizer = new LeadNormalizer();
-            $validator = new LeadInputValidator($normalizer);
-            $coordinator = new LeadPersistenceCoordinator($validator, $repository, $keyRing);
             $outboxConfig = $config['notifications']['outbox'] ?? null;
+
+            if ($outboxConfig !== null && !is_array($outboxConfig)) {
+                throw new \InvalidArgumentException(
+                    'Invalid outbox configuration.'
+                );
+            }
+
             $logger = isset($this->grav['log'])
                 ? fn (string $code): mixed => $this->grav['log']->warning($code)
                 : null;
-            $outbox = null;
-            if (is_array($outboxConfig)
-                && ($outboxConfig['enabled'] ?? null) === true
-                && ($outboxConfig['max_event_bytes'] ?? null) === 512
-            ) {
-                try {
-                    $outbox = new FilesystemNotificationOutbox($root, $entropy);
-                } catch (\Throwable) {
-                    if ($logger !== null) $logger('outbox_unavailable');
-                }
-            }
-            $service = new LeadCaptureService($coordinator, $keyRing, $outbox, $logger);
-            $adapter = new FormsLeadCaptureAdapter($service, $forms, $entropy, $clock);
+
+            $service = LeadCaptureRuntimeFactory::create(
+                $root,
+                $idempotency,
+                $outboxConfig,
+                $logger
+            );
+
+            $entropy = static fn (int $length): string =>
+                random_bytes($length);
+
+            $clock = static fn (): \DateTimeInterface =>
+                new \DateTimeImmutable(
+                    'now',
+                    new \DateTimeZone('UTC')
+                );
+
+            $adapter = new FormsLeadCaptureAdapter(
+                $service,
+                $forms,
+                $entropy,
+                $clock
+            );
             $adapter->process($event);
         } catch (\Throwable) {
             $form->setMessage('PLUGIN_GOOSIALIZE_LEADS.FORMS_CAPTURE_UNAVAILABLE');
