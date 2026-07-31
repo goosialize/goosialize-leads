@@ -72,6 +72,7 @@ if (($composer["require"]["ext-intl"] ?? null) !== "*") throw new RuntimeExcepti
 $enabled = (bool) $grav["config"]->get("plugins.goosialize-leads.enabled");
 if ($enabled !== $expectedEnabled) throw new RuntimeException("Merged enabled state mismatch");
 $expectedSubscriptions = [
+    "onPluginsInitialized" => ["onPluginsInitialized", 0],
     "Grav\\Events\\PermissionsRegisterEvent" => ["onRegisterPermissions", 1000],
     "onApiRegisterRoutes" => ["onApiRegisterRoutes", 0],
     "onApiSidebarItems" => ["onApiSidebarItems", 0],
@@ -108,6 +109,7 @@ if ($expectedEnabled) {
         "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadsIndexController",
         "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureCommand",
         "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureResult",
+        "Grav\\Plugin\\GoosializeLeads\\Application\\LeadCaptureRuntimeFactory",
         "Grav\\Plugin\\GoosializeLeads\\Application\\LeadCaptureService",
         "Grav\\Plugin\\GoosializeLeads\\Application\\LeadPersistenceCoordinator",
         "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadIdGenerator",
@@ -123,6 +125,10 @@ if ($expectedEnabled) {
         "Grav\\Plugin\\GoosializeLeads\\Http\\PublicLeadApiController",
         "Grav\\Plugin\\GoosializeLeads\\Http\\RateLimitResult",
         "Grav\\Plugin\\GoosializeLeads\\Http\\RawJsonParser",
+        "Grav\\Plugin\\GoosializeLeads\\Integration\\GoosializeLeadsCaptureCapabilityV1",
+        "Grav\\Plugin\\GoosializeLeads\\Integration\\LeadCaptureContextV1",
+        "Grav\\Plugin\\GoosializeLeads\\Integration\\LeadCaptureRequestV1",
+        "Grav\\Plugin\\GoosializeLeads\\Integration\\LeadCaptureResultV1",
         "Grav\\Plugin\\GoosializeLeads\\Notification\\FilesystemNotificationOutbox",
         "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationEnqueueResult",
         "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationEvent",
@@ -140,6 +146,7 @@ if ($expectedEnabled) {
     foreach ($classes as $class) {
         if (!class_exists($class) || !(new ReflectionClass($class))->isFinal()) throw new RuntimeException("Phase 3A class mismatch: " . $class);
     }
+    if (!interface_exists("Grav\\Plugin\\GoosializeLeads\\Integration\\LeadCaptureCapabilityV1")) throw new RuntimeException("Phase 8 public capability interface missing");
     if (!interface_exists("Grav\\Plugin\\GoosializeLeads\\Storage\\LeadRepository")) throw new RuntimeException("Phase 3B repository interface missing");
     if (!interface_exists("Grav\\Plugin\\GoosializeLeads\\Storage\\LeadReadRepository")) throw new RuntimeException("Phase 4A.1 read repository interface missing");
     if (!interface_exists("Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationOutbox")) throw new RuntimeException("Phase 5A outbox interface missing");

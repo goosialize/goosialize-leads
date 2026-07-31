@@ -123,10 +123,10 @@ foreach (['invalid_submission_id', 'idempotency_conflict', 'storage_unavailable'
 
 $apis = [
     CaptureResult::class => ['success', 'failure', 'isSuccess', 'record', 'replayed', 'code', 'errors', 'errorsAsArray', 'toArray'],
-    LeadCaptureService::class => ['__construct', 'capture', 'captureApi'],
+    LeadCaptureService::class => ['__construct', 'capture', 'captureApi', 'capturePublicCapability'],
     FormsLeadCaptureAdapter::class => ['__construct', 'process'],
     IdempotencyKeyRing::class => [
-        '__construct', 'enabled', 'activeVersion', 'deriveFormsIdempotencyKey', 'deriveApiIdempotencyKey',
+        '__construct', 'enabled', 'activeVersion', 'deriveFormsIdempotencyKey', 'deriveApiIdempotencyKey', 'derivePublicCapabilityIdempotencyKey',
         'keyDigest', 'canonicalPayload', 'payloadDigest', 'verify',
     ],
 ];

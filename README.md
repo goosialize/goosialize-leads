@@ -127,6 +127,7 @@ The first release is planned to provide:
 scripts/build-plugin-package.sh /tmp/goosialize-leads-package
 GRAV_TEST_IMAGE=lscr.io/linuxserver/grav:2.0.12 tests/integration/installable-plugin-package.sh
 GRAV_TEST_IMAGE=lscr.io/linuxserver/grav:2.0.12 tests/integration/phase-2d-entry-points.sh
+GRAV_TEST_IMAGE=lscr.io/linuxserver/grav:2.0.12 tests/integration/phase-8-public-capture-capability.sh
 ```
 
 The manifest is `packaging/package-files.txt`; the complete isolation and safety contract is documented in `docs/INSTALLABLE_PLUGIN_PACKAGE_TEST.md`. Build output must remain outside this repository.
@@ -153,6 +154,16 @@ Compatible local Grav plugins detect the exact
 published request, trusted-context and result types over the same validation,
 idempotency and secure persistence pipeline as supported capture entry points.
 
-The runtime capability is not exposed at this documentation checkpoint.
-Consumers must treat a missing or incompatible capability as unavailable and
-must not access internal repositories, storage services or controllers.
+The version 1 runtime capability is registered under
+`goosialize-leads.public-capture.v1`. Consumers must detect the published
+interface, capability identifier and exact contract version before capture.
+
+The capability reuses the same canonical validation, idempotency, persistence
+and optional post-persistence notification pipeline as the supported Forms and
+public JSON entry points. It returns only the published outcomes and validation
+error map; it does not expose Lead IDs, storage paths, repositories,
+notification state or internal exceptions.
+
+Consumers must treat a missing, unavailable or incompatible capability as a
+non-fatal integration state and must not access internal repositories, storage
+services or controllers.

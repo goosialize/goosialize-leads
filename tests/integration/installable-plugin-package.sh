@@ -66,6 +66,7 @@ required = [
     "classes/Admin/NotificationOperationsController.php",
     "classes/Application/CaptureCommand.php",
     "classes/Application/CaptureResult.php",
+    "classes/Application/LeadCaptureRuntimeFactory.php",
     "classes/Application/LeadCaptureService.php",
     "classes/Application/LeadPersistenceCoordinator.php",
     "classes/Domain/LeadIdGenerator.php",
@@ -81,6 +82,11 @@ required = [
     "classes/Http/PublicLeadApiController.php",
     "classes/Http/RateLimitResult.php",
     "classes/Http/RawJsonParser.php",
+    "classes/Integration/GoosializeLeadsCaptureCapabilityV1.php",
+    "classes/Integration/LeadCaptureCapabilityV1.php",
+    "classes/Integration/LeadCaptureContextV1.php",
+    "classes/Integration/LeadCaptureRequestV1.php",
+    "classes/Integration/LeadCaptureResultV1.php",
     "classes/Notification/ClassifiedNotificationTransport.php",
     "classes/Notification/DeadLetterRepository.php",
     "classes/Notification/DeliveryClock.php",
@@ -132,10 +138,10 @@ required = [
     "permissions.yaml",
     "templates/phase-2d-skeleton.html.twig",
 ]
-if files != sorted(required): raise SystemExit("manifest does not match the independent 82-file allowlist")
+if files != sorted(required): raise SystemExit("manifest does not match the independent 88-file allowlist")
 expected = {root + "/", root + "/languages/"} | {f"{root}/{name}" for name in files}
 expected |= {root + "/admin-next/", root + "/admin-next/pages/", root + "/templates/"}
-expected |= {root + "/admin/", root + "/admin/blueprints/", root + "/classes/", root + "/classes/Admin/", root + "/classes/Application/", root + "/classes/Domain/", root + "/classes/Http/", root + "/classes/Notification/", root + "/classes/Security/", root + "/classes/Storage/", root + "/classes/Validation/", root + "/cli/"}
+expected |= {root + "/admin/", root + "/admin/blueprints/", root + "/classes/", root + "/classes/Admin/", root + "/classes/Application/", root + "/classes/Domain/", root + "/classes/Http/", root + "/classes/Integration/", root + "/classes/Notification/", root + "/classes/Security/", root + "/classes/Storage/", root + "/classes/Validation/", root + "/cli/"}
 with zipfile.ZipFile(archive_path) as archive:
     infos = archive.infolist(); names = [item.filename for item in infos]
     if len(names) != len(set(names)): raise SystemExit("duplicate ZIP entry")
@@ -154,7 +160,7 @@ PY
 fixture="${TEMP_ROOT}/fixture"
 mkdir -p "${fixture}/packaging" "${fixture}/scripts" "${fixture}/languages" \
     "${fixture}/admin-next/pages" "${fixture}/admin/blueprints" "${fixture}/templates" \
-    "${fixture}/classes/Admin" "${fixture}/classes/Application" "${fixture}/classes/Domain" "${fixture}/classes/Http" "${fixture}/classes/Notification" "${fixture}/classes/Security" \
+    "${fixture}/classes/Admin" "${fixture}/classes/Application" "${fixture}/classes/Domain" "${fixture}/classes/Http" "${fixture}/classes/Integration" "${fixture}/classes/Notification" "${fixture}/classes/Security" \
     "${fixture}/classes/Storage" "${fixture}/classes/Validation" "${fixture}/cli"
 cp "${REPOSITORY_ROOT}/packaging/package-files.txt" "${fixture}/packaging/"
 cp "${REPOSITORY_ROOT}/scripts/build-plugin-package.sh" "${fixture}/scripts/"
@@ -194,7 +200,7 @@ for nested in "$root/goosialize-leads" "$root/grav-plugin-goosialize-leads"; do
 done
 test ! -d user/themes/goosialize
 test -f user/plugins/api/api.php; test -f user/plugins/admin2/admin2.php
-test "$(find "$root" -type f | wc -l)" -eq 82
+test "$(find "$root" -type f | wc -l)" -eq 88
 test -f "$root/templates/phase-2d-skeleton.html.twig"
 test -f "$root/admin-next/pages/goosialize-leads.js"
 php -r '\''
@@ -240,7 +246,7 @@ $plugin=Grav\Common\Plugins::getPlugin("goosialize-leads");
 if (!$plugin || get_class($plugin)!=="Grav\\Plugin\\GoosializeLeadsPlugin") throw new RuntimeException("plugin discovery failed");
 if ($grav["config"]->get("plugins.goosialize-leads.enabled")!==true) throw new RuntimeException("plugin disabled");
 if (Grav\Plugin\GoosializeLeadsPlugin::getSubscribedEvents()!==[
-    "Grav\\Events\\PermissionsRegisterEvent"=>["onRegisterPermissions",1000],
+    "onPluginsInitialized"=>["onPluginsInitialized",0],"Grav\\Events\\PermissionsRegisterEvent"=>["onRegisterPermissions",1000],
     "onApiRegisterRoutes"=>["onApiRegisterRoutes",0],
     "onApiSidebarItems"=>["onApiSidebarItems",0],
     "onApiPluginPageInfo"=>["onApiPluginPageInfo",0],
@@ -266,6 +272,7 @@ $classes=[
     "Grav\\Plugin\\GoosializeLeads\\Admin\\NotificationOperationsController",
     "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureCommand",
     "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureResult",
+    "Grav\\Plugin\\GoosializeLeads\\Application\\LeadCaptureRuntimeFactory",
     "Grav\\Plugin\\GoosializeLeads\\Application\\LeadCaptureService",
     "Grav\\Plugin\\GoosializeLeads\\Application\\LeadPersistenceCoordinator",
     "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadIdGenerator",
@@ -281,6 +288,10 @@ $classes=[
     "Grav\\Plugin\\GoosializeLeads\\Http\\PublicLeadApiController",
     "Grav\\Plugin\\GoosializeLeads\\Http\\RateLimitResult",
     "Grav\\Plugin\\GoosializeLeads\\Http\\RawJsonParser",
+    "Grav\\Plugin\\GoosializeLeads\\Integration\\GoosializeLeadsCaptureCapabilityV1",
+    "Grav\\Plugin\\GoosializeLeads\\Integration\\LeadCaptureContextV1",
+    "Grav\\Plugin\\GoosializeLeads\\Integration\\LeadCaptureRequestV1",
+    "Grav\\Plugin\\GoosializeLeads\\Integration\\LeadCaptureResultV1",
     "Grav\\Plugin\\GoosializeLeads\\Notification\\DeliveryReconciliationService",
     "Grav\\Plugin\\GoosializeLeads\\Notification\\DeliveryRetryPolicy",
     "Grav\\Plugin\\GoosializeLeads\\Notification\\DeliveryState",
@@ -322,6 +333,7 @@ if(!interface_exists("Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationO
 if(!interface_exists("Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationTransport"))throw new RuntimeException("Phase 5B transport interface missing");
 if(!interface_exists("Grav\\Plugin\\GoosializeLeads\\Notification\\PendingNotificationRepository"))throw new RuntimeException("Phase 5B pending interface missing");
 $interfaces=[
+    "Grav\\Plugin\\GoosializeLeads\\Integration\\LeadCaptureCapabilityV1",
     "Grav\\Plugin\\GoosializeLeads\\Storage\\LeadRepository",
     "Grav\\Plugin\\GoosializeLeads\\Storage\\LeadReadRepository",
     "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationOutbox",
@@ -334,7 +346,7 @@ $interfaces=[
     "Grav\\Plugin\\GoosializeLeads\\Notification\\DeliveryStateRepository",
     "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationOperationalInventoryRepository",
 ];
-if(count($classes)!==57 || count($interfaces)!==11)throw new RuntimeException("Phase 5C.2 68-type reflection count mismatch");
+if(count($classes)!==62 || count($interfaces)!==12)throw new RuntimeException("Phase 8 74-type reflection count mismatch");
 $command=new Grav\Plugin\Console\DeliverNotificationsCommand();
 if($command->getName()!=="deliver-notifications")throw new RuntimeException("Phase 5B command name mismatch");
 $reconcile=new Grav\Plugin\Console\ReconcileNotificationCommand();

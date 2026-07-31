@@ -43,7 +43,7 @@ define(\"GRAV_CLI\",true); define(\"GRAV_REQUEST_TIME\",microtime(true));
 if (!\$plugin) throw new RuntimeException(\"plugin discovery failed\");
 \$plugin->autoload();
 if (!class_exists(\"Grav\\\\Plugin\\\\GoosializeLeads\\\\Http\\\\FormsLeadCaptureAdapter\")) throw new RuntimeException(\"adapter load failed\");
-\$expected=[\"Grav\\\\Events\\\\PermissionsRegisterEvent\"=>[\"onRegisterPermissions\",1000],\"onApiRegisterRoutes\"=>[\"onApiRegisterRoutes\",0],\"onApiSidebarItems\"=>[\"onApiSidebarItems\",0],\"onApiPluginPageInfo\"=>[\"onApiPluginPageInfo\",0],\"onApiCollectPublicRoutes\"=>[\"onApiCollectPublicRoutes\",0],\"onRequestHandlerInit\"=>[\"onRequestHandlerInit\",98000],\"onTwigTemplatePaths\"=>[\"onTwigTemplatePaths\",0],\"onFormProcessed\"=>[\"onFormProcessed\",0],\"onSchedulerInitialized\"=>[\"onSchedulerInitialized\",0]];
+\$expected=[\"onPluginsInitialized\"=>[\"onPluginsInitialized\",0],\"Grav\\\\Events\\\\PermissionsRegisterEvent\"=>[\"onRegisterPermissions\",1000],\"onApiRegisterRoutes\"=>[\"onApiRegisterRoutes\",0],\"onApiSidebarItems\"=>[\"onApiSidebarItems\",0],\"onApiPluginPageInfo\"=>[\"onApiPluginPageInfo\",0],\"onApiCollectPublicRoutes\"=>[\"onApiCollectPublicRoutes\",0],\"onRequestHandlerInit\"=>[\"onRequestHandlerInit\",98000],\"onTwigTemplatePaths\"=>[\"onTwigTemplatePaths\",0],\"onFormProcessed\"=>[\"onFormProcessed\",0],\"onSchedulerInitialized\"=>[\"onSchedulerInitialized\",0]];
 if (\$plugin::getSubscribedEvents()!==\$expected) throw new RuntimeException(\"subscription mismatch\");
 '
 "

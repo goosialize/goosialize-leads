@@ -157,7 +157,7 @@ foreach ($classes as $class) check((new ReflectionClass($class))->isFinal(), 'cl
 check((new ReflectionClass(LeadRepository::class))->isInterface(), 'repository is not interface');
 $methods = [
     LeadPersistenceCoordinator::class => ['__construct', 'persist'],
-    IdempotencyKeyRing::class => ['__construct', 'enabled', 'activeVersion', 'deriveFormsIdempotencyKey', 'deriveApiIdempotencyKey', 'keyDigest', 'canonicalPayload', 'payloadDigest', 'verify'],
+    IdempotencyKeyRing::class => ['__construct', 'enabled', 'activeVersion', 'deriveFormsIdempotencyKey', 'deriveApiIdempotencyKey', 'derivePublicCapabilityIdempotencyKey', 'keyDigest', 'canonicalPayload', 'payloadDigest', 'verify'],
     \Grav\Plugin\GoosializeLeads\Storage\FilesystemLeadRepository::class => ['__construct', 'persist'],
     PersistenceRequest::class => ['create', 'record', 'recordBytes', 'keyDigest', 'payloadBytes', 'hasIdempotency'],
     PersistenceResult::class => ['created', 'replayed', 'idCollision', 'failure', 'status', 'record', 'code', 'errors', 'errorsAsArray', 'isSuccess', 'toArray'],

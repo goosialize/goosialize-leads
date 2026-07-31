@@ -15,6 +15,7 @@ classes/Admin/LeadsIndexController.php
 classes/Admin/NotificationOperationsController.php
 classes/Application/CaptureCommand.php
 classes/Application/CaptureResult.php
+classes/Application/LeadCaptureRuntimeFactory.php
 classes/Application/LeadCaptureService.php
 classes/Application/LeadPersistenceCoordinator.php
 classes/Domain/LeadIdGenerator.php
@@ -30,6 +31,11 @@ classes/Http/PublicApiRawBodyMiddleware.php
 classes/Http/PublicLeadApiController.php
 classes/Http/RateLimitResult.php
 classes/Http/RawJsonParser.php
+classes/Integration/GoosializeLeadsCaptureCapabilityV1.php
+classes/Integration/LeadCaptureCapabilityV1.php
+classes/Integration/LeadCaptureContextV1.php
+classes/Integration/LeadCaptureRequestV1.php
+classes/Integration/LeadCaptureResultV1.php
 classes/Notification/ClassifiedNotificationTransport.php
 classes/Notification/DeadLetterRepository.php
 classes/Notification/DeliveryClock.php

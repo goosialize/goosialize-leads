@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- Add the version 1 plugin-to-plugin public Lead capture capability under
+  `goosialize-leads.public-capture.v1`.
+- Add published request, trusted-context and result DTOs with stable capability
+  detection, exact contract versioning and a no-throwable boundary.
+- Reuse the shared validation, idempotency, secure persistence and optional
+  post-persistence notification runtime across Forms, public JSON and
+  plugin-to-plugin capture.
+- Add collision-safe Grav container registration, unavailable fallback,
+  deterministic package coverage and external-consumer contract tests.
+
 - Define the normative version 1 public plugin-to-plugin Lead capture contract,
   including capability detection, public DTOs, trusted context, result outcomes,
   compatibility rules, consumer obligations, and external contract-test
