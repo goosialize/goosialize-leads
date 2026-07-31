@@ -1,5 +1,10 @@
 # Changelog
 
+- Define the normative version 1 public plugin-to-plugin Lead capture contract,
+  including capability detection, public DTOs, trusted context, result outcomes,
+  compatibility rules, consumer obligations, and external contract-test
+  requirements.
+
 - Add optional bounded core-scheduler delivery registration and read-only notification operational inventory surfaces.
 
 ## Unreleased

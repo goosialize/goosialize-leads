@@ -115,6 +115,7 @@ The first release is planned to provide:
     ├── OFFICIAL_VERIFICATION_LOG.md
     ├── PHASE_2D_ENTRY_POINT_TEST.md
     ├── PROJECT_SCOPE.md
+    ├── PUBLIC_INTEGRATION_CONTRACT.md
     ├── REFERENCE_IMPLEMENTATION_AUDIT.md
     ├── REUSE_MATRIX.md
     └── ROADMAP.md
@@ -140,3 +141,18 @@ collection. The index is disabled by default and never changes Lead data.
 ## Public JSON capture
 
 Phase 3C.2 adds an opt-in `POST /api/v1/goosialize-leads/capture` endpoint when the local API plugin is installed and `public_api.enabled` is true. It requires JSON, an exact allowed Origin, a mandatory `Idempotency-Key`, and uses the shared validation and secure persistence pipeline. It is disabled by default.
+
+## Public plugin integration contract
+
+The normative version 1 plugin-to-plugin Lead capture contract is documented
+in `docs/PUBLIC_INTEGRATION_CONTRACT.md`.
+
+Compatible local Grav plugins detect the exact
+`goosialize-leads.capture` capability at contract version `1` through the
+`goosialize-leads.public-capture.v1` container service. The integration uses
+published request, trusted-context and result types over the same validation,
+idempotency and secure persistence pipeline as supported capture entry points.
+
+The runtime capability is not exposed at this documentation checkpoint.
+Consumers must treat a missing or incompatible capability as unavailable and
+must not access internal repositories, storage services or controllers.
