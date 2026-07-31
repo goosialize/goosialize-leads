@@ -61,7 +61,8 @@ observed PHP 8.5.8.
 
 ## Included in v1.0.0
 
-All merged functionality through Phase 5C.2 is `INCLUDED_IN_V1_0_0`:
+All merged functionality through Phase 5C.2 and the Phase 8 public capture
+capability is `INCLUDED_IN_V1_0_0`:
 
 - Grav Forms and public JSON Lead capture through one validation, normalization
   and capture service;
@@ -75,7 +76,12 @@ All merged functionality through Phase 5C.2 is `INCLUDED_IN_V1_0_0`:
 - Grav scheduler registration, bounded scheduled delivery, read-only
   operational inventory, CLI status and a native read-only Admin2 operations
   page; and
-- deterministic package generation and genuine offline GPM installation.
+- deterministic package generation and genuine offline GPM installation; and
+- versioned plugin-to-plugin Lead capture through
+  `goosialize-leads.public-capture.v1`, capability ID
+  `goosialize-leads.capture`, contract version `1`, with the same validation,
+  idempotency, persistence and optional notification pipeline as Forms and
+  public JSON capture.
 
 The source and synthetic suites prove these capabilities. They do not prove a
 real transport send, real scheduler execution or browser rendering.
@@ -86,6 +92,7 @@ real transport send, real scheduler execution or browser rendering.
 |---|---|
 | Phases 0–3C.2 and notification Phase 5A–5C.2 merged functionality | `INCLUDED_IN_V1_0_0` |
 | Phase 4A.1 Lead index and Phase 4C.1 CSV export | `INCLUDED_IN_V1_0_0` |
+| Phase 8 versioned public plugin-to-plugin capture capability | `INCLUDED_IN_V1_0_0` |
 | Phase 6 security closure, Phase 7 acceptance, Phase 8 documentation/package work and Phase 9 release candidate gates | `INCLUDED_IN_V1_0_0` |
 | Phase 4A.2 native Lead detail | `BLOCKED_BY_ADMIN2_2_0_15` |
 | Phase 4B.1 Lead status mutation | `BLOCKED_BY_ADMIN2_2_0_15` |
@@ -113,3 +120,17 @@ creation and publication are prohibited until the checklist records `PASS`
 against the exact candidate commit and package SHA-256. Any source correction
 after acceptance invalidates the affected results and requires those browser
 checks to be repeated.
+
+## Corrected v1.0.0 release baseline
+
+The release candidate is based on main commit
+`247a0ecf3b55b0d1c3cdf3dbfb0f590dd8a7435c`. Before release-documentation
+implementation, that source contains 88 packaged files, 74 reflected
+runtime/command types, 11 unit-test files and 13 integration-test files.
+
+The exact release-readiness target is 107 packaged files, 74 reflected types,
+11 unit-test files and 14 integration-test files. The release changeset is
+21 new plus 18 modified paths, 39 total.
+
+Manual browser acceptance remains a mandatory development-only release gate and
+is still `PENDING`.

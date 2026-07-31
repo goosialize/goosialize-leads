@@ -149,3 +149,37 @@ Only a `PASS` record containing the exact candidate commit and package SHA-256
 permits final release review. Any later source correction invalidates the
 previous acceptance and requires affected checks to be repeated. Tag creation
 and publication remain prohibited while the result is `PENDING` or `FAIL`.
+
+## Phase 8 cumulative release baseline
+
+The authoritative source baseline for the v1.0.0 release candidate is main
+commit `247a0ecf3b55b0d1c3cdf3dbfb0f590dd8a7435c`, after the public
+plugin-to-plugin Lead capture capability was merged and post-merge verified.
+
+The immutable pre-release package evidence for that baseline is:
+
+- archive name `goosialize-leads-0.1.0-dev.zip`;
+- SHA-256
+  `e00c6bf0557f051baf5830c104132f35567f08bb6f47050560ac4730fc6fe883`;
+- 88 package and installed files;
+- 74 reflected runtime/command types;
+- 11 unit-test files; and
+- 13 integration-test files.
+
+The release-readiness implementation adds nineteen packaged documentation
+files and one development-only integration test. It adds no runtime or command
+type and no unit test. Its exact final inventories are therefore:
+
+- 107 package and installed files;
+- 74 reflected runtime/command types;
+- 11 unit-test files;
+- 14 integration-test files; and
+- 39 changed paths, composed of 21 new and 18 modified paths.
+
+The additional modified path beyond the earlier contract is
+`tests/integration/phase-8-public-capture-capability.sh`, whose package-count
+oracle must follow the 107-file release inventory.
+
+All existing version, compatibility, security, deterministic-build,
+manual-browser, annotated-tag and publication invariants remain unchanged.
+The manual-browser result remains `PENDING`.

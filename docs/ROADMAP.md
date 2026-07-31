@@ -186,7 +186,7 @@ Automated tests may not mark an item `PASS`.
 
 ## Closed workflow
 
-The only allowed sequence is: implement and validate the exact 38-path manifest
+The only allowed sequence is: implement and validate the exact 39-path manifest
 unstaged and uncommitted; perform manual browser acceptance against that
 working-tree candidate; record results; correct in-scope defects and invalidate
 and repeat affected browser checks; rerun automated regressions and
@@ -207,3 +207,62 @@ compatibility, full regressions, deterministic package, offline install, manual
 browser acceptance, artifact integrity and clean Git state. It must also record
 `NO` for real send, network access, secrets, real data, remote/push and
 premature tag creation.
+
+# Phase 9 cumulative release-baseline correction after public capture
+
+The v1.0.0 release-readiness contract originally closed against the Phase 5C.2
+baseline. Phase 8 subsequently merged the versioned public plugin-to-plugin
+Lead capture capability into `main` at commit
+`247a0ecf3b55b0d1c3cdf3dbfb0f590dd8a7435c`.
+
+This correction supersedes only the release-readiness baseline and inventory
+figures. It does not modify runtime behavior, package inputs, version metadata,
+release documentation, the manual-browser result, a tag or publication state.
+
+The corrected release baseline is:
+
+- source commit:
+  `247a0ecf3b55b0d1c3cdf3dbfb0f590dd8a7435c`;
+- deterministic package SHA-256:
+  `e00c6bf0557f051baf5830c104132f35567f08bb6f47050560ac4730fc6fe883`;
+- 88 package and installed files;
+- 74 runtime/command types;
+- 11 unit-test files; and
+- 13 integration-test files.
+
+The nineteen required packaged documentation additions remain unchanged.
+Therefore the v1.0.0 release candidate must contain exactly 107 packaged and
+installed files.
+
+The existing release-readiness integration test remains one new
+development-only integration file, producing 14 integration-test files.
+No unit test is added, so the final unit-test count remains 11. Runtime and
+command APIs do not change, so the reflection count remains 74.
+
+The Phase 8 integration regression
+`tests/integration/phase-8-public-capture-capability.sh` must also change its
+package-count oracle from 88 to 107. The corrected implementation manifest is
+therefore exactly:
+
+- 21 new paths;
+- 18 modified paths; and
+- 39 total changed paths.
+
+The eighteenth modified path is
+`tests/integration/phase-8-public-capture-capability.sh`. Every previously
+listed modified path remains required.
+
+The existing local branch `release/v1.0.0-readiness` at
+`305040c8305ac166e31456fc891d3b444e6c6b58` is stale and must not be reused in
+place. After this correction is merged, the release branch must be recreated
+from the then-current `main` while preserving the exact branch name
+`release/v1.0.0-readiness`.
+
+The public capability is included in v1.0.0 with:
+
+- container service key `goosialize-leads.public-capture.v1`;
+- capability ID `goosialize-leads.capture`; and
+- exact contract version `1`.
+
+Manual browser acceptance remains mandatory and `PENDING`. This correction
+does not authorize release, tagging or publication.

@@ -324,9 +324,9 @@ ShellCheck was unavailable in the pinned local environment; this documented exce
 The complete packaged source, commands, native Admin2 definitions, unit tests,
 integration tests and packaging scripts at Phase 5C.2 establish the capability
 inventory and scope recorded in `PROJECT_SCOPE.md`. The immutable checkpoint is
-commit `db34a6008da54ed013ab02950830572e04239018`, package SHA-256
-`04277b3beb650c3869c3619fda2b5182c4e28bdb02c107d279e5dc871f7c01f7`,
-82 package and installed files, 68 runtime/command types, 10 unit files and 12
+commit `247a0ecf3b55b0d1c3cdf3dbfb0f590dd8a7435c`, package SHA-256
+`e00c6bf0557f051baf5830c104132f35567f08bb6f47050560ac4730fc6fe883`,
+88 package and installed files, 74 runtime/command types, 11 unit files and 13
 integration files. This documentation contract changes no package input,
 version, runtime behavior or baseline checksum.
 
@@ -357,21 +357,25 @@ The exact seventeen modified paths are:
 | `packaging/package-files.txt` | Add exactly nineteen sorted documentation paths | Development-only manifest; package/install inventory impact; package test |
 | `scripts/build-plugin-package.sh` | Build exact 1.0.0 filename from matching metadata | Development-only; version/artifact impact; deterministic-build test |
 | `docs/OFFICIAL_VERIFICATION_LOG.md` | Final gate evidence and final checksum | Development-only; documentation/release evidence impact; release test |
-| `tests/integration/clean-grav-plugin-load.sh` | Version/dependency/load and 68-type oracle | Development-only; version/load test impact; no package content |
-| `tests/integration/installable-plugin-package.sh` | 1.0.0 ZIP, 101-file and offline-install oracle | Development-only; version/package/artifact test impact |
-| `tests/integration/phase-2d-entry-points.sh` | Preserve entry-point regressions with 101-file manifest | Development-only; regression/package test impact |
-| `tests/integration/phase-3c2-public-json-api.sh` | Preserve API regressions with 101-file manifest | Development-only; regression/package test impact |
-| `tests/integration/phase-4a1-bounded-admin2-lead-index.sh` | Preserve index regressions with 101-file manifest | Development-only; regression/package test impact |
-| `tests/integration/phase-4c1-admin2-csv-export.sh` | Preserve export regressions with 101-file manifest | Development-only; regression/package test impact |
-| `tests/integration/phase-5a-notification-outbox.sh` | Preserve outbox regressions with 101-file manifest | Development-only; regression/package test impact |
-| `tests/integration/phase-5b-notification-delivery.sh` | Preserve delivery regressions with 101-file manifest | Development-only; regression/package test impact |
-| `tests/integration/phase-5c1-delivery-state-retry.sh` | Preserve state/retry regressions with 101-file manifest | Development-only; regression/package test impact |
-| `tests/integration/phase-5c2-scheduling-visibility.sh` | Preserve scheduling/inventory regressions with 101-file manifest | Development-only; regression/package test impact |
+| `tests/integration/clean-grav-plugin-load.sh` | Version/dependency/load and 74-type oracle | Development-only; version/load test impact; no package content |
+| `tests/integration/installable-plugin-package.sh` | 1.0.0 ZIP, 107-file and offline-install oracle | Development-only; version/package/artifact test impact |
+| `tests/integration/phase-2d-entry-points.sh` | Preserve entry-point regressions with 107-file manifest | Development-only; regression/package test impact |
+| `tests/integration/phase-3c2-public-json-api.sh` | Preserve API regressions with 107-file manifest | Development-only; regression/package test impact |
+| `tests/integration/phase-4a1-bounded-admin2-lead-index.sh` | Preserve index regressions with 107-file manifest | Development-only; regression/package test impact |
+| `tests/integration/phase-4c1-admin2-csv-export.sh` | Preserve export regressions with 107-file manifest | Development-only; regression/package test impact |
+| `tests/integration/phase-5a-notification-outbox.sh` | Preserve outbox regressions with 107-file manifest | Development-only; regression/package test impact |
+| `tests/integration/phase-5b-notification-delivery.sh` | Preserve delivery regressions with 107-file manifest | Development-only; regression/package test impact |
+| `tests/integration/phase-5c1-delivery-state-retry.sh` | Preserve state/retry regressions with 107-file manifest | Development-only; regression/package test impact |
+| `tests/integration/phase-5c2-scheduling-visibility.sh` | Preserve scheduling/inventory regressions with 107-file manifest | Development-only; regression/package test impact |
+| `tests/integration/phase-8-public-capture-capability.sh` | Preserve public-capability regressions with 107-file manifest | Development-only; regression/package test impact |
 
-The future closure is therefore 21 new + 17 modified = 38 changed paths.
-Nineteen packaged additions make package and installed-tree counts exactly 101.
-No runtime or command type changes, so that count remains 68. No unit file is
-added, so the count remains 10. One integration file makes that count 13.
+The corrected future closure is therefore 21 new + 18 modified = 39 changed
+paths. The additional modified path is
+`tests/integration/phase-8-public-capture-capability.sh`.
+
+Nineteen packaged additions make package and installed-tree counts exactly 107.
+No runtime or command type changes, so that count remains 74. No unit file is
+added, so the count remains 11. One integration file makes that count 14.
 Commands remain exactly `deliver-notifications`, `reconcile-notification` and
 `notification-status`; the scheduler job remains exactly
 `goosialize-leads-notification-delivery`; configuration and permission
@@ -429,8 +433,43 @@ sole responsibility is manual-browser release acceptance. It is excluded from
 `packaging/package-files.txt`, the ZIP, installed tree, and runtime/reflection,
 command, scheduler, unit and integration inventories.
 
-The corrected manifest is 21 new, 17 modified and 38 total paths. Package and
-installed-tree counts remain 101; runtime/command types remain 68; unit files
-remain 10; integration files remain 13. The Phase 5C.2 package baseline remains
-`04277b3beb650c3869c3619fda2b5182c4e28bdb02c107d279e5dc871f7c01f7`.
+After Phase 8, the cumulative corrected manifest is 21 new, 18 modified and
+39 total paths. Package and installed-tree counts become 107;
+runtime/command types remain 74; unit files remain 11; integration files become
+14. The authoritative source baseline is
+`247a0ecf3b55b0d1c3cdf3dbfb0f590dd8a7435c`, and its deterministic package
+SHA-256 is
+`e00c6bf0557f051baf5830c104132f35567f08bb6f47050560ac4730fc6fe883`.
 No runtime scope, package input or plugin version changes in this correction.
+
+## Phase 8 cumulative release-readiness correction
+
+The original release-readiness contract and its manual-browser manifest
+correction predate the merged Phase 8 public capture capability. A complete
+read-only audit on main commit
+`247a0ecf3b55b0d1c3cdf3dbfb0f590dd8a7435c` established the corrected
+cumulative baseline:
+
+- package and installed files: 88;
+- reflected runtime/command types: 74;
+- unit-test files: 11;
+- integration-test files: 13; and
+- deterministic package SHA-256:
+  `e00c6bf0557f051baf5830c104132f35567f08bb6f47050560ac4730fc6fe883`.
+
+The nineteen packaged release-documentation additions produce exactly 107
+package and installed files. The one new release-readiness integration test
+produces 14 integration-test files. Unit tests remain 11 and reflected types
+remain 74.
+
+Because the existing Phase 8 integration test contains a package-count oracle,
+it is an additional modified release path. The exact implementation manifest is
+therefore 21 new, 18 modified and 39 total paths.
+
+The stale local branch `release/v1.0.0-readiness` remains at
+`305040c8305ac166e31456fc891d3b444e6c6b58` and must not be used as the release
+implementation base. After this correction is merged, that branch name must be
+recreated from current `main`.
+
+This correction changes no package input, plugin version, runtime behavior,
+manual-browser result, tag or publication state.
