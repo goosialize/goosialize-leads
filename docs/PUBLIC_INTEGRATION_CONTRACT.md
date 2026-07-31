@@ -113,6 +113,14 @@ The request accepts these submitted fields only:
 
 Unknown fields fail validation.
 
+Name normalization follows these published rules:
+
+- when `full_name` is a non-empty string, it is used as the canonical name;
+- otherwise `first_name` and `last_name` are trimmed and joined with one space;
+- when the composed value is empty, canonical `full_name` is null;
+- `first_name` and `last_name` are compatibility input fields only and are not
+  persisted as separate canonical Lead fields.
+
 Scalar fields are strings or null. `campaign` is null or a map containing only:
 
 - `utm_source`;
@@ -202,9 +210,12 @@ Outcome semantics are:
 For `created`, `replayed`, `idempotency_conflict` and `unavailable`,
 `errors` is empty.
 
-For `validation_failed`, each `errors` key is a public request or context
-field name and each value is a non-empty list of stable public error codes.
-Human-readable messages are owned by the consumer.
+For `validation_failed`, `errors` is a map whose keys are public request
+or context field names and whose values are non-empty lists of unique stable
+public error-code strings. Keys are ordered lexicographically and codes retain
+their first-seen order. When the shared validation pipeline returns an error
+without a specific field, the reserved `_request` key is used. Human-readable
+messages are owned by the consumer.
 
 ## 8. Exception Boundary
 

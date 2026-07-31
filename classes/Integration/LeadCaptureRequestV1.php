@@ -96,7 +96,33 @@ final class LeadCaptureRequestV1
             $normalized[$field] = $values[$field] ?? null;
         }
 
+        $fullName = self::trimmed($normalized['full_name']);
+        if ($fullName === null) {
+            $parts = array_filter(
+                [
+                    self::trimmed($normalized['first_name']),
+                    self::trimmed($normalized['last_name']),
+                ],
+                static fn (?string $value): bool => $value !== null
+            );
+
+            $fullName = $parts === [] ? null : implode(' ', $parts);
+        }
+
+        $normalized['full_name'] = $fullName;
+
         return new self($normalized);
+    }
+
+    private static function trimmed(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+
+        return $trimmed === '' ? null : $trimmed;
     }
 
     /** @return array<string,mixed> */

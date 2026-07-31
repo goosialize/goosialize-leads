@@ -15,7 +15,7 @@ final class LeadCaptureResultV1
     ];
 
     /**
-     * @param list<array{code:string,field:?string}> $errors
+     * @param array<string,list<string>> $errors
      */
     private function __construct(
         private readonly string $outcome,
@@ -34,27 +34,45 @@ final class LeadCaptureResultV1
     }
 
     /**
-     * @param list<array{code:string,field:?string}> $errors
+     * @param array<string,list<string>> $errors
      */
     public static function validationFailed(array $errors): self
     {
-        if ($errors === [] || !array_is_list($errors)) {
+        if ($errors === [] || array_is_list($errors)) {
             throw new \InvalidArgumentException('Validation errors are required.');
         }
 
-        foreach ($errors as $error) {
+        $normalized = [];
+
+        foreach ($errors as $field => $codes) {
             if (
-                !is_array($error)
-                || array_keys($error) !== ['code', 'field']
-                || !is_string($error['code'])
-                || $error['code'] === ''
-                || ($error['field'] !== null && !is_string($error['field']))
+                !is_string($field)
+                || $field === ''
+                || !is_array($codes)
+                || !array_is_list($codes)
+                || $codes === []
             ) {
-                throw new \InvalidArgumentException('Invalid public validation error.');
+                throw new \InvalidArgumentException('Invalid public validation errors.');
             }
+
+            $unique = [];
+
+            foreach ($codes as $code) {
+                if (!is_string($code) || $code === '') {
+                    throw new \InvalidArgumentException('Invalid public validation error code.');
+                }
+
+                if (!in_array($code, $unique, true)) {
+                    $unique[] = $code;
+                }
+            }
+
+            $normalized[$field] = $unique;
         }
 
-        return new self('validation_failed', $errors);
+        ksort($normalized, SORT_STRING);
+
+        return new self('validation_failed', $normalized);
     }
 
     public static function idempotencyConflict(): self
@@ -72,7 +90,7 @@ final class LeadCaptureResultV1
         return $this->outcome;
     }
 
-    /** @return list<array{code:string,field:?string}> */
+    /** @return array<string,list<string>> */
     public function errors(): array
     {
         return $this->errors;
@@ -81,7 +99,7 @@ final class LeadCaptureResultV1
     /**
      * @return array{
      *   outcome:string,
-     *   errors:list<array{code:string,field:?string}>
+     *   errors:array<string,list<string>>
      * }
      */
     public function toArray(): array
