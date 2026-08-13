@@ -61,6 +61,58 @@ final class FilesystemLeadReadRepository implements LeadReadRepository
         }
     }
 
+    public function findById(string $leadId): ?LeadSummary
+    {
+        if (preg_match('/\A[0-9a-f]{32}\z/D', $leadId) !== 1) {
+            throw new \InvalidArgumentException('Invalid Lead ID.');
+        }
+
+        try {
+            if (@lstat($this->recordsRoot) === false) {
+                return null;
+            }
+
+            $root = $this->checkedDirectory($this->recordsRoot);
+            $directoryEntries = 0;
+            $match = null;
+
+            foreach ($this->directoryEntries($root, $directoryEntries) as $year) {
+                if (preg_match('/\A\d{4}\z/D', $year) !== 1) {
+                    throw new StorageException('lead_index_storage_invalid');
+                }
+
+                $yearPath = $this->checkedDirectory($root . '/' . $year);
+
+                foreach ($this->directoryEntries($yearPath, $directoryEntries) as $month) {
+                    if (preg_match('/\A(?:0[1-9]|1[0-2])\z/D', $month) !== 1) {
+                        throw new StorageException('lead_index_storage_invalid');
+                    }
+
+                    $monthPath = $this->checkedDirectory($yearPath . '/' . $month);
+                    $path = $monthPath . '/' . $leadId . '.json';
+
+                    if (@lstat($path) === false) {
+                        continue;
+                    }
+
+                    if ($match !== null) {
+                        throw new StorageException('lead_index_record_invalid');
+                    }
+
+                    $match = $this->readRecord($path, $leadId, $year, $month);
+                }
+            }
+
+            return $match === null
+                ? null
+                : LeadSummary::fromRecord($match);
+        } catch (StorageException $error) {
+            throw $error;
+        } catch (\Throwable $error) {
+            throw new StorageException('unexpected_storage_failure', $error);
+        }
+    }
+
     /** @return list<string> */
     private function directoryEntries(string $directory, int &$count): array
     {

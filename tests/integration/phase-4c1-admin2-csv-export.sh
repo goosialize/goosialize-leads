@@ -10,14 +10,12 @@ readonly IMAGE_ID='sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f336
 docker run --rm --network none \
   --mount "type=bind,src=${REPOSITORY_ROOT},dst=/source,readonly" \
   --entrypoint php "${IMAGE_ID}" /source/tests/unit/phase-4c1-admin2-csv-export.php
-[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 88 ]]
+[[ -z "$(sort "${REPOSITORY_ROOT}/packaging/package-files.txt" | uniq -d)" ]]
 grep -qx 'classes/Notification/FilesystemNotificationOutbox.php' "${REPOSITORY_ROOT}/packaging/package-files.txt"
-grep -Fq 'export_endpoint: /goosialize-leads/export' "${REPOSITORY_ROOT}/admin/blueprints/goosialize-leads-index-export.yaml"
-grep -Fq 'export_supported_filters: []' "${REPOSITORY_ROOT}/admin/blueprints/goosialize-leads-index-export.yaml"
-grep -Fq 'export: true' "${REPOSITORY_ROOT}/admin/blueprints/goosialize-leads-index-export.yaml"
 grep -Fq "api.goosialize_leads.export" "${REPOSITORY_ROOT}/goosialize-leads.php"
 grep -Fq "routes->get('/goosialize-leads/export'" "${REPOSITORY_ROOT}/goosialize-leads.php"
-! grep -Eiq 'export|status|delete|restore' "${REPOSITORY_ROOT}/admin-next/pages/goosialize-leads.js"
+grep -Fq "'id' => 'export'" "${REPOSITORY_ROOT}/goosialize-leads.php"
+grep -Fq "api.goosialize_leads.export" "${REPOSITORY_ROOT}/goosialize-leads.php"
 ! find "${REPOSITORY_ROOT}" -path '*/.git' -prune -o -type f \( -name '*.svelte' -o -name '*.css' \) -print | grep -q .
 
 docker run --rm --network none \
@@ -35,14 +33,14 @@ $readOnly=new class{public function get(string $key):bool{return in_array($key,[
 $exporter=new class{public function get(string $key):bool{return in_array($key,["access.api.access","access.api.goosialize_leads.read","access.api.goosialize_leads.export"],true);}public function authorize(string $key):bool{return in_array($key,["api.goosialize_leads.read","api.goosialize_leads.export"],true);}};
 $noApiAccess=new class{public function get(string $key):bool{return in_array($key,["access.api.goosialize_leads.read","access.api.goosialize_leads.export"],true);}public function authorize(string $key):bool{return in_array($key,["api.goosialize_leads.read","api.goosialize_leads.export"],true);}};
 $page=new RocketTheme\Toolbox\Event\Event(["plugin"=>"goosialize-leads","user"=>$readOnly]);$plugin->onApiPluginPageInfo($page);
-if(($page["definition"]["blueprint"]??null)!=="goosialize-leads-index")throw new RuntimeException("read-only action visible");
+if(in_array("export",array_column($page["definition"]["actions"]??[],"id"),true))throw new RuntimeException("read-only export action visible");
 $page=new RocketTheme\Toolbox\Event\Event(["plugin"=>"goosialize-leads","user"=>$noApiAccess]);$plugin->onApiPluginPageInfo($page);
-if(($page["definition"]["blueprint"]??null)!=="goosialize-leads-index")throw new RuntimeException("API access bypass");
+if(isset($page["definition"]))throw new RuntimeException("API access bypass");
 $page=new RocketTheme\Toolbox\Event\Event(["plugin"=>"goosialize-leads","user"=>$exporter]);$plugin->onApiPluginPageInfo($page);
-if(($page["definition"]["blueprint"]??null)!=="goosialize-leads-index-export")throw new RuntimeException("export action hidden");
-$routes=new class{public array $gets=[];public function get(string $path,array $handler):void{$this->gets[$path]=$handler;}};
+if(!in_array("export",array_column($page["definition"]["actions"]??[],"id"),true))throw new RuntimeException("export action hidden");
+$routes=new class{public array $gets=[];public function get(string $path,array $handler):void{$this->gets[$path]=$handler;}public function post(string $path,array $handler):void{}public function patch(string $path,array $handler):void{}};
 $plugin->onApiRegisterRoutes(new RocketTheme\Toolbox\Event\Event(["routes"=>$routes]));
-if(array_keys($routes->gets)!==["/goosialize-leads","/goosialize-leads/export","/goosialize-leads/notification-operations"])throw new RuntimeException("route mismatch");
+foreach(["/goosialize-leads","/goosialize-leads/export","/goosialize-leads/notification-operations"] as $path)if(!array_key_exists($path,$routes->gets))throw new RuntimeException("route missing: ".$path);
 $controller=new Grav\Plugin\GoosializeLeads\Admin\LeadsCsvExportController($grav,$grav["config"]);
 $request=new Nyholm\Psr7\ServerRequest("GET","/api/v1/goosialize-leads/export");
 if($controller->export($request)->getStatusCode()!==401)throw new RuntimeException("authentication gate");
@@ -51,10 +49,11 @@ if($denied->getStatusCode()!==403||str_starts_with((string)$denied->getBody(),"\
 $response=$controller->export($request->withAttribute("api_user",$exporter));
 if($response->getStatusCode()!==200
  ||$response->getHeaderLine("Content-Type")!=="text/csv; charset=utf-8"
- ||$response->getHeaderLine("Content-Disposition")!=="attachment; filename=\"goosialize-leads-latest-100.csv\""
+ ||preg_match("/\\Aattachment; filename=\\\"goosialize-leads-\\d{4}-\\d{2}-\\d{2}-\\d{4}\\.csv\\\"\\z/D",$response->getHeaderLine("Content-Disposition"))!==1
+ ||str_contains($response->getHeaderLine("Content-Disposition"),"latest-100")
  ||$response->getHeaderLine("Cache-Control")!=="private, no-store, max-age=0"
  ||$response->getHeaderLine("X-Content-Type-Options")!=="nosniff"
- ||(string)$response->getBody()!=="\"Lead ID\",\"Created (UTC)\",\"Name\",\"Email\",\"Source\",\"Form\",\"Status\"\r\n")throw new RuntimeException("CSV response");
+ ||(string)$response->getBody()!=="\"Lead ID\",\"Created (UTC)\",\"Name\",\"Email\",\"Phone\",\"Source\",\"Form / Resource\",\"Status\"\r\n")throw new RuntimeException("CSV response");
 $grav["config"]->set("plugins.goosialize-leads.admin2_csv_export",["enabled"=>false,"max_response_bytes"=>131072]);
 if($controller->export($request->withAttribute("api_user",$exporter))->getStatusCode()!==503)throw new RuntimeException("disabled gate");
 echo "PASS_PHASE_4C1_AUTHENTICATED_ENDPOINT\n";

@@ -212,6 +212,10 @@ Phase 4C.1 is approved as a read-only, authenticated export of the same independ
 
 - API `BlueprintController.php:1213-1235` preserves `export_endpoint`, `export_filename` and `export_supported_filters` for native `resource-table` fields.
 - Admin2 `app/_app/immutable/chunks/pU51ty18.js:246`, functions `Ke()`, `p()`, `W()`, `oe()` and `ue()`, renders the native export action, permits only declared query filters, calls `api.fetchBlob()`, uses the response `Content-Disposition` filename, creates an Admin2-owned temporary browser anchor and revokes the object URL. No plugin JavaScript, component, HTML button, CSS or compiled change is required.
+
+The Phase 4C.1 static CSV filename evidence is historical. The final v1
+response uses the dynamic server-generated filename contract in
+`docs/CSV_EXPORT.md`; native Admin2 still consumes `Content-Disposition`.
 - Admin2 `app/_app/immutable/chunks/CVq-Ik9t.js:65`, `fetchBlob()`, performs GET with `authHeaders`, including the current `X-API-Token`, refreshes once on 401, rejects non-success before reading the blob, and returns the blob plus headers.
 - API `ApiRouter.php:190-240,250-298` treats the plugin GET as non-public, authenticates it before dispatch and closes the read-only request's session lock. Existing plugin `goosialize-leads.php:48-58` proves plugin GET route registration; `LeadsIndexController.php:23-72` proves request callback, `api_user` and ACL checks, repository composition, redacted pre-body failures and PSR-7 response construction.
 - API `AuditController.php:94-125` proves a controller can return non-JSON CSV directly with `new Response(200, headers, body)`, including `Content-Type`, `Content-Disposition` and `Cache-Control`, without a temporary file. `X-Content-Type-Options: nosniff` is the contract-required additional header.
@@ -346,7 +350,7 @@ package impact; it verifies documentation, metadata, regression, package and
 artifact gates. The checklist has no version, runtime or test-count impact and
 is excluded from the package and installed tree. Thus the new-path count is 21.
 
-The exact seventeen modified paths are:
+The exact eighteen modified paths are:
 
 | Path or exact group | Responsibility | Status and impact |
 |---|---|---|
@@ -466,10 +470,150 @@ Because the existing Phase 8 integration test contains a package-count oracle,
 it is an additional modified release path. The exact implementation manifest is
 therefore 21 new, 18 modified and 39 total paths.
 
-The stale local branch `release/v1.0.0-readiness` remains at
-`305040c8305ac166e31456fc891d3b444e6c6b58` and must not be used as the release
-implementation base. After this correction is merged, that branch name must be
-recreated from current `main`.
+The former stale local branch state at
+`305040c8305ac166e31456fc891d3b444e6c6b58` was archived as
+`archive/release-v1.0.0-readiness-pre-phase8`. The active
+`release/v1.0.0-readiness` branch was recreated from the corrected release
+baseline and is based on commit
+`8d9245eea61a265099d7282e6fd770770f4e7e85`.
 
-This correction changes no package input, plugin version, runtime behavior,
+This correction changed no package input, plugin version, runtime behavior,
 manual-browser result, tag or publication state.
+
+## v1.0.0 release-readiness implementation checkpoint
+
+Prepared and verified locally on 2026-08-01 without network access, remote use,
+push, tag creation, real notification delivery, secrets or real Lead data. The
+active implementation branch is `release/v1.0.0-readiness`, based on
+`8d9245eea61a265099d7282e6fd770770f4e7e85`. Verification uses the already-local
+immutable image `lscr.io/linuxserver/grav:2.0.12`, image ID
+`sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351`.
+
+The prepared release metadata is consistently `1.0.0` in `blueprints.yaml`,
+`composer.json` and `scripts/build-plugin-package.sh`. The deterministic build
+filename contract is `goosialize-leads-1.0.0.zip`. The package manifest contains
+exactly 107 unique, lexicographically sorted paths, including nineteen packaged
+release-documentation additions. The development-only manual-browser checklist
+and release-readiness integration test are excluded from the package and
+installed tree.
+
+The current executable inventory is unchanged at 62 final classes plus 12
+interfaces, exactly 74 runtime/command types. Commands remain exactly
+`deliver-notifications`, `reconcile-notification` and `notification-status`.
+The repository contains exactly 11 unit-test files and 14 integration-test shell
+files.
+
+The updated clean-load oracle verifies the `1.0.0` blueprint and Composer
+versions, matching release metadata, the 107-path package manifest, all 74
+runtime/command types, all three CLI command files, enabled discovery, disabled
+inactivity and repository immutability. It passed with
+`PASS_ENABLED_DISCOVERY_LOAD`, `PASS_DISABLED_INACTIVE` and
+`PASS_CLEAN_GRAV_PLUGIN_LOAD`.
+
+The release-readiness implementation currently closes exactly 21 new paths plus
+18 modified paths, 39 changed paths total. No runtime PHP source, plugin
+configuration capability, permission inventory, command inventory, scheduler
+job or public integration contract was added or removed by this release
+preparation.
+
+The mandatory manual-browser checklist subsequently reached `Status: PASS` on
+2026-08-13. Final repository alignment, staged-diff review, milestone commit,
+annotated tag `v1.0.0` and publication approval remain separate and
+intentionally unrecorded until explicitly authorized.
+
+## Phase 9G-C — Final Fresh Automated Release Verification — 2026-08-01
+
+Status: PASS
+
+A complete fresh automated release verification was executed after the
+installable-package release-oracle corrections. The run started from the
+release-readiness worktree without staging, commit, or release tag creation.
+
+### Environment
+
+- Release branch: `release/v1.0.0-readiness`
+- Release baseline HEAD: `8d9245eea61a265099d7282e6fd770770f4e7e85`
+- Pinned Grav image: `lscr.io/linuxserver/grav:2.0.12`
+- Pinned Grav image ID: `sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351`
+
+### Release inventory
+
+- Package manifest paths: 107
+- Reflected runtime/command types: 74
+- Unit tests: 11
+- Integration shell tests: 14
+- Release changeset: 39 paths
+  - New paths: 21
+  - Modified paths: 18
+
+### Installable-package oracle corrections verified
+
+The final fresh suite includes the corrected release package verification
+contract:
+
+1. the independent package allowlist contains exactly the authoritative
+   107 package paths;
+2. the ZIP directory oracle permits the packaged `docs/` directory;
+3. the mutation fixture creates parent directories for every manifest path
+   before copying package content.
+
+These corrections remain contained within the already-modified
+`tests/integration/installable-plugin-package.sh` release-test path and do not
+change the 39-path release changeset.
+
+### Fresh integration suite result
+
+All 14 integration tests completed successfully in one fresh sequential run:
+
+- `tests/integration/clean-grav-plugin-load.sh` — PASS
+- `tests/integration/installable-plugin-package.sh` — PASS
+- `tests/integration/phase-2d-entry-points.sh` — PASS
+- `tests/integration/phase-3b-secure-storage.sh` — PASS
+- `tests/integration/phase-3c-grav-forms.sh` — PASS
+- `tests/integration/phase-3c2-public-json-api.sh` — PASS
+- `tests/integration/phase-4a1-bounded-admin2-lead-index.sh` — PASS
+- `tests/integration/phase-4c1-admin2-csv-export.sh` — PASS
+- `tests/integration/phase-5a-notification-outbox.sh` — PASS
+- `tests/integration/phase-5b-notification-delivery.sh` — PASS
+- `tests/integration/phase-5c1-delivery-state-retry.sh` — PASS
+- `tests/integration/phase-5c2-scheduling-visibility.sh` — PASS
+- `tests/integration/phase-8-public-capture-capability.sh` — PASS
+- `tests/integration/v1-release-readiness.sh` — PASS
+
+Aggregate result:
+
+- Integration tests executed: 14
+- Integration tests passed: 14
+- Automated integration gates: PASS
+- Clean Grav plugin-load gate: PASS
+- Installable plugin-package gate: PASS
+- Package contents gate: PASS
+- ZIP safety gate: PASS
+- Local package installation gate: PASS
+- Installed plugin load gate: PASS
+
+### Deterministic package evidence
+
+The release candidate package was independently built twice during the fresh
+verification and produced the same SHA-256 digest both times:
+
+`116e3569fdca9ef4f0841c3ef703dfbf817fc97c5cd4211ce0ee7730930b2e07`
+
+This digest is automated release-candidate evidence only. It is not recorded
+as the final post-commit/post-merge release artifact checksum.
+
+### Repository state after automated verification
+
+- New paths: 21
+- Modified paths: 18
+- Total release changeset: 39
+- Staged paths: 0
+- Release commit created: NO
+- `v1.0.0` tag created: NO
+- Final package checksum recorded: NO
+- Manual browser acceptance: PASS (completed 2026-08-13)
+- Release tag allowed: NO
+
+Human Grav Admin2 browser acceptance subsequently passed. Release progression
+remains gated by final repository/package review, the milestone commit and
+explicit tag/publication authorization.

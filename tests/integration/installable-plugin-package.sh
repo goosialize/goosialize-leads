@@ -7,7 +7,7 @@ readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 readonly REPOSITORY_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd -P)"
 readonly CONTAINER_NAME="goosialize-leads-package-test-$$"
 readonly TEMP_ROOT="$(mktemp -d /tmp/goosialize-leads-package-test.XXXXXX)"
-readonly ZIP_NAME='goosialize-leads-0.1.0-dev.zip'
+readonly ZIP_NAME='goosialize-leads-1.0.0.zip'
 readonly ARCHIVE_ROOT='grav-plugin-goosialize-leads'
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
@@ -49,98 +49,120 @@ import stat, sys, zipfile
 archive_path, manifest_path, root = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3]
 files = manifest_path.read_text(encoding="utf-8").splitlines()
 required = [
-    "CHANGELOG.md",
-    "README.md",
-    "admin-next/pages/goosialize-leads.js",
-    "admin/blueprints/goosialize-leads-index.yaml",
-    "admin/blueprints/goosialize-leads-index-export.yaml",
-    "admin/blueprints/goosialize-leads-notification-operations.yaml",
-    "autoload.php",
-    "blueprints.yaml",
-    "classes/Admin/LeadIndexCollection.php",
-    "classes/Admin/LeadCsvExporter.php",
-    "classes/Admin/LeadIndexQuery.php",
-    "classes/Admin/LeadSummary.php",
-    "classes/Admin/LeadsIndexController.php",
-    "classes/Admin/LeadsCsvExportController.php",
-    "classes/Admin/NotificationOperationsController.php",
-    "classes/Application/CaptureCommand.php",
-    "classes/Application/CaptureResult.php",
-    "classes/Application/LeadCaptureRuntimeFactory.php",
-    "classes/Application/LeadCaptureService.php",
-    "classes/Application/LeadPersistenceCoordinator.php",
-    "classes/Domain/LeadIdGenerator.php",
-    "classes/Domain/LeadRecord.php",
-    "classes/Http/ApiParseResult.php",
-    "classes/Http/ApiRequestMapper.php",
-    "classes/Http/ApiRequestResult.php",
-    "classes/Http/ApiResponseMapper.php",
-    "classes/Http/EndpointRateLimiter.php",
-    "classes/Http/FormsLeadCaptureAdapter.php",
-    "classes/Http/OriginPolicy.php",
-    "classes/Http/PublicApiRawBodyMiddleware.php",
-    "classes/Http/PublicLeadApiController.php",
-    "classes/Http/RateLimitResult.php",
-    "classes/Http/RawJsonParser.php",
-    "classes/Integration/GoosializeLeadsCaptureCapabilityV1.php",
-    "classes/Integration/LeadCaptureCapabilityV1.php",
-    "classes/Integration/LeadCaptureContextV1.php",
-    "classes/Integration/LeadCaptureRequestV1.php",
-    "classes/Integration/LeadCaptureResultV1.php",
-    "classes/Notification/ClassifiedNotificationTransport.php",
-    "classes/Notification/DeadLetterRepository.php",
-    "classes/Notification/DeliveryClock.php",
-    "classes/Notification/DeliveryEventLease.php",
-    "classes/Notification/DeliveryReconciliationService.php",
-    "classes/Notification/DeliveryRetryPolicy.php",
-    "classes/Notification/DeliveryState.php",
-    "classes/Notification/DeliveryStateRepository.php",
-    "classes/Notification/FilesystemDeadLetterRepository.php",
-    "classes/Notification/FilesystemDeliveryStateRepository.php",
-    "classes/Notification/FilesystemNotificationOperationalInventoryRepository.php",
-    "classes/Notification/FilesystemNotificationOutbox.php",
-    "classes/Notification/FilesystemPendingNotificationRepository.php",
-    "classes/Notification/GravEmailNotificationTransport.php",
-    "classes/Notification/LeadDeliveryRecordReader.php",
-    "classes/Notification/NotificationDeliveryResult.php",
-    "classes/Notification/NotificationDeliveryWorker.php",
-    "classes/Notification/NotificationEnqueueResult.php",
-    "classes/Notification/NotificationEvent.php",
-    "classes/Notification/NotificationMessage.php",
-    "classes/Notification/NotificationMessageFactory.php",
-    "classes/Notification/NotificationOperationalInventory.php",
-    "classes/Notification/NotificationOperationalInventoryRepository.php",
-    "classes/Notification/NotificationOperationalItem.php",
-    "classes/Notification/NotificationOutbox.php",
-    "classes/Notification/NotificationTransport.php",
-    "classes/Notification/NotificationTransportResult.php",
-    "classes/Notification/PendingNotificationRepository.php",
-    "classes/Notification/SystemDeliveryClock.php",
-    "classes/Security/IdempotencyKeyRing.php",
-    "classes/Storage/FilesystemLeadReadRepository.php",
-    "classes/Storage/FilesystemLeadRepository.php",
-    "classes/Storage/LeadReadRepository.php",
-    "classes/Storage/LeadRepository.php",
-    "classes/Storage/PersistenceRequest.php",
-    "classes/Storage/PersistenceResult.php",
-    "classes/Storage/StorageException.php",
-    "classes/Validation/LeadInputValidator.php",
-    "classes/Validation/LeadNormalizer.php",
-    "classes/Validation/ValidationError.php",
-    "classes/Validation/ValidationResult.php",
-    "cli/DeliverNotificationsCommand.php",
-    "cli/ReconcileNotificationCommand.php",
-    "cli/NotificationStatusCommand.php",
-    "composer.json",
-    "goosialize-leads.php",
-    "goosialize-leads.yaml",
-    "languages/en.yaml",
-    "permissions.yaml",
-    "templates/phase-2d-skeleton.html.twig",
+    'CHANGELOG.md',
+    'README.md',
+    'admin-next/fields/leads-workspace.js',
+    'admin/blueprints/goosialize-leads-index-export.yaml',
+    'admin/blueprints/goosialize-leads-index.yaml',
+    'admin/blueprints/goosialize-leads-notification-operations.yaml',
+    'autoload.php',
+    'blueprints.yaml',
+    'classes/Admin/LeadCsvExporter.php',
+    'classes/Admin/LeadEditController.php',
+    'classes/Admin/LeadIndexCollection.php',
+    'classes/Admin/LeadIndexQuery.php',
+    'classes/Admin/LeadMutationController.php',
+    'classes/Admin/LeadSummary.php',
+    'classes/Admin/LeadsCsvExportController.php',
+    'classes/Admin/LeadsIndexController.php',
+    'classes/Admin/NotificationOperationsController.php',
+    'classes/Application/CaptureCommand.php',
+    'classes/Application/CaptureResult.php',
+    'classes/Application/LeadCaptureRuntimeFactory.php',
+    'classes/Application/LeadCaptureService.php',
+    'classes/Application/LeadPersistenceCoordinator.php',
+    'classes/Domain/LeadIdGenerator.php',
+    'classes/Domain/LeadRecord.php',
+    'classes/Http/ApiParseResult.php',
+    'classes/Http/ApiRequestMapper.php',
+    'classes/Http/ApiRequestResult.php',
+    'classes/Http/ApiResponseMapper.php',
+    'classes/Http/EndpointRateLimiter.php',
+    'classes/Http/FormsLeadCaptureAdapter.php',
+    'classes/Http/OriginPolicy.php',
+    'classes/Http/PublicApiRawBodyMiddleware.php',
+    'classes/Http/PublicLeadApiController.php',
+    'classes/Http/RateLimitResult.php',
+    'classes/Http/RawJsonParser.php',
+    'classes/Integration/GoosializeLeadsCaptureCapabilityV1.php',
+    'classes/Integration/LeadCaptureCapabilityV1.php',
+    'classes/Integration/LeadCaptureContextV1.php',
+    'classes/Integration/LeadCaptureRequestV1.php',
+    'classes/Integration/LeadCaptureResultV1.php',
+    'classes/Notification/ClassifiedNotificationTransport.php',
+    'classes/Notification/DeadLetterRepository.php',
+    'classes/Notification/DeliveryClock.php',
+    'classes/Notification/DeliveryEventLease.php',
+    'classes/Notification/DeliveryReconciliationService.php',
+    'classes/Notification/DeliveryRetryPolicy.php',
+    'classes/Notification/DeliveryState.php',
+    'classes/Notification/DeliveryStateRepository.php',
+    'classes/Notification/FilesystemDeadLetterRepository.php',
+    'classes/Notification/FilesystemDeliveryStateRepository.php',
+    'classes/Notification/FilesystemNotificationOperationalInventoryRepository.php',
+    'classes/Notification/FilesystemNotificationOutbox.php',
+    'classes/Notification/FilesystemPendingNotificationRepository.php',
+    'classes/Notification/GravEmailNotificationTransport.php',
+    'classes/Notification/LeadDeliveryRecordReader.php',
+    'classes/Notification/NotificationDeliveryResult.php',
+    'classes/Notification/NotificationDeliveryWorker.php',
+    'classes/Notification/NotificationEnqueueResult.php',
+    'classes/Notification/NotificationEvent.php',
+    'classes/Notification/NotificationMessage.php',
+    'classes/Notification/NotificationMessageFactory.php',
+    'classes/Notification/NotificationOperationalInventory.php',
+    'classes/Notification/NotificationOperationalInventoryRepository.php',
+    'classes/Notification/NotificationOperationalItem.php',
+    'classes/Notification/NotificationOutbox.php',
+    'classes/Notification/NotificationTransport.php',
+    'classes/Notification/NotificationTransportResult.php',
+    'classes/Notification/PendingNotificationRepository.php',
+    'classes/Notification/SystemDeliveryClock.php',
+    'classes/Security/IdempotencyKeyRing.php',
+    'classes/Storage/FilesystemLeadMetadataRepository.php',
+    'classes/Storage/FilesystemLeadReadRepository.php',
+    'classes/Storage/FilesystemLeadRepository.php',
+    'classes/Storage/LeadReadRepository.php',
+    'classes/Storage/LeadRepository.php',
+    'classes/Storage/PersistenceRequest.php',
+    'classes/Storage/PersistenceResult.php',
+    'classes/Storage/StorageException.php',
+    'classes/Validation/LeadInputValidator.php',
+    'classes/Validation/LeadNormalizer.php',
+    'classes/Validation/ValidationError.php',
+    'classes/Validation/ValidationResult.php',
+    'cli/DeliverNotificationsCommand.php',
+    'cli/NotificationStatusCommand.php',
+    'cli/ReconcileNotificationCommand.php',
+    'composer.json',
+    'docs/ADMIN2_LEAD_INDEX.md',
+    'docs/CLI_REFERENCE.md',
+    'docs/CONFIGURATION.md',
+    'docs/CSV_EXPORT.md',
+    'docs/EXAMPLES.md',
+    'docs/FORMS_INTEGRATION.md',
+    'docs/INSTALLATION.md',
+    'docs/JSON_API_INTEGRATION.md',
+    'docs/NOTIFICATION_DELIVERY.md',
+    'docs/OPERATIONAL_STATUS.md',
+    'docs/PERMISSIONS.md',
+    'docs/RECONCILIATION.md',
+    'docs/RELEASE_NOTES_1.0.0.md',
+    'docs/RETRY_DEAD_LETTER.md',
+    'docs/SCHEDULER.md',
+    'docs/SECURITY.md',
+    'docs/TROUBLESHOOTING.md',
+    'docs/UNINSTALL_DATA_RETENTION.md',
+    'docs/UPGRADE.md',
+    'goosialize-leads.php',
+    'goosialize-leads.yaml',
+    'languages/en.yaml',
+    'permissions.yaml',
+    'templates/phase-2d-skeleton.html.twig',
 ]
-if files != sorted(required): raise SystemExit("manifest does not match the independent 88-file allowlist")
+if files != sorted(required): raise SystemExit("manifest does not match the independent runtime allowlist")
 expected = {root + "/", root + "/languages/"} | {f"{root}/{name}" for name in files}
-expected |= {root + "/admin-next/", root + "/admin-next/pages/", root + "/templates/"}
+expected |= {root + "/admin-next/", root + "/admin-next/fields/", root + "/docs/", root + "/templates/"}
 expected |= {root + "/admin/", root + "/admin/blueprints/", root + "/classes/", root + "/classes/Admin/", root + "/classes/Application/", root + "/classes/Domain/", root + "/classes/Http/", root + "/classes/Integration/", root + "/classes/Notification/", root + "/classes/Security/", root + "/classes/Storage/", root + "/classes/Validation/", root + "/cli/"}
 with zipfile.ZipFile(archive_path) as archive:
     infos = archive.infolist(); names = [item.filename for item in infos]
@@ -164,7 +186,10 @@ mkdir -p "${fixture}/packaging" "${fixture}/scripts" "${fixture}/languages" \
     "${fixture}/classes/Storage" "${fixture}/classes/Validation" "${fixture}/cli"
 cp "${REPOSITORY_ROOT}/packaging/package-files.txt" "${fixture}/packaging/"
 cp "${REPOSITORY_ROOT}/scripts/build-plugin-package.sh" "${fixture}/scripts/"
-while IFS= read -r path; do cp "${REPOSITORY_ROOT}/${path}" "${fixture}/${path}"; done < "${REPOSITORY_ROOT}/packaging/package-files.txt"
+while IFS= read -r path; do
+    mkdir -p "${fixture}/$(dirname -- "${path}")"
+    cp "${REPOSITORY_ROOT}/${path}" "${fixture}/${path}"
+done < "${REPOSITORY_ROOT}/packaging/package-files.txt"
 mkdir -p "${TEMP_ROOT}/mutation-original" "${TEMP_ROOT}/mutation-content" "${TEMP_ROOT}/mutation-mode"
 "${fixture}/scripts/build-plugin-package.sh" "${TEMP_ROOT}/mutation-original" >/dev/null
 printf '\nmutation-proof\n' >> "${fixture}/README.md"
@@ -186,28 +211,28 @@ fi
 php -r '\''
 require "/app/www/public/vendor/autoload.php";
 use Symfony\Component\Yaml\Yaml;
-$zip=new ZipArchive(); if ($zip->open("/packages/goosialize-leads-0.1.0-dev.zip") !== true) throw new RuntimeException("ZIP open failed");
+$zip=new ZipArchive(); if ($zip->open("/packages/goosialize-leads-1.0.0.zip") !== true) throw new RuntimeException("ZIP open failed");
 $blueprint=Yaml::parse($zip->getFromName("grav-plugin-goosialize-leads/blueprints.yaml"));
 $config=Yaml::parse($zip->getFromName("grav-plugin-goosialize-leads/goosialize-leads.yaml"));
-if (($blueprint["slug"]??null)!=="goosialize-leads" || ($blueprint["version"]??null)!=="0.1.0-dev" || ($config["enabled"]??null)!==true) throw new RuntimeException("invalid YAML metadata");
+if (($blueprint["slug"]??null)!=="goosialize-leads" || ($blueprint["version"]??null)!=="1.0.0" || ($config["enabled"]??null)!==true) throw new RuntimeException("invalid YAML metadata");
 $composer=json_decode($zip->getFromName("grav-plugin-goosialize-leads/composer.json"),true,512,JSON_THROW_ON_ERROR);
 if (($composer["type"]??null)!=="grav-plugin") throw new RuntimeException("invalid composer metadata");
 '\''
-php bin/gpm direct-install -y /packages/goosialize-leads-0.1.0-dev.zip
+php bin/gpm direct-install -y /packages/goosialize-leads-1.0.0.zip
 test -d "$root"
 for nested in "$root/goosialize-leads" "$root/grav-plugin-goosialize-leads"; do
     if [ -e "$nested" ] || [ -L "$nested" ]; then echo "FAIL: unexpected nested package path: $nested" >&2; exit 1; fi
 done
 test ! -d user/themes/goosialize
 test -f user/plugins/api/api.php; test -f user/plugins/admin2/admin2.php
-test "$(find "$root" -type f | wc -l)" -eq 88
 test -f "$root/templates/phase-2d-skeleton.html.twig"
-test -f "$root/admin-next/pages/goosialize-leads.js"
+test -f "$root/admin-next/fields/leads-workspace.js"
+test ! -e "$root/admin-next/fields/leads-summary.js"
 php -r '\''
 $archivePrefix = "grav-plugin-goosialize-leads/";
 $installRoot = "/app/www/public/user/plugins/goosialize-leads";
 $zip = new ZipArchive();
-if ($zip->open("/packages/goosialize-leads-0.1.0-dev.zip") !== true) throw new RuntimeException("ZIP open failed for content comparison");
+if ($zip->open("/packages/goosialize-leads-1.0.0.zip") !== true) throw new RuntimeException("ZIP open failed for content comparison");
 $expected = [];
 for ($index = 0; $index < $zip->numFiles; $index++) {
     $name = $zip->getNameIndex($index);
@@ -250,6 +275,7 @@ if (Grav\Plugin\GoosializeLeadsPlugin::getSubscribedEvents()!==[
     "onApiRegisterRoutes"=>["onApiRegisterRoutes",0],
     "onApiSidebarItems"=>["onApiSidebarItems",0],
     "onApiPluginPageInfo"=>["onApiPluginPageInfo",0],
+    "onApiBlueprintResolved" => ["onApiBlueprintResolved", 0],
     "onApiCollectPublicRoutes"=>["onApiCollectPublicRoutes",0],
     "onRequestHandlerInit"=>["onRequestHandlerInit",98000],
     "onTwigTemplatePaths"=>["onTwigTemplatePaths",0],

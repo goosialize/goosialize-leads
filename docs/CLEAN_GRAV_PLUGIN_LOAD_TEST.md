@@ -1,8 +1,13 @@
 # Clean Grav Plugin Load Test
 
+> Historical checkpoint document. Statements below describing the absence of
+> Lead capabilities applied to the original skeleton milestone and do not
+> describe the current version 1 product.
+
 ## Purpose
 
-This test verifies that the current standalone skeleton loads in isolated Grav CMS 2.0.12. It does not test Lead functionality.
+This historical checkpoint verified that the original standalone skeleton
+loaded in isolated Grav CMS 2.0.12. It did not test Lead functionality.
 
 ## Isolation model
 
@@ -73,4 +78,6 @@ PASS_CLEAN_GRAV_PLUGIN_LOAD
 
 This is a CLI bootstrap and lifecycle test, not an HTTP, installation, upgrade, removal, theme-rendering, API, permissions, or Admin2 UI test. Those remain subject to official verification and dedicated testing.
 
-No functional Lead capability exists: there is no capture, storage, delivery, functional API route, or Admin2 Leads management behavior.
+At that historical checkpoint no functional Lead capability existed. Current
+product functionality is covered by the dedicated integration and release
+gates, not by this document's original skeleton assertions.

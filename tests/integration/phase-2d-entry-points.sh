@@ -39,46 +39,11 @@ readonly STATUS_BEFORE="$(git -C "${REPOSITORY_ROOT}" status --porcelain=v1 -z |
 readonly HEAD_BEFORE="$(git -C "${REPOSITORY_ROOT}" rev-parse HEAD)"
 readonly BRANCH_BEFORE="$(git -C "${REPOSITORY_ROOT}" branch --show-current)"
 
-[[ "$(wc -l < "${REPOSITORY_ROOT}/packaging/package-files.txt")" -eq 88 ]] || fail 'package manifest count mismatch'
+[[ -z "$(sort "${REPOSITORY_ROOT}/packaging/package-files.txt" | uniq -d)" ]] || fail 'duplicate package manifest path'
 [[ "$(<"${REPOSITORY_ROOT}/templates/phase-2d-skeleton.html.twig")" == 'Goosialize Leads Phase 2 skeleton.' ]] || fail 'template content mismatch'
-node --check "${REPOSITORY_ROOT}/admin-next/pages/goosialize-leads.js"
-if grep -Eiq 'attachShadow|fetch|XMLHttpRequest|WebSocket|sendBeacon|localStorage|sessionStorage|document\.cookie|location\.|<form|<input|<button|addEventListener|import[ (]|export ' "${REPOSITORY_ROOT}/admin-next/pages/goosialize-leads.js"; then
-    fail 'Admin2 component contains a forbidden capability'
-fi
-
-node - "${REPOSITORY_ROOT}/admin-next/pages/goosialize-leads.js" <<'NODE'
-const fs = require('fs');
-const vm = require('vm');
-const source = fs.readFileSync(process.argv[2], 'utf8');
-const definitions = new Map();
-let mutations = 0;
-class HTMLElement {
-    set textContent(value) { this.value = value; mutations += 1; }
-}
-const context = {
-    window: {__GRAV_PAGE_TAG: 'grav-goosialize-leads--page'},
-    HTMLElement,
-    customElements: {
-        get: tag => definitions.get(tag),
-        define: (tag, constructor) => {
-            if (definitions.has(tag)) throw new Error('duplicate definition');
-            definitions.set(tag, constructor);
-        }
-    }
-};
-vm.runInNewContext(source, context, {filename: 'goosialize-leads.js'});
-if (definitions.size !== 1 || !definitions.has(context.window.__GRAV_PAGE_TAG)) throw new Error('supplied tag was not defined exactly once');
-const Element = definitions.get(context.window.__GRAV_PAGE_TAG);
-const element = new Element();
-element.connectedCallback();
-if (element.value !== 'Goosialize Leads Phase 2 skeleton. No lead functionality is enabled.') throw new Error('inert text mismatch');
-if (mutations !== 1) throw new Error('unexpected DOM mutation count');
-vm.runInNewContext(source, context, {filename: 'goosialize-leads.js'});
-if (definitions.size !== 1) throw new Error('duplicate evaluation changed registration');
-const invalid = {...context, window: {__GRAV_PAGE_TAG: 'invalid'}};
-vm.runInNewContext(source, invalid, {filename: 'goosialize-leads.js'});
-if (definitions.size !== 1) throw new Error('invalid tag registered');
-NODE
+node --check "${REPOSITORY_ROOT}/admin-next/fields/leads-workspace.js"
+! grep -Eq 'attachShadow|ShadowRoot' "${REPOSITORY_ROOT}/admin-next/fields/leads-workspace.js"
+! test -e "${REPOSITORY_ROOT}/admin-next/pages/goosialize-leads.js"
 
 printf 'PASS_LOCAL_IMAGE image=%s id=%s\n' "${GRAV_TEST_IMAGE}" "${ACTUAL_IMAGE_ID}"
 
@@ -96,7 +61,7 @@ $grav = Grav\Common\Grav::instance(["loader" => $autoload]); $grav->initializeCl
 $plugin = Grav\Common\Plugins::getPlugin("goosialize-leads");
 if (!$plugin || !$grav["config"]->get("plugins.goosialize-leads.enabled")) throw new RuntimeException("enabled plugin unavailable");
 $expected = ["onPluginsInitialized" => ["onPluginsInitialized", 0],
-    "Grav\\Events\\PermissionsRegisterEvent" => ["onRegisterPermissions", 1000], "onApiRegisterRoutes" => ["onApiRegisterRoutes", 0], "onApiSidebarItems" => ["onApiSidebarItems", 0], "onApiPluginPageInfo" => ["onApiPluginPageInfo", 0], "onApiCollectPublicRoutes" => ["onApiCollectPublicRoutes", 0], "onRequestHandlerInit" => ["onRequestHandlerInit", 98000], "onTwigTemplatePaths" => ["onTwigTemplatePaths", 0], "onFormProcessed" => ["onFormProcessed", 0], "onSchedulerInitialized" => ["onSchedulerInitialized", 0]];
+    "Grav\\Events\\PermissionsRegisterEvent" => ["onRegisterPermissions", 1000], "onApiRegisterRoutes" => ["onApiRegisterRoutes", 0], "onApiSidebarItems" => ["onApiSidebarItems", 0], "onApiPluginPageInfo" => ["onApiPluginPageInfo", 0], "onApiBlueprintResolved" => ["onApiBlueprintResolved", 0], "onApiCollectPublicRoutes" => ["onApiCollectPublicRoutes", 0], "onRequestHandlerInit" => ["onRequestHandlerInit", 98000], "onTwigTemplatePaths" => ["onTwigTemplatePaths", 0], "onFormProcessed" => ["onFormProcessed", 0], "onSchedulerInitialized" => ["onSchedulerInitialized", 0]];
 if ($plugin::getSubscribedEvents() !== $expected) throw new RuntimeException("subscription allowlist mismatch");
 $plugin->autoload();
 foreach ([
@@ -166,25 +131,21 @@ if ($grav["twig"]->twig_paths !== [$path]) throw new RuntimeException("Twig path
 $loader = new Twig\Loader\FilesystemLoader($grav["twig"]->twig_paths);
 $twig = new Twig\Environment($loader);
 if ($twig->render("phase-2d-skeleton.html.twig") !== "Goosialize Leads Phase 2 skeleton.\n") throw new RuntimeException("Twig render mismatch");
-$user = new Grav\Common\User\User(["access" => ["api" => ["super" => true]]]);
-$pageRequest = (new Nyholm\Psr7\ServerRequest("GET", "/gpm/plugins/goosialize-leads/page"))->withAttribute("api_user", $user)->withAttribute("route_params", ["slug" => "goosialize-leads"]);
-$controller = new Grav\Plugin\Api\Controllers\GpmController($grav, $grav["config"]);
-$pageResponse = $controller->pluginPage($pageRequest);
-if ($pageResponse->getStatusCode() !== 200 || $pageResponse->getHeaderLine("Content-Type") !== "application/json") throw new RuntimeException("Admin2 page metadata response mismatch");
-$pageBody = json_decode((string) $pageResponse->getBody(), true, 512, JSON_THROW_ON_ERROR);
-$page = $pageBody["data"] ?? null;
-if (($page["id"] ?? null) !== "goosialize-leads" || ($page["plugin"] ?? null) !== "goosialize-leads" || ($page["page_type"] ?? null) !== "component" || ($page["has_custom_component"] ?? null) !== true) throw new RuntimeException("Admin2 component metadata mismatch");
-$scriptRequest = (new Nyholm\Psr7\ServerRequest("GET", "/gpm/plugins/goosialize-leads/page-script"))->withAttribute("api_user", $user)->withAttribute("route_params", ["slug" => "goosialize-leads"]);
-$scriptResponse = $controller->customPageScript($scriptRequest);
-$scriptFile = "/app/www/public/user/plugins/goosialize-leads/admin-next/pages/goosialize-leads.js";
-if ($scriptResponse->getStatusCode() !== 200 || $scriptResponse->getHeaderLine("Content-Type") !== "application/javascript; charset=utf-8") throw new RuntimeException("Admin2 page script response mismatch");
-if (!hash_equals(hash_file("sha256", $scriptFile), hash("sha256", (string) $scriptResponse->getBody()))) throw new RuntimeException("Admin2 page script body mismatch");
+$user = new class { public function get(string $key): bool { return in_array($key, ["access.api.access", "access.api.goosialize_leads.read"], true); } public function authorize(string $key): bool { return $key === "api.goosialize_leads.read"; } };
+$pageEvent = new RocketTheme\Toolbox\Event\Event(["plugin" => "goosialize-leads", "user" => $user]);
+$plugin->onApiPluginPageInfo($pageEvent);
+$page = $pageEvent["definition"] ?? null;
+if (($page["id"] ?? null) !== "goosialize-leads") throw new RuntimeException("Admin2 Leads page id mismatch");
+if (($page["plugin"] ?? null) !== "goosialize-leads") throw new RuntimeException("Admin2 Leads plugin metadata mismatch");
+if (($page["page_type"] ?? null) !== "blueprint") throw new RuntimeException("Admin2 Leads page type mismatch");
+$blueprint = $page["blueprint"] ?? null;
+if (!in_array($blueprint, ["goosialize-leads-index", "goosialize-leads-index-export"], true)) throw new RuntimeException("Admin2 Leads blueprint mismatch");
 if (is_dir("/app/www/public/user/themes/goosialize")) throw new RuntimeException("Goosialize theme unexpectedly present");
 '\''
 '
 printf 'PASS_ROUTE_PROVIDER_ENTRY_POINT\nPASS_NO_FUNCTIONAL_ROUTE\n'
 printf 'PASS_TWIG_TEMPLATE_ENTRY_POINT\nPASS_TEMPLATE_THEME_INDEPENDENCE\n'
-printf 'PASS_ADMIN2_COMPONENT_DISCOVERY\nPASS_ADMIN2_COMPONENT_CONTRACT\n'
+printf 'PASS_ADMIN2_BLUEPRINT_DISCOVERY\nPASS_ADMIN2_BLUEPRINT_CONTRACT\n'
 
 docker run --rm --name "${DISABLED_CONTAINER}" --network none \
     --mount "type=bind,src=${REPOSITORY_ROOT},dst=${PLUGIN_MOUNT},readonly" \
@@ -215,18 +176,10 @@ try {
     throw new RuntimeException("disabled plugin template unexpectedly resolved");
 } catch (Twig\Error\LoaderError) {
 }
-$user = new Grav\Common\User\User(["access" => ["api" => ["super" => true]]]);
-$pageRequest = (new Nyholm\Psr7\ServerRequest("GET", "/gpm/plugins/goosialize-leads/page"))->withAttribute("api_user", $user)->withAttribute("route_params", ["slug" => "goosialize-leads"]);
-$controller = new Grav\Plugin\Api\Controllers\GpmController($grav, $grav["config"]);
-$pageResponse = $controller->pluginPage($pageRequest);
-$pageBody = json_decode((string) $pageResponse->getBody(), true, 512, JSON_THROW_ON_ERROR);
-$page = $pageBody["data"] ?? null;
-if ($pageResponse->getStatusCode() !== 200 || ($page["page_type"] ?? null) !== "component" || ($page["has_custom_component"] ?? null) !== true) throw new RuntimeException("disabled installed Admin2 metadata mismatch");
-$scriptRequest = (new Nyholm\Psr7\ServerRequest("GET", "/gpm/plugins/goosialize-leads/page-script"))->withAttribute("api_user", $user)->withAttribute("route_params", ["slug" => "goosialize-leads"]);
-$scriptResponse = $controller->customPageScript($scriptRequest);
-$scriptFile = "/app/www/public/user/plugins/goosialize-leads/admin-next/pages/goosialize-leads.js";
-if ($scriptResponse->getStatusCode() !== 200 || $scriptResponse->getHeaderLine("Content-Type") !== "application/javascript; charset=utf-8") throw new RuntimeException("disabled installed Admin2 script response mismatch");
-if (!hash_equals(hash_file("sha256", $scriptFile), hash("sha256", (string) $scriptResponse->getBody()))) throw new RuntimeException("disabled installed Admin2 script body mismatch");
+$user = new class { public function get(string $key): bool { return true; } public function authorize(string $key): bool { return true; } };
+$pageEvent = new RocketTheme\Toolbox\Event\Event(["plugin" => "goosialize-leads", "user" => $user]);
+$plugin->onApiPluginPageInfo($pageEvent);
+if (isset($pageEvent["definition"])) throw new RuntimeException("disabled plugin exposed Admin2 page metadata");
 '\''
 '
 printf 'PASS_DISABLED_RUNTIME_ENTRY_POINTS_INACTIVE

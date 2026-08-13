@@ -1,44 +1,80 @@
 # Changelog
 
-## Unreleased
+## 1.0.0 — 2026-08-01
 
-- Add the version 1 plugin-to-plugin public Lead capture capability under
-  `goosialize-leads.public-capture.v1`.
-- Add published request, trusted-context and result DTOs with stable capability
-  detection, exact contract versioning and a no-throwable boundary.
-- Reuse the shared validation, idempotency, secure persistence and optional
-  post-persistence notification runtime across Forms, public JSON and
-  plugin-to-plugin capture.
-- Add collision-safe Grav container registration, unavailable fallback,
-  deterministic package coverage and external-consumer contract tests.
+### Added
 
-- Define the normative version 1 public plugin-to-plugin Lead capture contract,
-  including capability detection, public DTOs, trusted context, result outcomes,
-  compatibility rules, consumer obligations, and external contract-test
-  requirements.
+- Standalone, theme-independent Lead capture and storage for Grav CMS 2.
+- Canonical filesystem persistence with atomic no-replace publication,
+  restrictive permissions and deterministic collision handling.
+- Durable idempotency with exact replay protection and conflicting-payload
+  rejection.
+- Opt-in native Grav Forms capture through `goosialize_leads_capture`.
+- Opt-in bounded public JSON capture at
+  `POST /api/v1/goosialize-leads/capture`.
+- Version 1 plugin-to-plugin public capture service
+  `goosialize-leads.public-capture.v1` with capability identifier
+  `goosialize-leads.capture`.
+- Permission-gated Admin2 latest-100 Lead workspace with Edit, status workflow,
+  Active/Inactive state, reversible Delete and Restore.
+- Bounded native Admin2 CSV export with spreadsheet-formula escaping.
+- Durable notification outbox and bounded delivery through the optional Grav
+  Email plugin.
+- Retry, dead-letter and duplicate-risk delivery state.
+- Revision-safe operator reconciliation.
+- Optional Grav core scheduler registration under
+  `goosialize-leads-notification-delivery`.
+- Human-readable and JSON notification operational status.
+- CLI commands `deliver-notifications`, `reconcile-notification` and
+  `notification-status`.
+- Permission boundaries `api.goosialize_leads.read`,
+  `api.goosialize_leads.write`, `api.goosialize_leads.delete`,
+  `api.goosialize_leads.export` and `api.goosialize_leads.operations`.
+- Nineteen packaged installation, configuration, integration, operations,
+  security, troubleshooting, examples and release documentation guides.
+- Development-only release-readiness integration test and mandatory manual
+  browser acceptance checklist.
 
-- Add optional bounded core-scheduler delivery registration and read-only notification operational inventory surfaces.
+### Changed
 
-## Unreleased
+- Set plugin, Composer and package-builder version metadata to `1.0.0`.
+- Consolidated the README around supported 1.0.0 capabilities, compatibility,
+  release status and documentation navigation.
+- Replaced historical fixed-count package oracles with deterministic manifest,
+  required-runtime, duplicate, source-existence and archive-identity checks.
+- Added exact-ID Lead lookup without widening the latest-100 index.
+- Added immutable metadata sidecars with optimistic revisions and Restore-only
+  handling for deleted Leads.
 
-- Add opt-in durable notification delivery state, deterministic retry,
-  immutable dead-letter recovery, and uncertain-delivery reconciliation.
+### Security
 
-- Add bounded, manually invoked Phase 5B notification delivery with deterministic plain-text messages, exclusive event locking, and immutable success archival.
-- Add the Phase 5A durable notification outbox boundary without delivery behavior.
+- Optional capture, Admin2, CSV, notification and scheduling facilities remain
+  disabled by default.
+- Public JSON capture enforces exact Origin allowlisting, body and JSON-depth
+  bounds, mandatory idempotency and a local fixed-window rate limit.
+- Operational output redacts secrets, configured recipients, raw Lead
+  payloads, filesystem paths and raw exceptions.
+- Retry and reconciliation fail closed on invalid state, stale revision,
+  ambiguous delivery or storage conflict.
+- Lead data is retained across plugin disablement, replacement and uninstall
+  unless separately removed through an explicit irreversible administrative
+  action.
 
-## Unreleased
+### Admin2 data model
 
-- Add the bounded authenticated native Admin2 Lead CSV export.
+Primary Lead records remain immutable. Admin2 workflow changes are stored in
+bounded, validated metadata sidecars and use optimistic revision checks.
+Deleted Leads cannot be edited or mutated except through Restore.
 
-## Unreleased
+### Release gate
 
-- Add an opt-in, permission-gated, bounded native Admin2 Lead Index that reads
-  only canonical primary records and returns the latest 100 without mutation.
-- Add the opt-in Phase 3C.2 public JSON Lead capture endpoint with raw-body,
-  Origin, idempotency, and local fixed-window abuse controls.
-- Add opt-in native Grav Forms Lead capture backed by the Phase 3A validation
-  and Phase 3B secure filesystem persistence services.
+Automated release-readiness verification and human browser acceptance pass.
+The annotated `v1.0.0` tag remains unauthorized pending repository alignment,
+deterministic package verification, staged-diff review, the milestone commit
+and explicit release authorization.
+
+See `docs/RELEASE_NOTES_1.0.0.md` for the complete release scope and operational
+notes.
 
 ## 0.1.0-dev — Unreleased
 

@@ -1,70 +1,104 @@
-name: Goosialize Leads Index
+name: Goosialize Leads
 
 form:
-  validation: strict
+  validation: loose
+
   fields:
-    leads:
-      type: resource-table
-      endpoint: /goosialize-leads
-      id_key: id
-      filters:
-        - name: search
-          section: search
+    filters_panel:
+      type: fieldset
+      title: Filters
+      description: Filter leads by status, source, state or creation date.
+      collapsible: true
+      collapsed: true
+
+      fields:
+        filters.search:
           type: text
           label: Search
-          placeholder: Search name, email, source or Lead ID
+          placeholder: Search by name, email, phone, source or resource
+          style: vertical
+
+        status_source_state:
+          type: columns
+
           fields:
-            - id
-            - name
-            - email
-            - source
-          operator: contains
-        - name: status
-          type: select
-          label: Status
-          field: status
-          operator: equals
-          options_from_meta: allowed_statuses
-        - name: source
-          type: select
-          label: Source
-          field: source
-          operator: equals
-          options_from_field: source
-        - name: date_from
-          type: datetime
-          label: Created from
-          field: created_at
-          operator: date-from
-        - name: date_to
-          type: datetime
-          label: Created to
-          field: created_at
-          operator: date-to
-      columns:
-        - name: created_at
-          label: Created
-          format: datetime
-          width: '18%'
-        - name: name
-          label: Name
-          width: '18%'
-        - name: email
-          label: Email
-          width: '24%'
-        - name: source
-          label: Source
-          width: '14%'
-        - name: form_name
-          label: Form
-          width: '12%'
-        - name: status
-          label: Status
-          width: '14%'
-      actions:
-        clear: true
-        refresh: true
-        export: false
-      empty_message: No leads have been captured yet.
-      filtered_empty_message: No leads match the active filters.
-      load_error_message: Lead data could not be loaded.
+            status_column:
+              type: column
+
+              fields:
+                filters.status:
+                  type: select
+                  label: Status
+                  style: vertical
+                  default: ''
+                  options:
+                    '': All statuses
+                    new: New
+                    contacted: Contacted
+                    qualified: Qualified
+                    closed: Closed
+
+            source_column:
+              type: column
+
+              fields:
+                filters.source:
+                  type: select
+                  label: Source
+                  style: vertical
+                  default: ''
+                  options:
+                    '': All sources
+
+            state_column:
+              type: column
+
+              fields:
+                filters.state:
+                  type: select
+                  label: State
+                  style: vertical
+                  default: ''
+                  options:
+                    '': All states
+                    active: Active
+                    inactive: Inactive
+                    deleted: Deleted
+
+            form_resource_column:
+              type: column
+
+              fields:
+                filters.form_resource:
+                  type: select
+                  label: Form / Resource
+                  style: vertical
+                  default: ''
+                  options:
+                    '': All forms / resources
+
+        created_dates:
+          type: columns
+
+          fields:
+            created_from_column:
+              type: column
+
+              fields:
+                filters.date_from:
+                  type: datetime
+                  label: Created from
+                  style: vertical
+
+            created_to_column:
+              type: column
+
+              fields:
+                filters.date_to:
+                  type: datetime
+                  label: Created to
+                  style: vertical
+
+    leads_workspace:
+      type: leads-workspace
+      style: vertical

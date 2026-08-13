@@ -39,7 +39,10 @@ final class LeadsCsvExportController
             $body = (new LeadCsvExporter())->export($collection, 131072);
             return new Response(200, [
                 'Content-Type' => 'text/csv; charset=utf-8',
-                'Content-Disposition' => 'attachment; filename="goosialize-leads-latest-100.csv"',
+                'Content-Disposition' => sprintf(
+                    'attachment; filename="goosialize-leads-%s.csv"',
+                    (new \DateTimeImmutable('now'))->format('Y-m-d-Hi')
+                ),
                 'Cache-Control' => 'private, no-store, max-age=0',
                 'X-Content-Type-Options' => 'nosniff',
             ], $body);

@@ -1,279 +1,376 @@
 name: Goosialize Leads
 slug: goosialize-leads
 type: plugin
-version: 0.1.0-dev
-description: PLUGIN_GOOSIALIZE_LEADS.DESCRIPTION
+version: 1.0.0
+description: Standalone lead management for Grav CMS 2.0.
 author:
   name: Goosialize Ltd
   email: agency@goosialize.com
-
-# LICENSING_DECISION_REQUIRED
-
 dependencies:
-  - name: grav
-    version: '>=2.0.12 <2.1.0'
-
+- name: grav
+  version: '>=2.0.12 <2.1.0'
 compatibility:
   grav:
-    - '2.0'
-
+  - '2.0'
 form:
   validation: strict
   fields:
-    notifications.scheduling.enabled:
-      type: toggle
-      label: Scheduled notification delivery
-      default: 0
-      options:
-        1: PLUGIN_ADMIN.ENABLED
-        0: PLUGIN_ADMIN.DISABLED
-      validate:
-        type: bool
-    notifications.scheduling.frequency_minutes:
-      type: select
-      label: Delivery frequency in minutes
-      default: 5
-      options:
-        1: '1'
-        2: '2'
-        5: '5'
-        10: '10'
-        15: '15'
-        20: '20'
-        30: '30'
-        60: '60'
-      validate:
-        type: int
-    notifications.scheduling.batch_limit:
-      type: number
-      label: Scheduled delivery batch limit
-      default: 10
-      validate:
-        type: int
-        min: 1
-        max: 50
-    notifications.scheduling.timeout_seconds:
-      type: display
-      label: Scheduled process timeout
-      default: 300
-    notifications.delivery_retry.enabled:
-      type: toggle
-      label: Durable notification retries
-      highlight: 1
-      default: 0
-      options:
-        1: PLUGIN_ADMIN.ENABLED
-        0: PLUGIN_ADMIN.DISABLED
-      validate:
-        type: bool
-    notifications.delivery_retry.maximum_attempts:
-      type: number
-      label: Maximum delivery attempts
-      default: 5
-      validate:
-        type: int
-        min: 5
-        max: 5
-    notifications.delivery_retry.delays_seconds:
-      type: array
-      label: Retry delays in seconds
-      default:
-        - 300
-        - 1800
-        - 7200
-        - 28800
-    notifications.delivery_retry.processing_limit:
-      type: number
-      label: Retry processing limit
-      default: 10
-      validate:
-        type: int
-        min: 1
-        max: 50
-    notifications.delivery_retry.state_max_bytes:
-      type: number
-      label: Delivery-state maximum bytes
-      default: 1024
-      validate:
-        type: int
-        min: 1024
-        max: 1024
-    enabled:
-      type: toggle
-      label: PLUGIN_GOOSIALIZE_LEADS.ENABLED
-      help: PLUGIN_GOOSIALIZE_LEADS.ENABLED_HELP
-      highlight: 1
-      default: 1
-      options:
-        1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
-        0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
-      validate:
-        type: bool
-    forms.enabled:
-      type: toggle
-      label: PLUGIN_GOOSIALIZE_LEADS.FORMS_ENABLED
-      default: 0
-      options:
-        1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
-        0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
-      validate:
-        type: bool
-    forms.forms:
-      type: array
-      label: PLUGIN_GOOSIALIZE_LEADS.FORMS_LIST
-      default: []
-      value_only: true
-      validate:
-        type: array
-    forms.source:
-      type: text
-      label: PLUGIN_GOOSIALIZE_LEADS.FORMS_SOURCE
-      default: website
-      validate:
-        required: true
-        pattern: '^[a-z0-9](?:[a-z0-9_-]{0,62}[a-z0-9])?$'
-    forms.locale:
-      type: text
-      label: PLUGIN_GOOSIALIZE_LEADS.FORMS_LOCALE
-      default: null
-      validate:
-        pattern: '^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*$'
-    forms.consent_version:
-      type: text
-      label: PLUGIN_GOOSIALIZE_LEADS.FORMS_CONSENT_VERSION
-      default: privacy-v1
-      validate:
-        required: true
-        pattern: '^[a-z0-9](?:[a-z0-9_-]{0,62}[a-z0-9])?$'
-    forms.success_redirect:
-      type: text
-      label: PLUGIN_GOOSIALIZE_LEADS.FORMS_SUCCESS_REDIRECT
-      default: /
-      validate:
-        required: true
-    public_api.enabled:
-      type: toggle
-      label: Public JSON API
-      default: 0
-      options:
-        1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
-        0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
-      validate:
-        type: bool
-    public_api.allowed_origins:
-      type: array
-      label: Allowed Origins
-      default: []
-      value_only: true
-      validate:
-        type: array
-    public_api.locale:
-      type: text
-      label: Public API locale
-      default: null
-      validate:
-        pattern: '^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$'
-    public_api.consent_version:
-      type: text
-      label: Public API consent version
-      default: privacy-v1
-      validate:
-        required: true
-        pattern: '^[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?$'
-    public_api.body_max_bytes:
-      type: display
-      label: Maximum raw body bytes
-      default: 16384
-    public_api.json_max_depth:
-      type: display
-      label: Maximum JSON depth
-      default: 4
-    public_api.rate_limit_count:
-      type: display
-      label: Requests per window
-      default: 10
-    public_api.rate_limit_window_seconds:
-      type: display
-      label: Rate-limit window seconds
-      default: 60
-    admin2_index.enabled:
-      type: toggle
-      label: Native Admin2 Lead Index
-      default: 0
-      options:
-        1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
-        0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
-      validate:
-        type: bool
-    admin2_index.timezone:
-      type: display
-      label: Lead Index timezone
-      default: UTC
-    admin2_csv_export.enabled:
-      type: toggle
-      label: Native Admin2 Lead CSV export
-      default: 0
-      options:
-        1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
-        0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
-      validate:
-        type: bool
-    admin2_csv_export.max_response_bytes:
-      type: number
-      label: Maximum CSV response bytes
-      default: 131072
-      validate:
-        type: int
-        min: 131072
-        max: 131072
-    notifications.outbox.enabled:
-      type: toggle
-      label: Durable notification outbox
-      default: 0
-      options:
-        1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
-        0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
-      validate:
-        type: bool
-    notifications.outbox.max_event_bytes:
-      type: number
-      label: Maximum notification event bytes
-      default: 512
-      validate:
-        type: int
-        min: 512
-        max: 512
-    notifications.delivery.enabled:
-      type: toggle
-      label: Manual notification delivery
-      default: 0
-      options:
-        1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
-        0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
-      validate:
-        type: bool
-    notifications.delivery.recipients:
-      type: array
-      label: Notification recipients
-      default: []
-      value_only: true
-      validate:
-        type: array
-    notifications.delivery.sender_address:
-      type: email
-      label: Notification sender address
-      default: null
-    notifications.delivery.sender_name:
-      type: text
-      label: Notification sender name
-      default: null
-      validate:
-        max: 80
-    notifications.delivery.default_limit:
-      type: number
-      label: Default delivery batch limit
-      default: 10
-      validate:
-        type: int
-        min: 10
-        max: 10
+    tabs:
+      type: tabs
+      active: 1
+      fields:
+        general:
+          type: tab
+          title: General
+          fields:
+            enabled:
+              type: toggle
+              label: PLUGIN_GOOSIALIZE_LEADS.ENABLED
+              help: PLUGIN_GOOSIALIZE_LEADS.ENABLED_HELP
+              highlight: 1
+              default: 1
+              options:
+                1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
+                0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
+              validate:
+                type: bool
+            admin2_index.enabled:
+              type: toggle
+              label: Native Admin2 Lead Index
+              default: 0
+              options:
+                1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
+                0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
+              validate:
+                type: bool
+            _admin2_index_settings:
+              type: conditional
+              condition: config.plugins.goosialize-leads.admin2_index.enabled
+              fields:
+                admin2_index.timezone:
+                  type: display
+                  label: Lead Index timezone
+                  default: UTC
+            admin2_csv_export.enabled:
+              type: toggle
+              label: Native Admin2 Lead CSV export
+              default: 0
+              options:
+                1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
+                0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
+              validate:
+                type: bool
+            _csv_export_settings:
+              type: conditional
+              condition: config.plugins.goosialize-leads.admin2_csv_export.enabled
+              fields:
+                admin2_csv_export.max_response_bytes:
+                  type: number
+                  label: Maximum CSV response bytes
+                  default: 131072
+                  validate:
+                    type: int
+                    min: 131072
+                    max: 131072
+        forms_tab:
+          type: tab
+          title: Forms
+          fields:
+            forms.enabled:
+              type: toggle
+              label: PLUGIN_GOOSIALIZE_LEADS.FORMS_ENABLED
+              default: 0
+              options:
+                1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
+                0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
+              validate:
+                type: bool
+            _forms_settings:
+              type: conditional
+              condition: config.plugins.goosialize-leads.forms.enabled
+              fields:
+                forms.forms:
+                  type: select
+                  label: Eligible Grav Forms
+                  default: []
+                  value_only: true
+                  validate:
+                    type: array
+                  multiple: true
+                  options: {}
+                  help: Select the Grav Forms that may create Leads.
+                forms.source:
+                  type: text
+                  label: PLUGIN_GOOSIALIZE_LEADS.FORMS_SOURCE
+                  default: website
+                  validate:
+                    required: true
+                    pattern: ^[a-z0-9](?:[a-z0-9_-]{0,62}[a-z0-9])?$
+                forms.locale:
+                  type: text
+                  label: PLUGIN_GOOSIALIZE_LEADS.FORMS_LOCALE
+                  default: null
+                  validate:
+                    pattern: ^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*$
+                forms.consent_version:
+                  type: text
+                  label: PLUGIN_GOOSIALIZE_LEADS.FORMS_CONSENT_VERSION
+                  default: privacy-v1
+                  validate:
+                    required: true
+                    pattern: ^[a-z0-9](?:[a-z0-9_-]{0,62}[a-z0-9])?$
+                forms.success_redirect:
+                  type: text
+                  label: PLUGIN_GOOSIALIZE_LEADS.FORMS_SUCCESS_REDIRECT
+                  default: /
+                  validate:
+                    required: true
+        downloads_tab:
+          type: tab
+          title: Downloads
+          fields:
+            downloads.enabled:
+              type: toggle
+              label: Download lead capture
+              default: 0
+              options:
+                1: Enabled
+                0: Disabled
+              validate:
+                type: bool
+            downloads.rules:
+              type: list
+              label: Download capture rules
+              help: Map resource identifiers to a Grav Form and Lead source. Compatible download/resource providers use the Leads capture capability; Leads does not serve files directly.
+              fields:
+                .resource_id:
+                  type: text
+                  label: Resource ID
+                  validate:
+                    required: true
+                    pattern: ^[a-z0-9](?:[a-z0-9_-]{0,126}[a-z0-9])?$
+                .form:
+                  type: select
+                  label: Capture Form
+                  options: {}
+                .source:
+                  type: text
+                  label: Lead source
+                  default: download
+                  validate:
+                    required: true
+                    pattern: ^[a-z0-9](?:[a-z0-9_-]{0,62}[a-z0-9])?$
+        public_api_tab:
+          type: tab
+          title: Public API
+          fields:
+            public_api.enabled:
+              type: toggle
+              label: Public JSON API
+              default: 0
+              options:
+                1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
+                0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
+              validate:
+                type: bool
+            _public_api_settings:
+              type: conditional
+              condition: config.plugins.goosialize-leads.public_api.enabled
+              fields:
+                public_api.allowed_origins:
+                  type: array
+                  label: Allowed Origins
+                  default: []
+                  value_only: true
+                  validate:
+                    type: array
+                public_api.locale:
+                  type: text
+                  label: Public API locale
+                  default: null
+                  validate:
+                    pattern: ^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$
+                public_api.consent_version:
+                  type: text
+                  label: Public API consent version
+                  default: privacy-v1
+                  validate:
+                    required: true
+                    pattern: ^[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?$
+                public_api.body_max_bytes:
+                  type: display
+                  label: Maximum raw body bytes
+                  default: 16384
+                public_api.json_max_depth:
+                  type: display
+                  label: Maximum JSON depth
+                  default: 4
+                public_api.rate_limit_count:
+                  type: display
+                  label: Requests per window
+                  default: 10
+                public_api.rate_limit_window_seconds:
+                  type: display
+                  label: Rate-limit window seconds
+                  default: 60
+        notifications_tab:
+          type: tab
+          title: Notifications
+          fields:
+            notifications.outbox.enabled:
+              type: toggle
+              label: Durable notification outbox
+              default: 0
+              options:
+                1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
+                0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
+              validate:
+                type: bool
+            _notification_outbox_settings:
+              type: conditional
+              condition: config.plugins.goosialize-leads.notifications.outbox.enabled
+              fields:
+                notifications.outbox.max_event_bytes:
+                  type: number
+                  label: Maximum notification event bytes
+                  default: 512
+                  validate:
+                    type: int
+                    min: 512
+                    max: 512
+            notifications.delivery.enabled:
+              type: toggle
+              label: Manual notification delivery
+              default: 0
+              options:
+                1: PLUGIN_GOOSIALIZE_LEADS.OPTION_ENABLED
+                0: PLUGIN_GOOSIALIZE_LEADS.OPTION_DISABLED
+              validate:
+                type: bool
+            _notification_delivery_settings:
+              type: conditional
+              condition: config.plugins.goosialize-leads.notifications.delivery.enabled
+              fields:
+                notifications.delivery.recipients:
+                  type: array
+                  label: Notification recipients
+                  default: []
+                  value_only: true
+                  validate:
+                    type: array
+                notifications.delivery.sender_address:
+                  type: email
+                  label: Notification sender address
+                  default: null
+                notifications.delivery.sender_name:
+                  type: text
+                  label: Notification sender name
+                  default: null
+                  validate:
+                    max: 80
+                notifications.delivery.default_limit:
+                  type: number
+                  label: Default delivery batch limit
+                  default: 10
+                  validate:
+                    type: int
+                    min: 10
+                    max: 10
+        automation_tab:
+          type: tab
+          title: Automation
+          fields:
+            notifications.delivery_retry.enabled:
+              type: toggle
+              label: Durable notification retries
+              highlight: 1
+              default: 0
+              options:
+                1: PLUGIN_ADMIN.ENABLED
+                0: PLUGIN_ADMIN.DISABLED
+              validate:
+                type: bool
+            _delivery_retry_settings:
+              type: conditional
+              condition: config.plugins.goosialize-leads.notifications.delivery_retry.enabled
+              fields:
+                notifications.delivery_retry.maximum_attempts:
+                  type: number
+                  label: Maximum delivery attempts
+                  default: 5
+                  validate:
+                    type: int
+                    min: 5
+                    max: 5
+                notifications.delivery_retry.delays_seconds:
+                  type: array
+                  label: Retry delays in seconds
+                  default:
+                  - 300
+                  - 1800
+                  - 7200
+                  - 28800
+                notifications.delivery_retry.processing_limit:
+                  type: number
+                  label: Retry processing limit
+                  default: 10
+                  validate:
+                    type: int
+                    min: 1
+                    max: 50
+                notifications.delivery_retry.state_max_bytes:
+                  type: number
+                  label: Delivery-state maximum bytes
+                  default: 1024
+                  validate:
+                    type: int
+                    min: 1024
+                    max: 1024
+            notifications.scheduling.enabled:
+              type: toggle
+              label: Scheduled notification delivery
+              default: 0
+              options:
+                1: PLUGIN_ADMIN.ENABLED
+                0: PLUGIN_ADMIN.DISABLED
+              validate:
+                type: bool
+            _scheduling_settings:
+              type: conditional
+              condition: config.plugins.goosialize-leads.notifications.scheduling.enabled
+              fields:
+                notifications.scheduling.frequency_minutes:
+                  type: select
+                  label: Delivery frequency in minutes
+                  default: 5
+                  options:
+                    1: '1'
+                    2: '2'
+                    5: '5'
+                    10: '10'
+                    15: '15'
+                    20: '20'
+                    30: '30'
+                    60: '60'
+                  validate:
+                    type: int
+                notifications.scheduling.batch_limit:
+                  type: number
+                  label: Scheduled delivery batch limit
+                  default: 10
+                  validate:
+                    type: int
+                    min: 1
+                    max: 50
+                notifications.scheduling.timeout_seconds:
+                  type: display
+                  label: Scheduled process timeout
+                  default: 300
+        advanced_tab:
+          type: tab
+          title: Advanced
+          fields:
+            _advanced_note:
+              type: display
+              label: Security limits
+              content: Security bounds are intentionally conservative in v1.0. Fixed limits remain controlled by the plugin contracts.

@@ -1,47 +1,43 @@
 # Goosialize Leads
 
-Phase 5C.2 adds optional bounded Grav core scheduling plus read-only notification operational visibility through `notification-status` and a native Admin2 resource table. Scheduling is disabled by default; manual delivery and reconciliation remain separate CLI authorities.
+Goosialize Leads 1.0.0 is a standalone, theme-independent Lead capture,
+storage, Admin2 reporting and notification-delivery plugin for Grav CMS 2.
 
-Phase 5C.1 adds opt-in durable delivery state, deterministic bounded manual
-retries, immutable dead-letter recovery, and operator-only reconciliation of
-uncertain delivery outcomes. It adds no scheduler and does not claim
-exactly-once delivery.
+The release supports:
 
-Phase 5A adds an optional, disabled-by-default durable filesystem notification outbox. It records one immutable `lead.accepted` event after successful Lead persistence; it performs no notification delivery or network access.
+- canonical filesystem Lead storage with atomic no-replace publication;
+- durable idempotency and exact replay protection;
+- opt-in native Grav Forms capture;
+- opt-in bounded public JSON capture;
+- a versioned plugin-to-plugin public capture capability;
+- a permission-gated, read-only native Admin2 latest-100 Lead index;
+- bounded native Admin2 CSV export;
+- a durable notification outbox;
+- bounded manual and scheduled notification delivery;
+- durable retry, dead-letter and duplicate-risk state;
+- revision-safe operator reconciliation;
+- bounded human-readable and JSON operational status.
 
-Phase 5B adds the explicitly invoked bounded command `php bin/plugin goosialize-leads deliver-notifications --limit=10`. It is disabled by default, uses the optional Grav Email plugin for transport configuration, and stores no SMTP/provider credentials. Delivery is single-attempt and at-least-once: a process termination after provider acceptance but before durable archival can cause a later manual run to deliver the same notification again. Scheduling, retries, reconciliation, dead-letter handling, and operational visibility remain Phase 5C.
+Optional capture, Admin2, CSV, notification and scheduling facilities are
+disabled by default and must be configured explicitly.
 
-Phase 4C.1 adds a permission-gated native Admin2 export of the deterministic latest-100 Lead summary collection. CSV export is disabled by default, uses no plugin-owned Admin2 JavaScript, and does not modify Lead storage.
+## Release status
 
-Phase 3C.1 adds opt-in, server-rendered Grav Forms capture. Configure
-`forms.enabled`, list eligible lowercase form names in `forms.forms`, and add the
-`goosialize_leads_capture` process action to those forms. Public JSON and XHR
-capture remain out of scope.
+The repository is preparing the 1.0.0 release artifact.
 
-Goosialize Leads is planned as a standalone commercial plugin for Grav CMS 2.0.12. Its objective is to capture, securely store, deliver, organize, and manage leads directly inside Grav and native Admin2.
+Mandatory human browser acceptance is `PASS`. Tagging and publication remain
+unauthorized until repository alignment, deterministic package verification,
+staged-diff review, the milestone commit and explicit release authorization.
 
-## Current status
+The following Admin2 features are intentionally unavailable in 1.0.0 because
+the complete required native Admin2 2.0.15 mutation contract has not been
+source-proven:
 
-**Phase 4A.1 bounded native Admin2 Lead Index.** The plugin includes secure
-Forms and public-API capture plus an opt-in, permission-gated, read-only native
-Admin2 resource table. The index reads only canonical primary Lead records,
-scans at most 10,000 records, and returns the latest 100 in fixed order. It has
-no detail, mutation, export, custom Admin2 JavaScript, or sidecar dependency.
+- Lead detail mutation;
+- Lead status management;
+- reversible Lead delete and restore.
 
-> Goosialize Leads is locally package-installable but remains non-functional, is not marketplace-ready, and is not production-ready.
-
-## Planned MVP
-
-The first release is planned to provide:
-
-- Standalone, theme-independent lead capture forms with documented template overrides.
-- Secure filesystem storage with atomic writes and duplicate protection.
-- Consent capture and email notifications.
-- Lead magnet or protected resource delivery.
-- A native Admin2 Leads management page using official extension points.
-- Search, combined filters, statuses, CSV export, and permission-gated update and delete operations.
-- Automated and manual test scenarios.
-- Clean installation on Grav CMS 2.0.12 and marketplace-ready packaging and documentation.
+The 1.0.0 Admin2 Lead index therefore remains read-only.
 
 ## Compatibility target
 
@@ -57,6 +53,46 @@ The first release is planned to provide:
 - Preserve lead data through plugin upgrades.
 - Keep installation, upgrade, and removal clean and isolated.
 - Verify lifecycle and API assumptions against official Grav 2.0 documentation and Grav 2.0.12 source.
+
+## Documentation
+
+### Getting started
+
+- [Installation](docs/INSTALLATION.md)
+- [Configuration](docs/CONFIGURATION.md)
+- [Upgrade](docs/UPGRADE.md)
+- [Uninstall and data retention](docs/UNINSTALL_DATA_RETENTION.md)
+
+### Capture integrations
+
+- [Grav Forms integration](docs/FORMS_INTEGRATION.md)
+- [Public JSON API integration](docs/JSON_API_INTEGRATION.md)
+- [Public plugin integration contract](docs/PUBLIC_INTEGRATION_CONTRACT.md)
+- [Examples](docs/EXAMPLES.md)
+
+### Admin2 and export
+
+- [Admin2 Lead index](docs/ADMIN2_LEAD_INDEX.md)
+- [CSV export](docs/CSV_EXPORT.md)
+- [Permissions](docs/PERMISSIONS.md)
+
+### Notification operations
+
+- [Notification delivery](docs/NOTIFICATION_DELIVERY.md)
+- [Scheduler](docs/SCHEDULER.md)
+- [Retry and dead-letter state](docs/RETRY_DEAD_LETTER.md)
+- [Reconciliation](docs/RECONCILIATION.md)
+- [Operational status](docs/OPERATIONAL_STATUS.md)
+- [CLI reference](docs/CLI_REFERENCE.md)
+
+### Operations and release
+
+- [Security](docs/SECURITY.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [1.0.0 release notes](docs/RELEASE_NOTES_1.0.0.md)
+
+The manual browser acceptance checklist is a development-only release gate and
+is intentionally excluded from the distributable package.
 
 ## Current repository layout
 
@@ -135,9 +171,12 @@ The manifest is `packaging/package-files.txt`; the complete isolation and safety
 ## Native Admin2 Lead Index
 
 Set `admin2_index.enabled: true` and grant `api.goosialize_leads.read` to an
-authenticated API/Admin2 user. The page title always states
-`Leads — latest 100`; filtering is native and client-side over that bounded
-collection. The index is disabled by default and never changes Lead data.
+authenticated API/Admin2 user. The workspace displays and filters the bounded
+latest-100 index. `write` adds Edit and Active/Inactive controls; `delete` adds
+reversible Delete. Deleted Leads can only be restored by a write-capable user.
+Primary records remain immutable: workflow status, state and optimistic
+revision are stored in separate metadata sidecars. Exact-ID Edit and mutation
+remain available for valid Leads older than the latest-100 index.
 
 ## Public JSON capture
 

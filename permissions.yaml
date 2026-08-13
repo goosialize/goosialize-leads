@@ -5,6 +5,10 @@ actions:
     actions:
       read:
         label: View leads
+      write:
+        label: Update leads
+      delete:
+        label: Delete leads
       export:
         label: Export leads
       operations:

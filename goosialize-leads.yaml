@@ -9,6 +9,10 @@ forms:
   locale: null
   consent_version: privacy-v1
   success_redirect: /
+downloads:
+  enabled: false
+  rules: []
+
 public_api:
   enabled: false
   allowed_origins: []
@@ -19,7 +23,7 @@ public_api:
   rate_limit_count: 10
   rate_limit_window_seconds: 60
 admin2_index:
-  enabled: false
+  enabled: true
   timezone: UTC
 admin2_csv_export:
   enabled: false

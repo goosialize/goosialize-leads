@@ -153,7 +153,21 @@ try {
     phase4a1Write($root, $newerA);
     $response = $repository->latest($query)->toResponse();
     phase4a1Check(array_column($response['data'], 'id') === [$newerA['id'], $newerB['id'], $older['id']], 'fixed ordering mismatch');
-    phase4a1Check(array_keys($response['data'][0]) === ['id', 'created_at', 'name', 'email', 'source', 'form_name', 'status'], 'projection mismatch');
+    phase4a1Check(
+        array_keys($response['data'][0]) === [
+            'id',
+            'created_at',
+            'name',
+            'email',
+            'phone',
+            'source',
+            'form_name',
+            'resource_id',
+            'status',
+            'form_or_resource',
+        ],
+        'projection mismatch'
+    );
     phase4a1Check($response['meta']['count'] === 3 && $response['meta']['total_scanned'] === 3, 'collection metadata mismatch');
 
     $sidecarDirectory = $root . '/goosialize-leads/v1/idempotency/aa';
@@ -305,12 +319,12 @@ try {
     foreach ($classes as $class) phase4a1Check((new ReflectionClass($class))->isFinal(), 'class is not final');
     phase4a1Check((new ReflectionClass(LeadReadRepository::class))->isInterface(), 'read repository is not interface');
     $methods = [
-        LeadSummary::class => ['fromRecord', 'id', 'createdAt', 'name', 'email', 'source', 'formName', 'status', 'toArray'],
+        LeadSummary::class => ['fromRecord', 'id', 'createdAt', 'name', 'email', 'phone', 'source', 'formName', 'resourceId', 'status', 'toArray'],
         LeadIndexQuery::class => ['newest', 'limit'],
         LeadIndexCollection::class => ['create', 'summaries', 'truncated', 'totalScanned', 'toResponse'],
-        LeadsIndexController::class => ['__construct', 'index'],
-        FilesystemLeadReadRepository::class => ['__construct', 'latest'],
-        LeadReadRepository::class => ['latest'],
+        LeadsIndexController::class => ['__construct', 'filterFormData', 'index'],
+        FilesystemLeadReadRepository::class => ['__construct', 'latest', 'findById'],
+        LeadReadRepository::class => ['latest', 'findById'],
     ];
     foreach ($methods as $class => $expected) {
         $actual = [];

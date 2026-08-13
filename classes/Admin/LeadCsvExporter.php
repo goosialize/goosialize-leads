@@ -6,8 +6,8 @@ namespace Grav\Plugin\GoosializeLeads\Admin;
 
 final class LeadCsvExporter
 {
-    private const HEADERS = ['Lead ID', 'Created (UTC)', 'Name', 'Email', 'Source', 'Form', 'Status'];
-    private const LIMITS = [128, 32, 256, 320, 128, 128, 32];
+    private const HEADERS = ['Lead ID', 'Created (UTC)', 'Name', 'Email', 'Phone', 'Source', 'Form / Resource', 'Status'];
+    private const LIMITS = [128, 32, 256, 320, 128, 128, 128, 32];
 
     public function __construct()
     {
@@ -26,8 +26,9 @@ final class LeadCsvExporter
                 $summary->createdAt(),
                 $summary->name(),
                 $summary->email(),
+                $summary->phone(),
                 $summary->source(),
-                $summary->formName(),
+                $summary->resourceId() ?? $summary->formName(),
                 $summary->status(),
             ];
             foreach ($values as $index => $value) {

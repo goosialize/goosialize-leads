@@ -28,7 +28,7 @@ docker run --rm --network none \
   --entrypoint /bin/sh "${EXPECTED_IMAGE_ID}" -c '
 set -eu
 for file in /source/classes/*/*.php /source/goosialize-leads.php; do php -l "$file" >/dev/null; done
-test "$(wc -l < /source/packaging/package-files.txt)" -eq 88
+test -z "$(sort /source/packaging/package-files.txt | uniq -d)"
 php -r '\''
 require "/source/autoload.php";
 $classes=[

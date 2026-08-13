@@ -1,5 +1,10 @@
 # Phase 3 Secure Capture and Storage Plan
 
+> Historical implementation record. Later Admin2 remediation supersedes the
+> resource-table, read-only index and no-mutation claims in this document.
+> Current product behavior is defined by `ADMIN2_LEAD_INDEX.md` and the release
+> documentation; checkpoint assertions below are preserved as history.
+
 Planning status: normative through Phase 3B; Phase 3A runtime primitives exist and Phase 3B runtime behavior is not yet implemented.
 
 ## Objective, scope, and baseline
@@ -822,6 +827,11 @@ Phase 4B may be replanned only after the supported installed platform source-pro
 ### Boundary and native entry point
 
 Phase 4C.1 adds one read-only native `resource-table` export action and authenticated GET `/goosialize-leads/export`. The existing `admin/blueprints/goosialize-leads-index.yaml` stays unchanged for users lacking export permission. New `admin/blueprints/goosialize-leads-index-export.yaml` is an exact copy except its existing field adds `export_endpoint: /goosialize-leads/export`, `export_filename: goosialize-leads-latest-100.csv`, `export_supported_filters: []`, and changes `actions.export` to true. The label is native `Export CSV`; its button semantics and accessible text are Admin2-owned.
+
+> Historical note: the static filename above records the Phase 4C.1 contract.
+> The final v1 product supersedes it with the server-generated
+> `goosialize-leads-YYYY-MM-DD-HHmm.csv` contract documented in
+> `docs/CSV_EXPORT.md`.
 
 `onApiPluginPageInfo()` continues to expose the same single page ID and selects blueprint `goosialize-leads-index-export` only when export configuration is valid and the user has API access, `api.goosialize_leads.read` and `api.goosialize_leads.export`; otherwise it selects `goosialize-leads-index`. This two-blueprint selection is required because the native export button has no per-action capability property. The endpoint independently enforces all permissions. No plugin JavaScript, web component, custom HTML/button/CSS, Shadow DOM or compiled Admin2 change exists.
 

@@ -20,20 +20,28 @@ function summary(int $number, ?string $name = 'Ada', ?string $email = 'ada@examp
         'created_at' => sprintf('2026-07-29T12:00:%02d.000000Z', $number % 60),
         'full_name' => $name,
         'email' => $email,
+        'phone' => null,
         'source' => 'website',
         'form_name' => 'contact',
+        'resource_id' => null,
         'status' => 'new',
     ]);
 }
 
 $api = new ReflectionClass(LeadCsvExporter::class);
 check($api->isFinal(), 'exporter not final');
+
+$headers = $api->getReflectionConstant('HEADERS')?->getValue();
+$limits = $api->getReflectionConstant('LIMITS')?->getValue();
+check(is_array($headers) && count($headers) === 8, 'CSV header count drift');
+check(is_array($limits) && count($limits) === 8, 'CSV limit count drift');
+check(count($headers) === count($limits), 'CSV header/limit alignment drift');
 check($api->getConstructor()?->isPublic() === true && $api->getConstructor()?->getNumberOfParameters() === 0, 'constructor drift');
 $method = $api->getMethod('export');
 check($method->isPublic() && $method->getReturnType()?->getName() === 'string', 'export API drift');
 
 $exporter = new LeadCsvExporter();
-$header = '"Lead ID","Created (UTC)","Name","Email","Source","Form","Status"' . "\r\n";
+$header = '"Lead ID","Created (UTC)","Name","Email","Phone","Source","Form / Resource","Status"' . "\r\n";
 check($exporter->export(LeadIndexCollection::create([], false, 0), 131072) === $header, 'empty CSV');
 
 $special = summary(1, " Zoë,\r\n\"=CEO\"", null);

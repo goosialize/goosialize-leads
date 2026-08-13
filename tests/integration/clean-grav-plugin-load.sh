@@ -41,6 +41,8 @@ readonly GIT_BEFORE="$(git -C "${REPOSITORY_ROOT}" status --porcelain=v1 -z | sh
 readonly HEAD_BEFORE="$(git -C "${REPOSITORY_ROOT}" rev-parse HEAD)"
 readonly BRANCH_BEFORE="$(git -C "${REPOSITORY_ROOT}" branch --show-current)"
 
+[[ -z "$(sort "${REPOSITORY_ROOT}/packaging/package-files.txt" | uniq -d)" ]] || fail "duplicate package manifest path"
+
 readonly PHP_PROBE='
 use Grav\Common\Grav;
 use Grav\Common\Plugins;
@@ -62,11 +64,14 @@ foreach (["blueprints.yaml", "goosialize-leads.yaml", "languages/en.yaml"] as $f
 }
 $metadata = Yaml::parseFile($root . "/blueprints.yaml");
 if (($metadata["slug"] ?? null) !== "goosialize-leads") throw new RuntimeException("Invalid metadata slug");
+if (($metadata["version"] ?? null) !== "1.0.0") throw new RuntimeException("Invalid blueprint version");
 if (($metadata["dependencies"][0]["version"] ?? null) !== ">=2.0.12 <2.1.0") throw new RuntimeException("Invalid Grav dependency");
 $defaults = Yaml::parseFile($root . "/goosialize-leads.yaml");
 if (($defaults["enabled"] ?? null) !== true) throw new RuntimeException("Default configuration is not enabled");
 $composer = json_decode(file_get_contents($root . "/composer.json"), true, 512, JSON_THROW_ON_ERROR);
 if (($composer["type"] ?? null) !== "grav-plugin") throw new RuntimeException("Invalid package type");
+if (($composer["version"] ?? null) !== "1.0.0") throw new RuntimeException("Invalid Composer version");
+if (($composer["version"] ?? null) !== ($metadata["version"] ?? null)) throw new RuntimeException("Release metadata version mismatch");
 if (($composer["require"]["php"] ?? null) !== "^8.3") throw new RuntimeException("Invalid PHP requirement");
 if (($composer["require"]["ext-intl"] ?? null) !== "*") throw new RuntimeException("Invalid ext-intl requirement");
 $enabled = (bool) $grav["config"]->get("plugins.goosialize-leads.enabled");
@@ -77,6 +82,7 @@ $expectedSubscriptions = [
     "onApiRegisterRoutes" => ["onApiRegisterRoutes", 0],
     "onApiSidebarItems" => ["onApiSidebarItems", 0],
     "onApiPluginPageInfo" => ["onApiPluginPageInfo", 0],
+    "onApiBlueprintResolved" => ["onApiBlueprintResolved", 0],
     "onApiCollectPublicRoutes" => ["onApiCollectPublicRoutes", 0],
     "onRequestHandlerInit" => ["onRequestHandlerInit", 98000],
     "onTwigTemplatePaths" => ["onTwigTemplatePaths", 0],
@@ -102,11 +108,17 @@ if ($expectedEnabled) {
     if (!$autoloadMethod->isPublic() || $autoloadMethod->isStatic() || (string) $autoloadMethod->getReturnType() !== "void") throw new RuntimeException("autoload signature mismatch");
     $plugin->autoload();
     $plugin->autoload();
+    require_once $root . "/cli/DeliverNotificationsCommand.php";
+    require_once $root . "/cli/NotificationStatusCommand.php";
+    require_once $root . "/cli/ReconcileNotificationCommand.php";
     $classes = [
+        "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadCsvExporter",
         "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadIndexCollection",
         "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadIndexQuery",
         "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadSummary",
+        "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadsCsvExportController",
         "Grav\\Plugin\\GoosializeLeads\\Admin\\LeadsIndexController",
+        "Grav\\Plugin\\GoosializeLeads\\Admin\\NotificationOperationsController",
         "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureCommand",
         "Grav\\Plugin\\GoosializeLeads\\Application\\CaptureResult",
         "Grav\\Plugin\\GoosializeLeads\\Application\\LeadCaptureRuntimeFactory",
@@ -114,12 +126,12 @@ if ($expectedEnabled) {
         "Grav\\Plugin\\GoosializeLeads\\Application\\LeadPersistenceCoordinator",
         "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadIdGenerator",
         "Grav\\Plugin\\GoosializeLeads\\Domain\\LeadRecord",
-        "Grav\\Plugin\\GoosializeLeads\\Http\\FormsLeadCaptureAdapter",
         "Grav\\Plugin\\GoosializeLeads\\Http\\ApiParseResult",
         "Grav\\Plugin\\GoosializeLeads\\Http\\ApiRequestMapper",
         "Grav\\Plugin\\GoosializeLeads\\Http\\ApiRequestResult",
         "Grav\\Plugin\\GoosializeLeads\\Http\\ApiResponseMapper",
         "Grav\\Plugin\\GoosializeLeads\\Http\\EndpointRateLimiter",
+        "Grav\\Plugin\\GoosializeLeads\\Http\\FormsLeadCaptureAdapter",
         "Grav\\Plugin\\GoosializeLeads\\Http\\OriginPolicy",
         "Grav\\Plugin\\GoosializeLeads\\Http\\PublicApiRawBodyMiddleware",
         "Grav\\Plugin\\GoosializeLeads\\Http\\PublicLeadApiController",
@@ -129,9 +141,26 @@ if ($expectedEnabled) {
         "Grav\\Plugin\\GoosializeLeads\\Integration\\LeadCaptureContextV1",
         "Grav\\Plugin\\GoosializeLeads\\Integration\\LeadCaptureRequestV1",
         "Grav\\Plugin\\GoosializeLeads\\Integration\\LeadCaptureResultV1",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\DeliveryReconciliationService",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\DeliveryRetryPolicy",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\DeliveryState",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\FilesystemDeadLetterRepository",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\FilesystemDeliveryStateRepository",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\FilesystemNotificationOperationalInventoryRepository",
         "Grav\\Plugin\\GoosializeLeads\\Notification\\FilesystemNotificationOutbox",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\FilesystemPendingNotificationRepository",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\GravEmailNotificationTransport",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\LeadDeliveryRecordReader",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationDeliveryResult",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationDeliveryWorker",
         "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationEnqueueResult",
         "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationEvent",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationMessage",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationMessageFactory",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationOperationalInventory",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationOperationalItem",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationTransportResult",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\SystemDeliveryClock",
         "Grav\\Plugin\\GoosializeLeads\\Security\\IdempotencyKeyRing",
         "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadRepository",
         "Grav\\Plugin\\GoosializeLeads\\Storage\\FilesystemLeadReadRepository",
@@ -142,14 +171,31 @@ if ($expectedEnabled) {
         "Grav\\Plugin\\GoosializeLeads\\Validation\\LeadNormalizer",
         "Grav\\Plugin\\GoosializeLeads\\Validation\\ValidationError",
         "Grav\\Plugin\\GoosializeLeads\\Validation\\ValidationResult",
+        "Grav\\Plugin\\Console\\DeliverNotificationsCommand",
+        "Grav\\Plugin\\Console\\ReconcileNotificationCommand",
+        "Grav\\Plugin\\Console\\NotificationStatusCommand",
     ];
+    $interfaces = [
+        "Grav\\Plugin\\GoosializeLeads\\Integration\\LeadCaptureCapabilityV1",
+        "Grav\\Plugin\\GoosializeLeads\\Storage\\LeadRepository",
+        "Grav\\Plugin\\GoosializeLeads\\Storage\\LeadReadRepository",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationOutbox",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationTransport",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\PendingNotificationRepository",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\ClassifiedNotificationTransport",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\DeadLetterRepository",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\DeliveryClock",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\DeliveryEventLease",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\DeliveryStateRepository",
+        "Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationOperationalInventoryRepository",
+    ];
+    if (count($classes) !== 62 || count($interfaces) !== 12) throw new RuntimeException("Release 74-type inventory count mismatch");
     foreach ($classes as $class) {
-        if (!class_exists($class) || !(new ReflectionClass($class))->isFinal()) throw new RuntimeException("Phase 3A class mismatch: " . $class);
+        if (!class_exists($class) || !(new ReflectionClass($class))->isFinal()) throw new RuntimeException("Release class reflection mismatch: " . $class);
     }
-    if (!interface_exists("Grav\\Plugin\\GoosializeLeads\\Integration\\LeadCaptureCapabilityV1")) throw new RuntimeException("Phase 8 public capability interface missing");
-    if (!interface_exists("Grav\\Plugin\\GoosializeLeads\\Storage\\LeadRepository")) throw new RuntimeException("Phase 3B repository interface missing");
-    if (!interface_exists("Grav\\Plugin\\GoosializeLeads\\Storage\\LeadReadRepository")) throw new RuntimeException("Phase 4A.1 read repository interface missing");
-    if (!interface_exists("Grav\\Plugin\\GoosializeLeads\\Notification\\NotificationOutbox")) throw new RuntimeException("Phase 5A outbox interface missing");
+    foreach ($interfaces as $interface) {
+        if (!interface_exists($interface) || !(new ReflectionClass($interface))->isInterface()) throw new RuntimeException("Release interface reflection mismatch: " . $interface);
+    }
     if (is_dir($root . "/vendor")) throw new RuntimeException("Packaged vendor directory exists");
     echo "PASS_PHASE_3A_AUTOLOAD\n";
     echo "PASS_ENABLED_DISCOVERY_LOAD\n";

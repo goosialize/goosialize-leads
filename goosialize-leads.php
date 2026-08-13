@@ -10,6 +10,9 @@ use Grav\Common\Processors\Events\RequestHandlerEvent;
 use Grav\Events\PermissionsRegisterEvent;
 use Grav\Framework\Acl\PermissionsReader;
 use Grav\Plugin\GoosializeLeads\Admin\LeadsIndexController;
+use Grav\Plugin\GoosializeLeads\Admin\LeadIndexQuery;
+use Grav\Plugin\GoosializeLeads\Admin\LeadMutationController;
+use Grav\Plugin\GoosializeLeads\Admin\LeadEditController;
 use Grav\Plugin\GoosializeLeads\Admin\LeadsCsvExportController;
 use Grav\Plugin\GoosializeLeads\Admin\NotificationOperationsController;
 use Grav\Plugin\GoosializeLeads\Application\LeadCaptureRuntimeFactory;
@@ -26,6 +29,7 @@ use Grav\Plugin\GoosializeLeads\Http\RawJsonParser;
 use Grav\Plugin\GoosializeLeads\Notification\FilesystemNotificationOutbox;
 use Grav\Plugin\GoosializeLeads\Security\IdempotencyKeyRing;
 use Grav\Plugin\GoosializeLeads\Storage\FilesystemLeadRepository;
+use Grav\Plugin\GoosializeLeads\Storage\FilesystemLeadReadRepository;
 use Grav\Plugin\GoosializeLeads\Validation\LeadInputValidator;
 use Grav\Plugin\GoosializeLeads\Validation\LeadNormalizer;
 use RocketTheme\Toolbox\Event\Event;
@@ -47,6 +51,7 @@ final class GoosializeLeadsPlugin extends Plugin
             'onApiRegisterRoutes' => ['onApiRegisterRoutes', 0],
             'onApiSidebarItems' => ['onApiSidebarItems', 0],
             'onApiPluginPageInfo' => ['onApiPluginPageInfo', 0],
+            'onApiBlueprintResolved' => ['onApiBlueprintResolved', 0],
             'onApiCollectPublicRoutes' => ['onApiCollectPublicRoutes', 0],
             'onRequestHandlerInit' => ['onRequestHandlerInit', 98000],
             'onTwigTemplatePaths' => ['onTwigTemplatePaths', 0],
@@ -121,6 +126,164 @@ final class GoosializeLeadsPlugin extends Plugin
             new GoosializeLeadsCaptureCapabilityV1($service);
     }
 
+    public function onApiBlueprintResolved(Event $event): void
+    {
+        if (($event['plugin'] ?? null) !== 'goosialize-leads') {
+            return;
+        }
+
+        $fields = $event['fields'] ?? null;
+
+        if (!is_array($fields)) {
+            return;
+        }
+
+        $options = $this->discoverGravFormOptions();
+
+        $this->injectSelectOptions(
+            $fields,
+            'forms.forms',
+            $options
+        );
+
+        $this->injectSelectOptions(
+            $fields,
+            '.form',
+            $options
+        );
+
+        $event['fields'] = $fields;
+    }
+
+    /**
+     * @return array<string,string>
+     */
+    private function discoverGravFormOptions(): array
+    {
+        $options = [];
+
+        try {
+            $pages = $this->grav['pages'] ?? null;
+
+            if (!is_object($pages) || !method_exists($pages, 'all')) {
+                return [];
+            }
+
+            foreach ($pages->all() as $page) {
+                if (
+                    !is_object($page)
+                    || !method_exists($page, 'header')
+                ) {
+                    continue;
+                }
+
+                $header = $page->header();
+
+                if (!is_object($header)) {
+                    continue;
+                }
+
+                $raw = null;
+
+                if (isset($header->forms)) {
+                    $raw = $header->forms;
+                } elseif (isset($header->form)) {
+                    $raw = $header->form;
+                }
+
+                if (is_object($raw)) {
+                    $raw = (array) $raw;
+                }
+
+                if (!is_array($raw)) {
+                    continue;
+                }
+
+                if (
+                    isset($raw['name'])
+                    && is_string($raw['name'])
+                ) {
+                    $name = $raw['name'];
+
+                    if ($this->validDiscoveredFormName($name)) {
+                        $options[$name] = $name;
+                    }
+
+                    continue;
+                }
+
+                foreach ($raw as $name => $definition) {
+                    if (
+                        !is_string($name)
+                        || !$this->validDiscoveredFormName($name)
+                    ) {
+                        continue;
+                    }
+
+                    $label = $name;
+
+                    if (is_object($definition)) {
+                        $definition = (array) $definition;
+                    }
+
+                    if (
+                        is_array($definition)
+                        && is_string($definition['name'] ?? null)
+                        && $definition['name'] !== ''
+                    ) {
+                        $label = $definition['name'];
+                    }
+
+                    $options[$name] = $label;
+                }
+            }
+        } catch (\Throwable) {
+            return [];
+        }
+
+        ksort($options, SORT_NATURAL | SORT_FLAG_CASE);
+
+        return $options;
+    }
+
+    private function validDiscoveredFormName(string $name): bool
+    {
+        return preg_match(
+            '/\A[a-z0-9](?:[a-z0-9_-]{0,62}[a-z0-9])?\z/D',
+            $name
+        ) === 1;
+    }
+
+    /**
+     * @param array<mixed> $node
+     * @param array<string,string> $options
+     */
+    private function injectSelectOptions(
+        array &$node,
+        string $targetName,
+        array $options
+    ): void {
+        foreach ($node as $key => &$value) {
+            if (
+                $key === $targetName
+                && is_array($value)
+                && ($value['type'] ?? null) === 'select'
+            ) {
+                $value['options'] = $options;
+            }
+
+            if (is_array($value)) {
+                $this->injectSelectOptions(
+                    $value,
+                    $targetName,
+                    $options
+                );
+            }
+        }
+
+        unset($value);
+    }
+
     public function onApiRegisterRoutes(Event $event): void
     {
         $routes = $event['routes'] ?? null;
@@ -130,6 +293,14 @@ final class GoosializeLeadsPlugin extends Plugin
         }
         if ($this->admin2IndexConfigurationValid() && method_exists($routes, 'get')) {
             $routes->get('/goosialize-leads', [LeadsIndexController::class, 'index']);
+            $routes->get('/goosialize-leads/filter-form-data', [LeadsIndexController::class, 'filterFormData']);
+            $routes->get('/goosialize-leads/edit/{id}/form-data', [LeadEditController::class, 'formData']);
+
+            if (method_exists($routes, 'patch')) {
+                $routes->patch('/goosialize-leads/edit/{id}', [LeadEditController::class, 'save']);
+            }
+
+            $routes->post('/goosialize-leads/apply', [LeadMutationController::class, 'apply']);
             if ($this->admin2CsvExportConfigurationValid()) {
                 $routes->get('/goosialize-leads/export', [LeadsCsvExportController::class, 'export']);
             }
@@ -146,7 +317,13 @@ final class GoosializeLeadsPlugin extends Plugin
 
     public function onApiSidebarItems(Event $event): void
     {
-        if (!$this->admin2IndexConfigurationValid() || !$this->eventUserAllowed($event['user'] ?? null)) return;
+        if (
+            !$this->admin2IndexConfigurationValid()
+            || !$this->eventUserAllowed($event['user'] ?? null)
+        ) {
+            return;
+        }
+
         $items = $event['items'] ?? [];
         if (!is_array($items)) $items = [];
         $items[] = [
@@ -160,41 +337,54 @@ final class GoosializeLeadsPlugin extends Plugin
             'authorize' => 'api.goosialize_leads.read',
         ];
         $event['items'] = $items;
-        if ($this->eventUserCanOperate($event['user'] ?? null)) {
-            $items[] = [
-                'id'=>'goosialize-leads-notification-operations','plugin'=>'goosialize-leads',
-                'label'=>'Notification operations','icon'=>'fa-bell',
-                'route'=>'/plugin/goosialize-leads-notification-operations','priority'=>21,
-                'badge'=>null,'authorize'=>'api.goosialize_leads.operations',
-            ];
-            $event['items']=$items;
-        }
     }
 
     public function onApiPluginPageInfo(Event $event): void
     {
-        if (($event['plugin'] ?? null) === 'goosialize-leads-notification-operations'
-            && $this->eventUserCanOperate($event['user'] ?? null)) {
-            $event['definition']=['id'=>'goosialize-leads-notification-operations','plugin'=>'goosialize-leads',
-                'title'=>'Notification operations','icon'=>'fa-bell','page_type'=>'blueprint',
-                'blueprint'=>'goosialize-leads-notification-operations','actions'=>[]];
-            return;
-        }
-        if (($event['plugin'] ?? null) !== 'goosialize-leads'
+        if (
+            ($event['plugin'] ?? null) !== 'goosialize-leads'
             || !$this->admin2IndexConfigurationValid()
             || !$this->eventUserAllowed($event['user'] ?? null)
-        ) return;
+        ) {
+            return;
+        }
+
+        $actions = [
+            [
+                'id' => 'refresh',
+                'label' => 'Refresh',
+                'icon' => 'fa-refresh',
+            ],
+            [
+                'id' => 'reset_filters',
+                'label' => 'Reset filters',
+                'icon' => 'fa-rotate-left',
+            ],
+        ];
+
+        if (
+            $this->eventUserCanExport($event['user'] ?? null)
+            && $this->admin2CsvExportConfigurationValid()
+        ) {
+            $actions[] = [
+                'id' => 'export',
+                'label' => 'Export CSV',
+                'icon' => 'fa-download',
+                'download' => true,
+                'endpoint' => '/goosialize-leads/export',
+            ];
+        }
+
         $event['definition'] = [
             'id' => 'goosialize-leads',
             'plugin' => 'goosialize-leads',
-            'title' => 'Leads — latest 100',
+            'title' => 'Leads',
             'icon' => 'fa-address-book',
             'page_type' => 'blueprint',
-            'blueprint' => $this->eventUserCanExport($event['user'] ?? null)
-                && $this->admin2CsvExportConfigurationValid()
-                ? 'goosialize-leads-index-export'
-                : 'goosialize-leads-index',
-            'actions' => [],
+                'blueprint' => 'goosialize-leads-index',
+                'data_endpoint' => '/goosialize-leads/filter-form-data',
+                'save_endpoint' => '/goosialize-leads/filter-form-data',
+            'actions' => $actions,
         ];
     }
 
@@ -413,6 +603,7 @@ final class GoosializeLeadsPlugin extends Plugin
         if (!is_object($user)) return false;
         try {
             if (method_exists($user, 'get') && (bool) $user->get('access.api.super')) return true;
+            if (method_exists($user, 'get') && !(bool) $user->get('access.api.access')) return false;
             if (method_exists($user, 'get') && (bool) $user->get('access.api.goosialize_leads.read')) return true;
             return method_exists($user, 'authorize') && (bool) $user->authorize('api.goosialize_leads.read');
         } catch (\Throwable) {

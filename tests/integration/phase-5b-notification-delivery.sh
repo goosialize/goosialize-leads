@@ -107,7 +107,7 @@ printf "PASS_PHASE_5B_COMMAND_RUNTIME\n"
 ')"
 grep -qx 'PASS_PHASE_5B_COMMAND_RUNTIME' <<<"${command_output}" || fail 'command runtime'
 
-test "$(wc -l < "${ROOT}/packaging/package-files.txt")" -eq 88
+test -z "$(sort "${ROOT}/packaging/package-files.txt" | uniq -d)"
 grep -qx 'cli/DeliverNotificationsCommand.php' "${ROOT}/packaging/package-files.txt"
 grep -q "setName('deliver-notifications')" "${ROOT}/cli/DeliverNotificationsCommand.php"
 grep -q "InputOption::VALUE_REQUIRED" "${ROOT}/cli/DeliverNotificationsCommand.php"

@@ -1,5 +1,4 @@
 name: Goosialize Leads Index
-
 form:
   validation: strict
   fields:
@@ -7,28 +6,57 @@ form:
       type: resource-table
       endpoint: /goosialize-leads
       export_endpoint: /goosialize-leads/export
-      export_filename: goosialize-leads-latest-100.csv
       export_supported_filters: []
       id_key: id
       filters:
-        - name: search
-          section: search
-          type: text
-          label: Search
-          placeholder: Search name, email, source or Lead ID
-          fields: [id, name, email, source]
-          operator: contains
-        - { name: status, type: select, label: Status, field: status, operator: equals, options_from_meta: allowed_statuses }
-        - { name: source, type: select, label: Source, field: source, operator: equals, options_from_field: source }
-        - { name: date_from, type: datetime, label: Created from, field: created_at, operator: date-from }
-        - { name: date_to, type: datetime, label: Created to, field: created_at, operator: date-to }
+      - name: search
+        section: search
+        type: text
+        label: Search
+        placeholder: Search name, email, source or Lead ID
+        fields:
+        - id
+        - name
+        - email
+        - source
+        operator: contains
+      - name: status
+        type: select
+        label: Status
+        field: status
+        operator: equals
+        options_from_meta: allowed_statuses
+      - name: source
+        type: select
+        label: Source
+        field: source
+        operator: equals
+        options_from_field: source
+      - name: date_from
+        type: datetime
+        label: Created from
+        field: created_at
+        operator: date-from
+      - name: date_to
+        type: datetime
+        label: Created to
+        field: created_at
+        operator: date-to
       columns:
-        - { name: created_at, label: Created, format: datetime, width: '18%' }
-        - { name: name, label: Name, width: '18%' }
-        - { name: email, label: Email, width: '24%' }
-        - { name: source, label: Source, width: '14%' }
-        - { name: form_name, label: Form, width: '12%' }
-        - { name: status, label: Status, width: '14%' }
+      - key: created_at
+        label: Created
+      - key: name
+        label: Name
+      - key: email
+        label: Email
+      - key: phone
+        label: Phone
+      - key: source
+        label: Source
+      - key: form_or_resource
+        label: Form / Resource
+      - key: status
+        label: Status
       actions:
         clear: true
         refresh: true

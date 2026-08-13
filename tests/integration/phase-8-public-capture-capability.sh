@@ -26,7 +26,7 @@ readonly ACTUAL_IMAGE_ID="$(
 test "${ACTUAL_IMAGE_ID}" = "${EXPECTED_IMAGE_ID}" \
     || fail "Unexpected Docker image ID: ${ACTUAL_IMAGE_ID}"
 
-test "$(wc -l < "${ROOT}/packaging/package-files.txt")" -eq 88
+test -z "$(sort "${ROOT}/packaging/package-files.txt" | uniq -d)"
 
 for path in \
     classes/Application/LeadCaptureRuntimeFactory.php \
