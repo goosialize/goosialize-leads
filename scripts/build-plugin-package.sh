@@ -2,7 +2,7 @@
 set -euo pipefail
 
 readonly SLUG='goosialize-leads'
-readonly VERSION='1.0.1'
+readonly VERSION='1.0.2'
 readonly ARCHIVE_ROOT='grav-plugin-goosialize-leads'
 readonly VALIDATION_IMAGE='lscr.io/linuxserver/grav:2.0.12'
 readonly VALIDATION_IMAGE_ID='sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351'

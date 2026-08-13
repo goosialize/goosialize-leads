@@ -1,7 +1,17 @@
 {
     "name": "goosialize/goosialize-leads",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "license": "MIT",
+    "homepage": "https://github.com/goosialize/goosialize-leads",
+    "authors": [
+        {
+            "name": "Goosialize Ltd"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/goosialize/goosialize-leads/issues",
+        "source": "https://github.com/goosialize/goosialize-leads"
+    },
     "type": "grav-plugin",
     "require": {
         "php": "^8.3",

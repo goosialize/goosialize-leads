@@ -64,13 +64,13 @@ foreach (["blueprints.yaml", "goosialize-leads.yaml", "languages/en.yaml"] as $f
 }
 $metadata = Yaml::parseFile($root . "/blueprints.yaml");
 if (($metadata["slug"] ?? null) !== "goosialize-leads") throw new RuntimeException("Invalid metadata slug");
-if (($metadata["version"] ?? null) !== "1.0.1") throw new RuntimeException("Invalid blueprint version");
+if (($metadata["version"] ?? null) !== "1.0.2") throw new RuntimeException("Invalid blueprint version");
 if (($metadata["dependencies"][0]["version"] ?? null) !== ">=2.0.12 <2.1.0") throw new RuntimeException("Invalid Grav dependency");
 $defaults = Yaml::parseFile($root . "/goosialize-leads.yaml");
 if (($defaults["enabled"] ?? null) !== true) throw new RuntimeException("Default configuration is not enabled");
 $composer = json_decode(file_get_contents($root . "/composer.json"), true, 512, JSON_THROW_ON_ERROR);
 if (($composer["type"] ?? null) !== "grav-plugin") throw new RuntimeException("Invalid package type");
-if (($composer["version"] ?? null) !== "1.0.1") throw new RuntimeException("Invalid Composer version");
+if (($composer["version"] ?? null) !== "1.0.2") throw new RuntimeException("Invalid Composer version");
 if (($composer["version"] ?? null) !== ($metadata["version"] ?? null)) throw new RuntimeException("Release metadata version mismatch");
 if (($composer["require"]["php"] ?? null) !== "^8.3") throw new RuntimeException("Invalid PHP requirement");
 if (($composer["require"]["ext-intl"] ?? null) !== "*") throw new RuntimeException("Invalid ext-intl requirement");

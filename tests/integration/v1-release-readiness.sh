@@ -19,7 +19,7 @@ pass() {
     printf 'PASS: %s\n' "$*"
 }
 
-EXPECTED_VERSION='1.0.1'
+EXPECTED_VERSION='1.0.2'
 EXPECTED_MANUAL_ACCEPTANCE_STATUS='PASS'
 
 echo "===== V1 RELEASE READINESS INTEGRATION TEST ====="
@@ -31,13 +31,13 @@ test -x scripts/build-plugin-package.sh || fail 'package builder is missing or n
 test -f docs/MANUAL_BROWSER_ACCEPTANCE_CHECKLIST.md || fail 'manual browser acceptance checklist is missing'
 
 grep -Fxq "version: ${EXPECTED_VERSION}" blueprints.yaml ||
-    fail 'blueprints version is not 1.0.1'
+    fail 'blueprints version is not 1.0.2'
 
 grep -Fq "\"version\": \"${EXPECTED_VERSION}\"" composer.json ||
-    fail 'composer version is not 1.0.1'
+    fail 'composer version is not 1.0.2'
 
 grep -Fq "readonly VERSION='${EXPECTED_VERSION}'" scripts/build-plugin-package.sh ||
-    fail 'package builder version is not 1.0.1'
+    fail 'package builder version is not 1.0.2'
 
 pass 'version metadata'
 
@@ -61,7 +61,9 @@ for path in \
     docs/TROUBLESHOOTING.md \
     docs/EXAMPLES.md \
     docs/RELEASE_NOTES_1.0.0.md \
-    docs/RELEASE_NOTES_1.0.1.md
+    docs/RELEASE_NOTES_1.0.1.md \
+    docs/RELEASE_NOTES_1.0.2.md \
+    docs/PUBLIC_INTEGRATION_CONTRACT.md
 do
     test -s "$path" || fail "packaged release document is missing or empty: $path"
 done
@@ -147,7 +149,9 @@ for path in \
         docs/TROUBLESHOOTING.md \
         docs/EXAMPLES.md \
         docs/RELEASE_NOTES_1.0.0.md \
-        docs/RELEASE_NOTES_1.0.1.md
+        docs/RELEASE_NOTES_1.0.1.md \
+        docs/RELEASE_NOTES_1.0.2.md \
+        docs/PUBLIC_INTEGRATION_CONTRACT.md
 do
     grep -Fxq "$path" packaging/package-files.txt ||
         fail "release document is missing from final package manifest: $path"
@@ -187,8 +191,8 @@ git diff --check || fail 'git diff --check failed'
 test -z "$(git diff --cached --name-only)" ||
     fail 'staged paths are not allowed during readiness preparation'
 
-test -z "$(git tag --list '1.0.1')" ||
-    fail '1.0.1 tag already exists before release preparation completes'
+test -z "$(git tag --list '1.0.2')" ||
+    fail '1.0.2 tag already exists before release preparation completes'
 
 MANUAL_ACCEPTANCE_STATUS="$(
     awk '

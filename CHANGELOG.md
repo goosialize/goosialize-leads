@@ -1,3 +1,14 @@
+# 1.0.2
+
+## 2026-08-13
+
+1. [](#improved)
+   * Added Composer homepage, author and verified public support metadata.
+   * Included the canonical public integration contract in the package and
+     aligned it with the shipped version 1 capability.
+   * Corrected public release-status and packaged-documentation references.
+   * Added 1.0.2 maintenance release notes without changing runtime behavior.
+
 # 1.0.1
 
 ## 2026-08-13

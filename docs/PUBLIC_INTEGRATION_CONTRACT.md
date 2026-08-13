@@ -8,8 +8,8 @@ contract for Goosialize Leads.
 The contract is public for compatible local Grav plugins. It is distinct from
 the anonymous JSON HTTP API and does not require an HTTP request.
 
-At this documentation checkpoint the contract is defined but not yet exposed
-by runtime code.
+The contract is exposed by the runtime through the service and public types
+defined below.
 
 ## 2. Capability Identity
 
@@ -67,7 +67,7 @@ Any exception or mismatch means unavailable.
 
 ## 5. Public Runtime Types
 
-Version 1 will expose only these public integration types:
+Version 1 exposes only these public integration types:
 
 - `Integration\LeadCaptureCapabilityV1`;
 - `Integration\LeadCaptureRequestV1`;

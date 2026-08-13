@@ -1,7 +1,7 @@
 name: Goosialize Leads
 slug: goosialize-leads
 type: plugin
-version: 1.0.1
+version: 1.0.2
 description: "Standalone lead capture, management, CSV export and notification delivery for Grav CMS 2.0."
 icon: address-card
 author:
