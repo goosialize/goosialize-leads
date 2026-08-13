@@ -10,7 +10,12 @@ The release supports:
 - opt-in native Grav Forms capture;
 - opt-in bounded public JSON capture;
 - a versioned plugin-to-plugin public capture capability;
-- a permission-gated, read-only native Admin2 latest-100 Lead index;
+- a permission-gated native Admin2 workspace over a bounded latest-100 Lead
+  index, with native Search, Status, Source, State, Form / Resource and
+  creation-date filters;
+- dynamic Source and Form / Resource vocabularies, inline exact-ID Edit,
+  optimistic revisions, status and Active/Inactive changes, reversible Delete
+  and Restore;
 - bounded native Admin2 CSV export;
 - a durable notification outbox;
 - bounded manual and scheduled notification delivery;
@@ -29,15 +34,16 @@ Mandatory human browser acceptance is `PASS`. Tagging and publication remain
 unauthorized until repository alignment, deterministic package verification,
 staged-diff review, the milestone commit and explicit release authorization.
 
-The following Admin2 features are intentionally unavailable in 1.0.0 because
-the complete required native Admin2 2.0.15 mutation contract has not been
-source-proven:
+The Admin2 workspace is capability-aware. Read access exposes the bounded Lead
+index and filters; write access adds inline Edit, status changes,
+Active/Inactive transitions and Restore; delete permission adds reversible
+Delete; and export requires its separate permission. Every endpoint enforces
+its server-side ACL independently of UI visibility.
 
-- Lead detail mutation;
-- Lead status management;
-- reversible Lead delete and restore.
-
-The 1.0.0 Admin2 Lead index therefore remains read-only.
+Captured primary Lead records remain immutable. Admin operations update only
+validated metadata sidecars containing workflow status, state and optimistic
+revision data. Delete is a reversible metadata state and never removes the
+captured primary record.
 
 ## Compatibility target
 
@@ -177,6 +183,12 @@ reversible Delete. Deleted Leads can only be restored by a write-capable user.
 Primary records remain immutable: workflow status, state and optimistic
 revision are stored in separate metadata sidecars. Exact-ID Edit and mutation
 remain available for valid Leads older than the latest-100 index.
+
+The native filters cover Search, Status, Source, State, Form / Resource,
+Created from and Created to. Source and Form / Resource vocabularies are
+derived dynamically from the bounded loaded dataset. CSV export remains
+bounded and uses the server-generated
+`goosialize-leads-YYYY-MM-DD-HHmm.csv` filename.
 
 ## Public JSON capture
 
