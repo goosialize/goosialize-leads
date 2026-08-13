@@ -1,4 +1,5 @@
 CHANGELOG.md
+LICENSE
 README.md
 admin-next/fields/leads-workspace.js
 admin/blueprints/goosialize-leads-index-export.yaml
@@ -97,6 +98,7 @@ docs/OPERATIONAL_STATUS.md
 docs/PERMISSIONS.md
 docs/RECONCILIATION.md
 docs/RELEASE_NOTES_1.0.0.md
+docs/RELEASE_NOTES_1.0.1.md
 docs/RETRY_DEAD_LETTER.md
 docs/SCHEDULER.md
 docs/SECURITY.md

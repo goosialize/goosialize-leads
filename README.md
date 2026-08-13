@@ -1,6 +1,6 @@
 # Goosialize Leads
 
-Goosialize Leads 1.0.0 is a standalone, theme-independent Lead capture,
+Goosialize Leads is a standalone, theme-independent Lead capture,
 storage, Admin2 reporting and notification-delivery plugin for Grav CMS 2.
 
 The release supports:
@@ -28,11 +28,9 @@ disabled by default and must be configured explicitly.
 
 ## Release status
 
-The repository is preparing the 1.0.0 release artifact.
-
-Mandatory human browser acceptance is `PASS`. Tagging and publication remain
-unauthorized until repository alignment, deterministic package verification,
-staged-diff review, the milestone commit and explicit release authorization.
+Version 1.0.0 is published as a stable GitHub Release. This branch prepares
+version 1.0.1 with the distribution metadata and packaged license required for
+official Grav GPM review; it does not alter the immutable 1.0.0 tag or assets.
 
 The Admin2 workspace is capability-aware. Read access exposes the bounded Lead
 index and filters; write access adds inline Edit, status changes,
@@ -96,6 +94,7 @@ captured primary record.
 - [Security](docs/SECURITY.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [1.0.0 release notes](docs/RELEASE_NOTES_1.0.0.md)
+- [1.0.1 release notes](docs/RELEASE_NOTES_1.0.1.md)
 
 The manual browser acceptance checklist is a development-only release gate and
 is intentionally excluded from the distributable package.

@@ -1,6 +1,17 @@
-# Changelog
+# 1.0.1
 
-## 1.0.0 — 2026-08-01
+## 2026-08-13
+
+1. [](#improved)
+   * Added the packaged MIT license required for Grav repository distribution.
+   * Added complete Grav plugin identity metadata for discovery, support and
+     licensing.
+   * Aligned release status documentation with the published 1.0.0 release.
+   * Converted the changelog to Grav's repository-compatible release format.
+
+# 1.0.0
+
+## 2026-08-01
 
 ### Added
 
@@ -76,7 +87,9 @@ and explicit release authorization.
 See `docs/RELEASE_NOTES_1.0.0.md` for the complete release scope and operational
 notes.
 
-## 0.1.0-dev — Unreleased
+# 0.1.0-dev
+
+## Unreleased
 
 - Established the project foundation.
 - Completed the reference implementation audit.

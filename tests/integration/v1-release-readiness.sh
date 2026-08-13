@@ -19,7 +19,7 @@ pass() {
     printf 'PASS: %s\n' "$*"
 }
 
-EXPECTED_VERSION='1.0.0'
+EXPECTED_VERSION='1.0.1'
 EXPECTED_MANUAL_ACCEPTANCE_STATUS='PASS'
 
 echo "===== V1 RELEASE READINESS INTEGRATION TEST ====="
@@ -31,13 +31,13 @@ test -x scripts/build-plugin-package.sh || fail 'package builder is missing or n
 test -f docs/MANUAL_BROWSER_ACCEPTANCE_CHECKLIST.md || fail 'manual browser acceptance checklist is missing'
 
 grep -Fxq "version: ${EXPECTED_VERSION}" blueprints.yaml ||
-    fail 'blueprints version is not 1.0.0'
+    fail 'blueprints version is not 1.0.1'
 
 grep -Fq "\"version\": \"${EXPECTED_VERSION}\"" composer.json ||
-    fail 'composer version is not 1.0.0'
+    fail 'composer version is not 1.0.1'
 
 grep -Fq "readonly VERSION='${EXPECTED_VERSION}'" scripts/build-plugin-package.sh ||
-    fail 'package builder version is not 1.0.0'
+    fail 'package builder version is not 1.0.1'
 
 pass 'version metadata'
 
@@ -60,7 +60,8 @@ for path in \
     docs/SECURITY.md \
     docs/TROUBLESHOOTING.md \
     docs/EXAMPLES.md \
-    docs/RELEASE_NOTES_1.0.0.md
+    docs/RELEASE_NOTES_1.0.0.md \
+    docs/RELEASE_NOTES_1.0.1.md
 do
     test -s "$path" || fail "packaged release document is missing or empty: $path"
 done
@@ -145,7 +146,8 @@ for path in \
         docs/SECURITY.md \
         docs/TROUBLESHOOTING.md \
         docs/EXAMPLES.md \
-        docs/RELEASE_NOTES_1.0.0.md
+        docs/RELEASE_NOTES_1.0.0.md \
+        docs/RELEASE_NOTES_1.0.1.md
 do
     grep -Fxq "$path" packaging/package-files.txt ||
         fail "release document is missing from final package manifest: $path"
@@ -185,8 +187,8 @@ git diff --check || fail 'git diff --check failed'
 test -z "$(git diff --cached --name-only)" ||
     fail 'staged paths are not allowed during readiness preparation'
 
-test -z "$(git tag --list 'v1.0.0')" ||
-    fail 'v1.0.0 tag already exists before manual acceptance'
+test -z "$(git tag --list '1.0.1')" ||
+    fail '1.0.1 tag already exists before release preparation completes'
 
 MANUAL_ACCEPTANCE_STATUS="$(
     awk '

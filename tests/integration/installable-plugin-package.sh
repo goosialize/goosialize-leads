@@ -7,7 +7,7 @@ readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 readonly REPOSITORY_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd -P)"
 readonly CONTAINER_NAME="goosialize-leads-package-test-$$"
 readonly TEMP_ROOT="$(mktemp -d /tmp/goosialize-leads-package-test.XXXXXX)"
-readonly ZIP_NAME='goosialize-leads-1.0.0.zip'
+readonly ZIP_NAME='goosialize-leads-1.0.1.zip'
 readonly ARCHIVE_ROOT='grav-plugin-goosialize-leads'
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
@@ -50,6 +50,7 @@ archive_path, manifest_path, root = Path(sys.argv[1]), Path(sys.argv[2]), sys.ar
 files = manifest_path.read_text(encoding="utf-8").splitlines()
 required = [
     'CHANGELOG.md',
+    'LICENSE',
     'README.md',
     'admin-next/fields/leads-workspace.js',
     'admin/blueprints/goosialize-leads-index-export.yaml',
@@ -148,6 +149,7 @@ required = [
     'docs/PERMISSIONS.md',
     'docs/RECONCILIATION.md',
     'docs/RELEASE_NOTES_1.0.0.md',
+    'docs/RELEASE_NOTES_1.0.1.md',
     'docs/RETRY_DEAD_LETTER.md',
     'docs/SCHEDULER.md',
     'docs/SECURITY.md',
@@ -211,14 +213,14 @@ fi
 php -r '\''
 require "/app/www/public/vendor/autoload.php";
 use Symfony\Component\Yaml\Yaml;
-$zip=new ZipArchive(); if ($zip->open("/packages/goosialize-leads-1.0.0.zip") !== true) throw new RuntimeException("ZIP open failed");
+$zip=new ZipArchive(); if ($zip->open("/packages/goosialize-leads-1.0.1.zip") !== true) throw new RuntimeException("ZIP open failed");
 $blueprint=Yaml::parse($zip->getFromName("grav-plugin-goosialize-leads/blueprints.yaml"));
 $config=Yaml::parse($zip->getFromName("grav-plugin-goosialize-leads/goosialize-leads.yaml"));
-if (($blueprint["slug"]??null)!=="goosialize-leads" || ($blueprint["version"]??null)!=="1.0.0" || ($config["enabled"]??null)!==true) throw new RuntimeException("invalid YAML metadata");
+if (($blueprint["slug"]??null)!=="goosialize-leads" || ($blueprint["version"]??null)!=="1.0.1" || ($config["enabled"]??null)!==true) throw new RuntimeException("invalid YAML metadata");
 $composer=json_decode($zip->getFromName("grav-plugin-goosialize-leads/composer.json"),true,512,JSON_THROW_ON_ERROR);
 if (($composer["type"]??null)!=="grav-plugin") throw new RuntimeException("invalid composer metadata");
 '\''
-php bin/gpm direct-install -y /packages/goosialize-leads-1.0.0.zip
+php bin/gpm direct-install -y /packages/goosialize-leads-1.0.1.zip
 test -d "$root"
 for nested in "$root/goosialize-leads" "$root/grav-plugin-goosialize-leads"; do
     if [ -e "$nested" ] || [ -L "$nested" ]; then echo "FAIL: unexpected nested package path: $nested" >&2; exit 1; fi
@@ -232,7 +234,7 @@ php -r '\''
 $archivePrefix = "grav-plugin-goosialize-leads/";
 $installRoot = "/app/www/public/user/plugins/goosialize-leads";
 $zip = new ZipArchive();
-if ($zip->open("/packages/goosialize-leads-1.0.0.zip") !== true) throw new RuntimeException("ZIP open failed for content comparison");
+if ($zip->open("/packages/goosialize-leads-1.0.1.zip") !== true) throw new RuntimeException("ZIP open failed for content comparison");
 $expected = [];
 for ($index = 0; $index < $zip->numFiles; $index++) {
     $name = $zip->getNameIndex($index);

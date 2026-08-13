@@ -1,11 +1,17 @@
 name: Goosialize Leads
 slug: goosialize-leads
 type: plugin
-version: 1.0.0
-description: Standalone lead management for Grav CMS 2.0.
+version: 1.0.1
+description: "Standalone lead capture, management, CSV export and notification delivery for Grav CMS 2.0."
+icon: address-card
 author:
   name: Goosialize Ltd
   email: agency@goosialize.com
+  url: https://goosialize.com
+homepage: https://github.com/goosialize/goosialize-leads
+keywords: grav, leads, forms, admin2, api, csv, notifications
+bugs: https://github.com/goosialize/goosialize-leads/issues
+license: MIT
 dependencies:
 - name: grav
   version: '>=2.0.12 <2.1.0'
