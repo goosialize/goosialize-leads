@@ -1,3 +1,16 @@
+# 1.0.3
+
+## 2026-08-14
+
+1. [](#improved)
+   * Corrected README wording to reflect the published 1.0.2 release and use
+     durable GitHub Releases guidance.
+   * Replaced patch-specific installation instructions with a
+     version-neutral release ZIP contract.
+   * Aligned packaged documentation for the existing Grav GPM submission.
+   * No product behavior or storage schema changed, and no migration is
+     required.
+
 # 1.0.2
 
 ## 2026-08-13

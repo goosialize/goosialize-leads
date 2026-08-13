@@ -1,8 +1,14 @@
 # Installation
 
-## Supported release
+## Supported releases
 
-This guide applies to Goosialize Leads 1.0.0, released on 2026-07-31.
+Download the latest stable package from
+[GitHub Releases](https://github.com/goosialize/goosialize-leads/releases).
+The release ZIP naming contract is:
+
+```text
+goosialize-leads-<version>.zip
+```
 
 Verified compatibility:
 
@@ -13,13 +19,7 @@ Verified compatibility:
 
 ## Package installation
 
-The distributable archive is:
-
-```text
-goosialize-leads-1.0.0.zip
-```
-
-Its archive root is:
+The archive root is:
 
 ```text
 grav-plugin-goosialize-leads/
@@ -28,7 +28,7 @@ grav-plugin-goosialize-leads/
 Install through Grav GPM using a local archive:
 
 ```bash
-php bin/gpm direct-install -y /absolute/path/goosialize-leads-1.0.0.zip
+php bin/gpm direct-install -y /absolute/path/goosialize-leads-<version>.zip
 ```
 
 The resolved plugin destination is:
