@@ -155,6 +155,59 @@ phase3cCheck(
     'nested secret key configuration failed'
 );
 
+$legacyRoot = sys_get_temp_dir() . '/phase-3c-legacy-' . bin2hex(random_bytes(6));
+mkdir($legacyRoot, 0700);
+$legacyService = LeadCaptureRuntimeFactory::create(
+    $legacyRoot,
+    ['active_key_version' => 1, 'keys' => [1 => $nestedSecret]],
+    null
+);
+$legacyCapture = $legacyService->capture(
+    phase3cSubmitted('legacy-key@example.test'),
+    $trusted,
+    'contact',
+    'legacy01234567890123',
+    $entropy,
+    $clock
+);
+phase3cCheck($legacyCapture->isSuccess(), 'legacy scalar secret compatibility failed');
+$legacyReplay = $legacyService->capture(
+    phase3cSubmitted('legacy-key@example.test'),
+    $trusted,
+    'contact',
+    'legacy01234567890123',
+    $entropy,
+    $clock
+);
+phase3cCheck($legacyReplay->isSuccess() && $legacyReplay->replayed(), 'legacy keyed duplicate replay failed');
+$legacyRecord = glob($legacyRoot . '/goosialize-leads/v1/records/*/*/*.json') ?: [];
+phase3cCheck(count($legacyRecord) === 1, 'legacy scalar secret did not publish one record');
+$legacyBytes = file_get_contents($legacyRecord[0]);
+$legacyData = is_string($legacyBytes) ? json_decode($legacyBytes, true, 8, JSON_THROW_ON_ERROR) : null;
+phase3cCheck(
+    is_array($legacyData)
+    && ($legacyData['idempotency']['key_version'] ?? null) === 1
+    && is_string($legacyData['idempotency']['key_hash'] ?? null)
+    && is_string($legacyData['idempotency']['payload_fingerprint'] ?? null),
+    'legacy scalar secret did not preserve keyed capture behavior'
+);
+
+foreach ([
+    ['active_key_version' => 1, 'keys' => [1 => ['secret' => '']]],
+    ['active_key_version' => 1, 'keys' => [2 => ['secret' => $nestedSecret]]],
+    ['active_key_version' => 1, 'keys' => [1 => ['secret' => $nestedSecret, 'unexpected' => true]]],
+] as $invalidKeyConfiguration) {
+    try {
+        LeadCaptureRuntimeFactory::create($legacyRoot, $invalidKeyConfiguration, null);
+        throw new RuntimeException('invalid idempotency key configuration accepted');
+    } catch (Throwable $exception) {
+        phase3cCheck(
+            $exception->getMessage() !== 'invalid idempotency key configuration accepted',
+            'invalid idempotency key configuration accepted'
+        );
+    }
+}
+
 $error = new ValidationError('required', 'full_name');
 $failure = CaptureResult::failure('validation_failed', [$error]);
 phase3cCheck(

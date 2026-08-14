@@ -42,6 +42,14 @@ idempotency:
 Idempotency keys are configuration secrets and must not be committed, logged or
 included in support material.
 
+On upgrade, the plugin automatically rewrites the legacy scalar form
+`keys.<version>: <secret>` to the nested `keys.<version>.secret` form in the
+base plugin configuration and any existing environment overrides. The key
+value and active version are preserved exactly; no key is generated or rotated
+and no manual re-entry is required. The migration is idempotent. Malformed key
+entries remain invalid, and the plugin blocks its configuration API response if
+the secure rewrite cannot be persisted.
+
 ## Grav Forms
 
 ```yaml

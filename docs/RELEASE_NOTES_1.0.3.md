@@ -13,6 +13,8 @@ narrow runtime fixes for clean-install Forms capture and configured API routes.
 - Declares API, Admin2 and Email dependencies and broadens Grav compatibility
   to `>=2.0.12`.
 - Uses native password/redaction semantics for nested idempotency secrets.
+- Migrates legacy scalar idempotency secrets to that nested form before API
+  configuration serialization, preserving key values and active versions.
 - Allows default-keyless Grav Forms capture while keeping public keyed capture
   fail-closed.
 - Derives the public endpoint from API `route` and `version_prefix` settings.
@@ -22,7 +24,8 @@ narrow runtime fixes for clean-install Forms capture and configured API routes.
 - Grav CMS compatibility is `>=2.0.12`.
 - The MIT license is unchanged.
 - There is no storage schema change.
-- No migration is required from 1.0.2.
+- Legacy scalar idempotency secrets are migrated automatically from 1.0.2 and
+  earlier configurations; no manual key re-entry or rotation is required.
 
 The immutable `1.0.0`, `1.0.1` and `1.0.2` tags and their published release
 assets are not modified by this release. Grav GPM acceptance or submission

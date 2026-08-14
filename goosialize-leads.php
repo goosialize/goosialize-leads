@@ -33,11 +33,13 @@ use Grav\Plugin\GoosializeLeads\Storage\FilesystemLeadReadRepository;
 use Grav\Plugin\GoosializeLeads\Validation\LeadInputValidator;
 use Grav\Plugin\GoosializeLeads\Validation\LeadNormalizer;
 use RocketTheme\Toolbox\Event\Event;
+use RocketTheme\Toolbox\File\YamlFile;
 
 final class GoosializeLeadsPlugin extends Plugin
 {
     /** @var \WeakMap<Scheduler,bool>|null */
     private ?\WeakMap $notificationSchedulers = null;
+    private bool $legacySecretMigrationBlocked = false;
     public function autoload(): void
     {
         require_once __DIR__ . '/autoload.php';
@@ -62,6 +64,15 @@ final class GoosializeLeadsPlugin extends Plugin
 
     public function onPluginsInitialized(): void
     {
+        try {
+            $this->migrateLegacyIdempotencySecrets();
+        } catch (\Throwable) {
+            $this->legacySecretMigrationBlocked = true;
+            if (isset($this->grav['log'])) {
+                $this->grav['log']->warning('idempotency_secret_migration_unavailable');
+            }
+        }
+
         $serviceKey = 'goosialize-leads.public-capture.v1';
 
         if (isset($this->grav[$serviceKey])) {
@@ -420,6 +431,13 @@ final class GoosializeLeadsPlugin extends Plugin
 
     public function onRequestHandlerInit(RequestHandlerEvent $event): void
     {
+        if ($this->legacySecretMigrationBlocked) {
+            $configRoute = $this->pluginConfigApiRoutePath();
+            if ($configRoute !== null && $event->getRoute()->getRoute() === $configRoute) {
+                throw new \RuntimeException('goosialize_leads_configuration_unavailable');
+            }
+        }
+
         if (!$this->publicApiConfigurationValid()) return;
         $routePath = $this->publicApiRoutePath();
         if ($routePath === null || $event->getRoute()->getRoute() !== $routePath) return;
@@ -443,6 +461,18 @@ final class GoosializeLeadsPlugin extends Plugin
 
     private function publicApiRoutePath(): ?string
     {
+        $apiBase = $this->apiBasePath();
+        return $apiBase === null ? null : $apiBase . '/goosialize-leads/capture';
+    }
+
+    private function pluginConfigApiRoutePath(): ?string
+    {
+        $apiBase = $this->apiBasePath();
+        return $apiBase === null ? null : $apiBase . '/config/plugins/goosialize-leads';
+    }
+
+    private function apiBasePath(): ?string
+    {
         $route = $this->grav['config']->get('plugins.api.route', '/api');
         $prefix = $this->grav['config']->get('plugins.api.version_prefix', 'v1');
         if (!is_string($route) || !is_string($prefix)) return null;
@@ -450,7 +480,67 @@ final class GoosializeLeadsPlugin extends Plugin
         $prefix = trim($prefix, '/');
         if ($route === '' || $prefix === '' || str_contains($route, '//') || str_contains($prefix, '/')) return null;
 
-        return '/' . $route . '/' . $prefix . '/goosialize-leads/capture';
+        return '/' . $route . '/' . $prefix;
+    }
+
+    private function migrateLegacyIdempotencySecrets(): void
+    {
+        $userRoot = $this->grav['locator']->findResource('user://', true);
+        if (!is_string($userRoot) || $userRoot === '') {
+            throw new \RuntimeException('User configuration root unavailable.');
+        }
+
+        $paths = [$userRoot . '/config/plugins/goosialize-leads.yaml'];
+        foreach (glob($userRoot . '/env/*/config/plugins/goosialize-leads.yaml') ?: [] as $path) {
+            $paths[] = $path;
+        }
+
+        $persisted = false;
+        foreach (array_values(array_unique($paths)) as $path) {
+            if (!is_file($path)) continue;
+            $file = YamlFile::instance($path);
+            $configuration = $file->content();
+            if (!is_array($configuration)) {
+                throw new \RuntimeException('Plugin configuration is invalid.');
+            }
+            $normalized = $this->normalizeLegacyIdempotencySecrets($configuration);
+            if ($normalized === $configuration) continue;
+            $file->content($normalized);
+            $file->save();
+            $persisted = true;
+        }
+
+        $configuration = $this->config();
+        $normalized = $this->normalizeLegacyIdempotencySecrets($configuration);
+        if ($normalized !== $configuration) {
+            $this->grav['config']->set('plugins.goosialize-leads', $normalized);
+        }
+
+        if ($persisted && isset($this->grav['cache'])) {
+            $this->grav['cache']->clearCache('standard');
+        }
+    }
+
+    /**
+     * @param array<string,mixed> $configuration
+     * @return array<string,mixed>
+     */
+    private function normalizeLegacyIdempotencySecrets(array $configuration): array
+    {
+        $idempotency = $configuration['idempotency'] ?? null;
+        if (!is_array($idempotency) || !is_array($idempotency['keys'] ?? null)) {
+            return $configuration;
+        }
+
+        $keys = $idempotency['keys'];
+        foreach ($keys as $version => $value) {
+            if (is_string($value)) {
+                $keys[$version] = ['secret' => $value];
+            }
+        }
+        $configuration['idempotency']['keys'] = $keys;
+
+        return $configuration;
     }
 
     /**

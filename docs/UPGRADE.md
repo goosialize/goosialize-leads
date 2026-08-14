@@ -66,6 +66,15 @@ notifications.scheduling
 
 Confirm that secret idempotency keys remain outside version control and were not replaced by package defaults.
 
+Upgrades from 1.0.0 through 1.0.2 may contain the legacy scalar key shape
+`idempotency.keys.<version>: <secret>`. Version 1.0.3 automatically migrates
+existing base and environment-specific plugin configuration files to
+`idempotency.keys.<version>.secret`. The secret bytes and active version are
+preserved; the process does not generate or rotate keys and is safe to repeat.
+Ensure the PHP/web user can write the affected configuration files. A
+persistence failure blocks this plugin's configuration API response rather
+than risking disclosure of the scalar value.
+
 ## Data retention
 
 Runtime data remains under:

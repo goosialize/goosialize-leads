@@ -37,6 +37,31 @@ echo "PASS_SECRET_BLUEPRINT_SECURITY\n";
 printf '%s\n' "${secret_output}"
 grep -q '^PASS_SECRET_BLUEPRINT_SECURITY$' <<<"${secret_output}" || fail 'secret masking marker missing'
 
+for secret_shape in legacy canonical; do
+    migration_output="$(docker run --rm --network none \
+        --env "SECRET_SHAPE=${secret_shape}" \
+        --mount "type=bind,src=${REPOSITORY_ROOT},dst=/app/www/public/user/plugins/goosialize-leads,readonly" \
+        --entrypoint /bin/sh "${EXPECTED_IMAGE_ID}" -c '
+set -eu
+config=/app/www/public/user/config/plugins/goosialize-leads.yaml
+env_config=/app/www/public/user/env/staging/config/plugins/goosialize-leads.yaml
+marker=LEGACY_TEST_SECRET_DO_NOT_EXPOSE
+mkdir -p "$(dirname "$config")"
+mkdir -p "$(dirname "$env_config")"
+if [ "$SECRET_SHAPE" = legacy ]; then
+    printf "%s\n" "enabled: true" "idempotency:" "  active_key_version: 1" "  keys:" "    1: $marker" > "$config"
+    printf "%s\n" "idempotency:" "  active_key_version: 1" "  keys:" "    1: $marker" > "$env_config"
+else
+    printf "%s\n" "enabled: true" "idempotency:" "  active_key_version: 1" "  keys:" "    1:" "      secret: $marker" > "$config"
+    printf "%s\n" "idempotency:" "  active_key_version: 1" "  keys:" "    1:" "      secret: $marker" > "$env_config"
+fi
+php /app/www/public/user/plugins/goosialize-leads/tests/integration/legacy-idempotency-secret-migration.php
+! grep -R -F "$marker" /app/www/logs 2>/dev/null
+')"
+    printf '%s\n' "${migration_output}"
+    grep -q '^PASS_SECRET_MIGRATION_API$' <<<"${migration_output}" || fail "${secret_shape} migration/API marker missing"
+done
+
 grep -q "'onApiRegisterRoutes' => \\['onApiRegisterRoutes', 0\\]" "${REPOSITORY_ROOT}/goosialize-leads.php"
 grep -q "'onApiCollectPublicRoutes' => \\['onApiCollectPublicRoutes', 0\\]" "${REPOSITORY_ROOT}/goosialize-leads.php"
 grep -q "post('/goosialize-leads/capture'" "${REPOSITORY_ROOT}/goosialize-leads.php"

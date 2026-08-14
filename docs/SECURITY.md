@@ -41,6 +41,12 @@ Do not:
 - log secrets or raw request bodies;
 - expose configuration files through public web routes.
 
+Legacy scalar idempotency secrets are normalized to the nested password field
+before configuration API handling. Both migrated and already-canonical values
+are redacted from API responses. If the legacy value cannot be persisted in
+the secure form, the plugin fails closed for its configuration API route and
+logs only a non-sensitive migration error code.
+
 ## Idempotency
 
 Keyed public API and public capability capture require:

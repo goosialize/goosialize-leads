@@ -11,10 +11,13 @@
    * Declared API, Admin2 and Email dependencies and set Grav compatibility to
      `>=2.0.12`.
    * Secured idempotency key configuration as nested password/redacted values.
+   * Added idempotent migration and API redaction protection for legacy scalar
+     idempotency secrets without changing their value or active version.
    * Enabled keyless default Grav Forms capture while preserving fail-closed
      keyed public capture.
    * Derived public API paths from API route configuration.
-   * No storage schema changed, and no migration is required.
+   * No storage schema changed; legacy scalar secret configuration migrates
+     automatically without operator key re-entry.
 
 # 1.0.2
 
