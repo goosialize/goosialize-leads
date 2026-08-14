@@ -14,7 +14,10 @@ bugs: https://github.com/goosialize/goosialize-leads/issues
 license: MIT
 dependencies:
 - name: grav
-  version: '>=2.0.12 <2.1.0'
+  version: '>=2.0.12'
+- name: api
+- name: admin2
+- name: email
 compatibility:
   grav:
   - '2.0'
@@ -78,6 +81,22 @@ form:
                     type: int
                     min: 131072
                     max: 131072
+        security_tab:
+          type: tab
+          title: Security
+          fields:
+            idempotency.active_key_version:
+              type: number
+              label: Active idempotency key version
+              default: null
+              validate:
+                type: int
+                min: 1
+            idempotency.keys.1.secret:
+              type: password
+              label: Idempotency key version 1
+              help: Canonical Base64 encoding of exactly 32 random bytes. Leave empty when only Grav Forms capture is used.
+              default: null
         forms_tab:
           type: tab
           title: Forms

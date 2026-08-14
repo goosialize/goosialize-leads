@@ -8,8 +8,13 @@
    * Replaced patch-specific installation instructions with a
      version-neutral release ZIP contract.
    * Aligned packaged documentation for the existing Grav GPM submission.
-   * No product behavior or storage schema changed, and no migration is
-     required.
+   * Declared API, Admin2 and Email dependencies and set Grav compatibility to
+     `>=2.0.12`.
+   * Secured idempotency key configuration as nested password/redacted values.
+   * Enabled keyless default Grav Forms capture while preserving fail-closed
+     keyed public capture.
+   * Derived public API paths from API route configuration.
+   * No storage schema changed, and no migration is required.
 
 # 1.0.2
 

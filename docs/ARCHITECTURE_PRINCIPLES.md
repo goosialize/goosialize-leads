@@ -58,7 +58,8 @@ The ZIP name, changelog heading and release-notes heading must be derived from
 that value and must agree exactly. No prerelease suffix is allowed for this
 release.
 
-The release metadata must state Grav `>=2.0.12 <2.1.0`, Admin2 2.0.15 as the
+The release metadata must state Grav `>=2.0.12`, declare API, Admin2 and Email
+as required plugins, and retain Admin2 2.0.15 as the
 only verified Admin2 version, and PHP `^8.3`; PHP 8.5.8 is an observed test
 runtime, not a broadened compatibility promise. The package is
 `goosialize-leads-1.0.0.zip`, its root is

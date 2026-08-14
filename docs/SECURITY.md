@@ -43,7 +43,7 @@ Do not:
 
 ## Idempotency
 
-Production capture requires:
+Keyed public API and public capability capture require:
 
 - an active positive key version;
 - a matching secret key;
@@ -58,7 +58,7 @@ Reusing the same idempotency key with a conflicting payload fails closed.
 The public API is disabled by default and exposes only:
 
 ```http
-POST /api/v1/goosialize-leads/capture
+POST <configured API route>/<configured version prefix>/goosialize-leads/capture
 ```
 
 When enabled, it enforces:

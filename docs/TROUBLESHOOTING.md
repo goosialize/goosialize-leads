@@ -79,7 +79,7 @@ Verify:
 Endpoint:
 
 ```http
-POST /api/v1/goosialize-leads/capture
+POST <configured API route>/<configured version prefix>/goosialize-leads/capture
 ```
 
 ## Public JSON capture returns 400

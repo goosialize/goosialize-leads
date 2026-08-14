@@ -26,7 +26,7 @@ Do not upgrade while a notification delivery or reconciliation command is runnin
 
 Version 1.0.0 is verified against:
 
-- Grav CMS `>=2.0.12 <2.1.0`;
+- Grav CMS `>=2.0.12`;
 - Admin2 `2.0.15`;
 - PHP `^8.3`.
 

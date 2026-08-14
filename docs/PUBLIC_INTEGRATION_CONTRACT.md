@@ -47,6 +47,11 @@ Forbidden:
 
 Goosialize Leads must not depend on any consumer plugin.
 
+The capability is available only with a configured active idempotency key.
+Key material uses nested `idempotency.keys.<version>.secret` configuration so
+the native API secret masker redacts it. The keyless clean-install mode is
+limited to Grav Forms capture and does not weaken this public contract.
+
 ## 4. Capability Detection
 
 A consumer may treat the integration as available only when all of the

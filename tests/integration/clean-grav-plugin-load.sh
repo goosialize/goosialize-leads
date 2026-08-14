@@ -65,7 +65,9 @@ foreach (["blueprints.yaml", "goosialize-leads.yaml", "languages/en.yaml"] as $f
 $metadata = Yaml::parseFile($root . "/blueprints.yaml");
 if (($metadata["slug"] ?? null) !== "goosialize-leads") throw new RuntimeException("Invalid metadata slug");
 if (($metadata["version"] ?? null) !== "1.0.3") throw new RuntimeException("Invalid blueprint version");
-if (($metadata["dependencies"][0]["version"] ?? null) !== ">=2.0.12 <2.1.0") throw new RuntimeException("Invalid Grav dependency");
+if (($metadata["dependencies"][0]["version"] ?? null) !== ">=2.0.12") throw new RuntimeException("Invalid Grav dependency");
+$dependencies = array_column($metadata["dependencies"] ?? [], "name");
+if ($dependencies !== ["grav", "api", "admin2", "email"]) throw new RuntimeException("Invalid plugin dependencies");
 $defaults = Yaml::parseFile($root . "/goosialize-leads.yaml");
 if (($defaults["enabled"] ?? null) !== true) throw new RuntimeException("Default configuration is not enabled");
 $composer = json_decode(file_get_contents($root . "/composer.json"), true, 512, JSON_THROW_ON_ERROR);

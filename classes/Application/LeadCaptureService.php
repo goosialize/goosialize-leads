@@ -45,7 +45,9 @@ final class LeadCaptureService
         }
 
         try {
-            $idempotencyKey = $this->keyRing->deriveFormsIdempotencyKey($formName, $submissionId);
+            $idempotencyKey = $this->keyRing->enabled()
+                ? $this->keyRing->deriveFormsIdempotencyKey($formName, $submissionId)
+                : null;
             return $this->mapPersistenceResult(
                 $this->coordinator->persist($submitted, $trusted, $idempotencyKey, $entropy, $clock)
             );

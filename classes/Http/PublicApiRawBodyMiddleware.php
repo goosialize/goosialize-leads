@@ -22,13 +22,14 @@ final class PublicApiRawBodyMiddleware implements MiddlewareInterface
         private readonly OriginPolicy $originPolicy,
         private readonly EndpointRateLimiter $rateLimiter,
         private readonly ApiResponseMapper $responses,
-        private readonly array $config
+        private readonly array $config,
+        private readonly string $routePath
     ) {
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if ($request->getUri()->getPath() !== '/api/v1/goosialize-leads/capture') {
+        if ($request->getUri()->getPath() !== $this->routePath) {
             return $handler->handle($request);
         }
         if ($request->getMethod() !== 'POST') return $this->responses->failure('unsupported_method');

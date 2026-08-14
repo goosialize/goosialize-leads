@@ -3,7 +3,7 @@
 ## Endpoint
 
 ```http
-POST /api/v1/goosialize-leads/capture
+POST <configured API route>/<configured version prefix>/goosialize-leads/capture
 ```
 
 The API is disabled by default.

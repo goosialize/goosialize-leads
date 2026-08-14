@@ -134,7 +134,8 @@ $middleware = new PublicApiRawBodyMiddleware(
     new OriginPolicy(),
     new EndpointRateLimiter($middlewareRoot, static fn (): int => 1000),
     $responses,
-    ['enabled'=>true,'allowed_origins'=>[],'body_max_bytes'=>16384,'json_max_depth'=>4,'rate_limit_count'=>10,'rate_limit_window_seconds'=>60]
+    ['enabled'=>true,'allowed_origins'=>[],'body_max_bytes'=>16384,'json_max_depth'=>4,'rate_limit_count'=>10,'rate_limit_window_seconds'=>60],
+    '/api/v1/goosialize-leads/capture'
 );
 $handler = new class implements RequestHandlerInterface {
     public bool $handled = false;
@@ -156,6 +157,19 @@ apiCheck($middleware->process($request->withoutHeader('Origin'), $handler)->getS
 apiCheck($middleware->process($request->withBody(Stream::create("\xff")), $handler)->getStatusCode() === 400, 'middleware UTF-8');
 apiCheck($middleware->process($request->withBody(Stream::create(str_repeat('x', 16385))), $handler)->getStatusCode() === 413, 'middleware limit');
 apiCheck($middleware->process($request->withBody(Stream::create('{"a":1,"a":2}')), $handler)->getStatusCode() === 400, 'middleware duplicate');
+$customMiddleware = new PublicApiRawBodyMiddleware(
+    $parser,
+    new OriginPolicy(),
+    new EndpointRateLimiter($middlewareRoot, static fn (): int => 1000),
+    $responses,
+    ['enabled'=>true,'allowed_origins'=>[],'body_max_bytes'=>16384,'json_max_depth'=>4,'rate_limit_count'=>10,'rate_limit_window_seconds'=>60],
+    '/service/edge/goosialize-leads/capture'
+);
+$customRequest = new ServerRequest('POST', 'https://example.test/service/edge/goosialize-leads/capture', [
+    'Content-Type'=>'application/json', 'Accept'=>'application/json', 'Origin'=>'https://example.test',
+], Stream::create('{"full_name":"Synthetic Lead"}'), '1.1', ['REMOTE_ADDR'=>'192.0.2.9']);
+apiCheck($customMiddleware->process($customRequest, $handler)->getStatusCode() === 204, 'custom middleware path');
+apiCheck($customMiddleware->process($request, $handler)->getStatusCode() === 204, 'custom middleware bypass');
 
 $temporary = sys_get_temp_dir() . '/phase-3c2-rate-' . bin2hex(random_bytes(6));
 mkdir($temporary, 0700);

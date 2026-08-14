@@ -24,7 +24,8 @@ The release supports:
 - bounded human-readable and JSON operational status.
 
 Optional capture, Admin2, CSV, notification and scheduling facilities are
-disabled by default and must be configured explicitly.
+disabled by default and must be configured explicitly. Grav GPM metadata
+declares API, Admin2 and Email as required plugin dependencies.
 
 ## Release status
 
@@ -47,7 +48,7 @@ captured primary record.
 
 ## Compatibility target
 
-- Grav CMS 2.0.12.
+- Grav CMS `>=2.0.12`.
 - Native Grav Admin2 components and official Admin2 extension mechanisms.
 - No dependency on the Goosialize theme or any specific frontend theme.
 
@@ -195,7 +196,13 @@ bounded and uses the server-generated
 
 ## Public JSON capture
 
-Phase 3C.2 adds an opt-in `POST /api/v1/goosialize-leads/capture` endpoint when the local API plugin is installed and `public_api.enabled` is true. It requires JSON, an exact allowed Origin, a mandatory `Idempotency-Key`, and uses the shared validation and secure persistence pipeline. It is disabled by default.
+Phase 3C.2 adds an opt-in public capture endpoint when the required API plugin
+is installed and `public_api.enabled` is true. Its
+`/goosialize-leads/capture` suffix is resolved under the API plugin's configured
+route and version prefix (by default,
+`POST /api/v1/goosialize-leads/capture`). It requires JSON, an exact allowed
+Origin, a mandatory `Idempotency-Key`, and uses the shared validation and secure
+persistence pipeline. It is disabled by default.
 
 ## Public plugin integration contract
 

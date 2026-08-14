@@ -22,8 +22,22 @@ idempotency:
   keys: {}
 ```
 
-Production capture requires an active positive key version and a matching
-secret key entry.
+Fresh installations can capture through Grav Forms without a key ring. That
+mode deliberately stores no idempotency digest; the public JSON API and public
+capture capability remain unavailable until an active key is configured.
+
+Configure keyed capture with a canonical Base64 encoding of exactly 32 random
+bytes. Native Admin2 exposes the version 1 secret as a password field, and the
+API plugin redacts every nested `secret` value. Additional rotation keys use
+the same nested form:
+
+```yaml
+idempotency:
+  active_key_version: 1
+  keys:
+    1:
+      secret: <canonical-base64-secret>
+```
 
 Idempotency keys are configuration secrets and must not be committed, logged or
 included in support material.
@@ -57,6 +71,10 @@ public_api:
 ```
 
 Wildcard Origins are not accepted.
+
+The endpoint suffix is `/goosialize-leads/capture`; its base is derived from
+the API plugin's `route` and `version_prefix` settings. With API defaults the
+complete path is `/api/v1/goosialize-leads/capture`.
 
 ## Admin2 Lead index
 

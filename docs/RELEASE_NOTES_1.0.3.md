@@ -1,7 +1,7 @@
 # Goosialize Leads 1.0.3 release notes
 
-Goosialize Leads 1.0.3 is a documentation and Grav GPM maintenance release.
-Runtime behavior is unchanged from 1.0.2.
+Goosialize Leads 1.0.3 is a Grav GPM maintainer-remediation release. It includes
+narrow runtime fixes for clean-install Forms capture and configured API routes.
 
 ## Maintenance changes
 
@@ -10,14 +10,18 @@ Runtime behavior is unchanged from 1.0.2.
 - Replaces patch-specific installation instructions with a durable release ZIP
   naming and installation contract.
 - Aligns packaged public documentation for the existing Grav GPM submission.
+- Declares API, Admin2 and Email dependencies and broadens Grav compatibility
+  to `>=2.0.12`.
+- Uses native password/redaction semantics for nested idempotency secrets.
+- Allows default-keyless Grav Forms capture while keeping public keyed capture
+  fail-closed.
+- Derives the public endpoint from API `route` and `version_prefix` settings.
 
 ## Compatibility and upgrades
 
-- Grav CMS 2.0.12 and the existing Grav 2 compatibility contract are
-  unchanged.
-- Native Admin2 and API integration behavior is unchanged.
+- Grav CMS compatibility is `>=2.0.12`.
 - The MIT license is unchanged.
-- There are no product behavior or storage schema changes.
+- There is no storage schema change.
 - No migration is required from 1.0.2.
 
 The immutable `1.0.0`, `1.0.1` and `1.0.2` tags and their published release

@@ -12,8 +12,8 @@ goosialize-leads-<version>.zip
 
 Verified compatibility:
 
-- Grav CMS `>=2.0.12 <2.1.0`;
-- Admin2 `2.0.15`;
+- Grav CMS `>=2.0.12`;
+- required Grav plugins: API, Admin2 and Email;
 - PHP `^8.3`;
 - observed verification runtime PHP `8.5.8`.
 
@@ -53,18 +53,21 @@ configured:
 
 Runtime data is created lazily after an enabled operation requires it.
 
-## Optional dependencies
+## Required dependencies
 
-Notification delivery requires:
+The GPM metadata declares API, Admin2 and Email as required dependencies. GPM
+can therefore discover them before the plugin is loaded. Notification delivery
+still requires:
 
 - Grav Email installed and enabled;
 - valid recipients;
 - a valid sender address;
 - delivery explicitly enabled.
 
-A missing optional dependency disables only the affected optional facility.
-Lead capture remains available when notification delivery or scheduling is
-unavailable.
+On a clean installation, Forms capture works without an idempotency key. Public
+JSON and public capability capture require a per-installation idempotency key;
+see `docs/CONFIGURATION.md`. No key is generated into or shipped with the
+package.
 
 ## Verification
 

@@ -17,11 +17,31 @@ output="$(docker run --rm --network none \
 printf '%s\n' "${output}"
 grep -q '^PASS_PHASE_3C2_SHARED_API$' <<<"${output}" || fail 'unit marker missing'
 
+secret_output="$(docker run --rm --network none \
+    --mount "type=bind,src=${REPOSITORY_ROOT},dst=/app/www/public/user/plugins/goosialize-leads,readonly" \
+    --entrypoint php "${EXPECTED_IMAGE_ID}" -r '
+chdir("/app/www/public");
+define("GRAV_CLI", true); define("GRAV_REQUEST_TIME", microtime(true));
+$autoload = require "vendor/autoload.php";
+$grav = Grav\Common\Grav::instance(["loader" => $autoload]); $grav->initializeCli();
+require "user/plugins/api/classes/Api/Services/ConfigDiffer.php";
+require "user/plugins/api/classes/Api/Services/ConfigSecretMasker.php";
+$blueprint = new Grav\Common\Data\Blueprint("goosialize-leads");
+$blueprint->load("user/plugins/goosialize-leads/blueprints.yaml");
+$input = ["idempotency" => ["keys" => [1 => ["secret" => "SENSITIVE_TEST_VALUE"]]]];
+$masked = Grav\Plugin\Api\Services\ConfigSecretMasker::mask($input, $blueprint);
+if (($masked["idempotency"]["keys"][1]["secret"] ?? null) !== "********") throw new RuntimeException("secret was not masked");
+if (str_contains(json_encode($masked, JSON_THROW_ON_ERROR), "SENSITIVE_TEST_VALUE")) throw new RuntimeException("secret leaked");
+echo "PASS_SECRET_BLUEPRINT_SECURITY\n";
+')"
+printf '%s\n' "${secret_output}"
+grep -q '^PASS_SECRET_BLUEPRINT_SECURITY$' <<<"${secret_output}" || fail 'secret masking marker missing'
+
 grep -q "'onApiRegisterRoutes' => \\['onApiRegisterRoutes', 0\\]" "${REPOSITORY_ROOT}/goosialize-leads.php"
 grep -q "'onApiCollectPublicRoutes' => \\['onApiCollectPublicRoutes', 0\\]" "${REPOSITORY_ROOT}/goosialize-leads.php"
 grep -q "post('/goosialize-leads/capture'" "${REPOSITORY_ROOT}/goosialize-leads.php"
-grep -q 'POST /api/v1/goosialize-leads/capture' "${REPOSITORY_ROOT}/goosialize-leads.php"
-grep -q "getUri()->getPath() !== '/api/v1/goosialize-leads/capture'" "${REPOSITORY_ROOT}/classes/Http/PublicApiRawBodyMiddleware.php"
+! grep -q "'POST /api/v1/goosialize-leads/capture'" "${REPOSITORY_ROOT}/goosialize-leads.php"
+! grep -q "getUri()->getPath() !== '/api/v1/goosialize-leads/capture'" "${REPOSITORY_ROOT}/classes/Http/PublicApiRawBodyMiddleware.php"
 
 docker run --rm --network none \
     --mount "type=bind,src=${REPOSITORY_ROOT},dst=/plugin,readonly" \
@@ -76,6 +96,9 @@ if ($routes->calls !== [["/goosialize-leads/capture",[Grav\Plugin\GoosializeLead
 $public=new RocketTheme\Toolbox\Event\Event(["api_base"=>"/api/v1","prefixes"=>[],"exact"=>[]]);
 $plugin->onApiCollectPublicRoutes($public);
 if ($public["exact"] !== ["POST /api/v1/goosialize-leads/capture"]) throw new RuntimeException("public classification mismatch");
+$custom=new RocketTheme\Toolbox\Event\Event(["api_base"=>"/service/edge","prefixes"=>[],"exact"=>[]]);
+$plugin->onApiCollectPublicRoutes($custom);
+if ($custom["exact"] !== ["POST /service/edge/goosialize-leads/capture"]) throw new RuntimeException("custom public classification mismatch");
 '
 printf 'PASS_PHASE_3C2_RAW_JSON\n'
 printf 'PASS_PHASE_3C2_PUBLIC_ROUTE\n'

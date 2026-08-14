@@ -409,8 +409,11 @@ final class GoosializeLeadsPlugin extends Plugin
     {
         if (!$this->publicApiConfigurationValid()) return;
         $exact = $event['exact'] ?? null;
-        if (!is_array($exact)) return;
-        $route = 'POST /api/v1/goosialize-leads/capture';
+        $apiBase = $event['api_base'] ?? null;
+        if (!is_array($exact) || !is_string($apiBase) || $apiBase === '') return;
+        $apiBase = '/' . trim($apiBase, '/');
+        if ($apiBase === '/' || str_contains($apiBase, '//')) return;
+        $route = 'POST ' . $apiBase . '/goosialize-leads/capture';
         if (!in_array($route, $exact, true)) $exact[] = $route;
         $event['exact'] = $exact;
     }
@@ -418,7 +421,8 @@ final class GoosializeLeadsPlugin extends Plugin
     public function onRequestHandlerInit(RequestHandlerEvent $event): void
     {
         if (!$this->publicApiConfigurationValid()) return;
-        if ($event->getRoute()->getRoute() !== '/api/v1/goosialize-leads/capture') return;
+        $routePath = $this->publicApiRoutePath();
+        if ($routePath === null || $event->getRoute()->getRoute() !== $routePath) return;
         try {
             $config = $this->config()['public_api'];
             $root = $this->grav['locator']->findResource('user-data://', true);
@@ -428,12 +432,25 @@ final class GoosializeLeadsPlugin extends Plugin
                 new OriginPolicy(),
                 new EndpointRateLimiter($root, static fn (): int => time()),
                 new ApiResponseMapper(),
-                $config
+                $config,
+                $routePath
             );
             $event->addMiddleware('goosialize_leads_public_api', $middleware);
         } catch (\Throwable) {
             if (isset($this->grav['log'])) $this->grav['log']->warning('public_api_configuration_unavailable');
         }
+    }
+
+    private function publicApiRoutePath(): ?string
+    {
+        $route = $this->grav['config']->get('plugins.api.route', '/api');
+        $prefix = $this->grav['config']->get('plugins.api.version_prefix', 'v1');
+        if (!is_string($route) || !is_string($prefix)) return null;
+        $route = trim($route, '/');
+        $prefix = trim($prefix, '/');
+        if ($route === '' || $prefix === '' || str_contains($route, '//') || str_contains($prefix, '/')) return null;
+
+        return '/' . $route . '/' . $prefix . '/goosialize-leads/capture';
     }
 
     /**

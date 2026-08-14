@@ -41,6 +41,21 @@ grep -Fq "readonly VERSION='${EXPECTED_VERSION}'" scripts/build-plugin-package.s
 
 pass 'version metadata'
 
+grep -Fq "version: '>=2.0.12'" blueprints.yaml ||
+    fail 'Grav dependency does not permit later Grav 2 releases'
+for dependency in api admin2 email; do
+    grep -Eq "^- name: ${dependency}$" blueprints.yaml ||
+        fail "required ${dependency} dependency is missing"
+done
+grep -A4 -F 'idempotency.keys.1.secret:' blueprints.yaml | grep -Fq 'type: password' ||
+    fail 'idempotency secret is not a native password field'
+grep -Fq "['active_key_version' => null, 'keys' => [1 => ['secret' => null]]]" tests/unit/phase-3c-forms-capture.php ||
+    fail 'default empty-key-ring capture regression is missing'
+! grep -Fq "'POST /api/v1/goosialize-leads/capture'" goosialize-leads.php ||
+    fail 'public classification still hard-codes the default API base'
+
+pass 'maintainer dependency, secret and route contracts'
+
 for path in \
     docs/INSTALLATION.md \
     docs/CONFIGURATION.md \

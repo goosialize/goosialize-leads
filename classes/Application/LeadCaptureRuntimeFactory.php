@@ -34,13 +34,15 @@ final class LeadCaptureRuntimeFactory
             $activeVersion = (int) $activeVersion;
         }
 
-        if (!is_int($activeVersion) || $activeVersion < 1) {
+        if ($activeVersion === null && $versions === []) {
+            $keyRing = new IdempotencyKeyRing(null, []);
+        } elseif (!is_int($activeVersion) || $activeVersion < 1) {
             throw new \InvalidArgumentException('Invalid idempotency configuration.');
+        } else {
+            $keyRing = new IdempotencyKeyRing($activeVersion, $versions);
         }
 
         $entropy = static fn (int $length): string => random_bytes($length);
-
-        $keyRing = new IdempotencyKeyRing($activeVersion, $versions);
 
         $repository = new FilesystemLeadRepository(
             $userDataRoot,
@@ -86,7 +88,18 @@ final class LeadCaptureRuntimeFactory
 
         $versions = [];
 
-        foreach ($configuration['keys'] as $version => $encoded) {
+        foreach ($configuration['keys'] as $version => $keyConfiguration) {
+            if (is_array($keyConfiguration)) {
+                if (array_keys($keyConfiguration) !== ['secret']) {
+                    throw new \InvalidArgumentException('Invalid idempotency configuration.');
+                }
+                $encoded = $keyConfiguration['secret'];
+                if ($encoded === null || $encoded === '') {
+                    continue;
+                }
+            } else {
+                $encoded = $keyConfiguration;
+            }
             if (
                 !(is_int($version) || (is_string($version) && ctype_digit($version)))
                 || !is_string($encoded)
@@ -100,10 +113,6 @@ final class LeadCaptureRuntimeFactory
             }
 
             $versions[$integerVersion] = $encoded;
-        }
-
-        if ($versions === []) {
-            throw new \InvalidArgumentException('Invalid idempotency configuration.');
         }
 
         ksort($versions, SORT_NUMERIC);

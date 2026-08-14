@@ -6,6 +6,7 @@ require dirname(__DIR__, 2) . '/autoload.php';
 
 use Grav\Plugin\GoosializeLeads\Application\CaptureResult;
 use Grav\Plugin\GoosializeLeads\Application\LeadCaptureService;
+use Grav\Plugin\GoosializeLeads\Application\LeadCaptureRuntimeFactory;
 use Grav\Plugin\GoosializeLeads\Notification\NotificationOutbox;
 use Grav\Plugin\GoosializeLeads\Application\LeadPersistenceCoordinator;
 use Grav\Plugin\GoosializeLeads\Http\FormsLeadCaptureAdapter;
@@ -103,6 +104,55 @@ $validation = $service->capture([], $trusted, 'contact', $submissionId, $entropy
 phase3cCheck(
     $validation->code() === 'validation_failed' && $validation->errors() !== [],
     'validation mapping failed'
+);
+
+$defaultRoot = sys_get_temp_dir() . '/phase-3c-default-' . bin2hex(random_bytes(6));
+mkdir($defaultRoot, 0700);
+$emptyDefaultService = LeadCaptureRuntimeFactory::create(
+    $defaultRoot,
+    ['active_key_version' => null, 'keys' => []],
+    null
+);
+phase3cCheck($emptyDefaultService instanceof LeadCaptureService, 'default YAML key ring was rejected');
+$defaultService = LeadCaptureRuntimeFactory::create(
+    $defaultRoot,
+    ['active_key_version' => null, 'keys' => [1 => ['secret' => null]]],
+    null
+);
+$defaultCapture = $defaultService->capture(
+    phase3cSubmitted('fresh-install@example.test'),
+    $trusted,
+    'contact',
+    'abcdefghij0123456789',
+    $entropy,
+    $clock
+);
+phase3cCheck($defaultCapture->isSuccess(), 'default empty key-ring Forms capture failed');
+$defaultRecord = glob($defaultRoot . '/goosialize-leads/v1/records/*/*/*.json') ?: [];
+phase3cCheck(count($defaultRecord) === 1, 'default capture did not publish one record');
+$defaultBytes = file_get_contents($defaultRecord[0]);
+$defaultData = is_string($defaultBytes) ? json_decode($defaultBytes, true, 8, JSON_THROW_ON_ERROR) : null;
+phase3cCheck(
+    is_array($defaultData)
+    && ($defaultData['idempotency'] ?? null) === [
+        'key_version' => null,
+        'key_hash' => null,
+        'payload_fingerprint' => null,
+    ],
+    'default capture persisted keyed idempotency'
+);
+
+$nestedSecret = base64_encode(str_repeat('N', 32));
+$nestedRoot = sys_get_temp_dir() . '/phase-3c-nested-' . bin2hex(random_bytes(6));
+mkdir($nestedRoot, 0700);
+$nestedService = LeadCaptureRuntimeFactory::create(
+    $nestedRoot,
+    ['active_key_version' => 1, 'keys' => [1 => ['secret' => $nestedSecret]]],
+    null
+);
+phase3cCheck(
+    $nestedService->capture(phase3cSubmitted('nested-key@example.test'), $trusted, 'contact', 'jihgfedcba9876543210', $entropy, $clock)->isSuccess(),
+    'nested secret key configuration failed'
 );
 
 $error = new ValidationError('required', 'full_name');
