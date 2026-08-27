@@ -3,25 +3,23 @@
 Notification reconciliation is an explicit operator action for delivery states that
 cannot be resolved safely through automatic retry processing.
 
+> **Audience:** Advanced operators. **High risk:** Reconciliation mutates
+> durable Notification state and can permit another delivery attempt.
+
 ## Command
 
-Inspect a specific event revision with:
-
-```bash
-php bin/plugin goosialize-leads reconcile-notification EVENT_ID REVISION ACTION --yes
-```
-
-Replace:
+The [CLI reference](CLI_REFERENCE.md#reconcile-notification-state) owns the
+exact command syntax. Every invocation supplies:
 
 - `EVENT_ID` with the notification event identifier;
 - `REVISION` with the exact durable-state revision currently stored;
 - `ACTION` with one supported reconciliation action.
 
-The `--yes` option is mandatory for a state-changing reconciliation.
+Explicit confirmation is mandatory for a state-changing Reconciliation.
 
 ## Supported actions
 
-Version 1.0.0 supports:
+The public contract supports:
 
 ```text
 confirm-delivered
@@ -62,39 +60,10 @@ transition.
 
 ## Inspection before mutation
 
-Inspect the bounded operational state first:
-
-```bash
-php bin/plugin goosialize-leads notification-status --limit=10
-```
-
-For machine-readable inspection:
-
-```bash
-php bin/plugin goosialize-leads notification-status --limit=10 --json
-```
-
-Record the event identifier, revision and current state before choosing an action.
-
-## Examples
-
-Confirm an independently verified delivery:
-
-```bash
-php bin/plugin goosialize-leads reconcile-notification event-123 4 confirm-delivered --yes
-```
-
-Return a reviewed duplicate-risk event to retry processing:
-
-```bash
-php bin/plugin goosialize-leads reconcile-notification event-123 4 retry-duplicate-risk --yes
-```
-
-Move an event to terminal dead-letter state:
-
-```bash
-php bin/plugin goosialize-leads reconcile-notification event-123 4 dead-letter --yes
-```
+Inspect bounded state through [Operational status](OPERATIONAL_STATUS.md).
+Record the event identifier, revision and current State before choosing an
+action. Independently confirm external delivery when duplicate risk exists;
+do not infer delivery from local state alone.
 
 ## Operational safety
 
@@ -108,3 +77,14 @@ Reconciliation must not:
 - redeliver a duplicate-risk event without explicit operator intent.
 
 Every state-changing action must remain explicit, bounded and auditable.
+
+---
+
+## Navigation
+
+[← Back to README](../README.md) ·
+[Previous: Retry and Dead Letter](RETRY_DEAD_LETTER.md) ·
+[Next: CLI reference →](CLI_REFERENCE.md)
+
+Related documentation: [Operational status](OPERATIONAL_STATUS.md) ·
+[Notification delivery](NOTIFICATION_DELIVERY.md) · [Security](SECURITY.md)

@@ -1,10 +1,15 @@
 # Permissions
 
-Goosialize Leads 1.0.0 uses explicit Grav ACL permissions for native Admin2 and operational access.
+Goosialize Leads uses explicit Grav ACL permissions for native Admin2 and
+operational access. For the workspace controls administrators see, read the
+[Admin Guide](ADMIN_GUIDE.md).
+
+> **Audience:** Administrators designing least-privilege Admin2 roles and
+> operational access.
 
 ## Permission catalogue
 
-Version 1.0.0 defines:
+The public permission catalogue defines:
 
 ```text
 api.goosialize_leads.read
@@ -26,7 +31,7 @@ state, Delete or Restore controls.
 
 It does not grant:
 
-- CSV export;
+- CSV Export;
 - notification delivery;
 - notification status inspection;
 - notification reconciliation;
@@ -50,7 +55,7 @@ It does not independently grant index read or ordinary workflow mutation.
 api.goosialize_leads.export
 ```
 
-CSV export requires both:
+CSV Export requires both:
 
 ```text
 api.goosialize_leads.read
@@ -105,3 +110,16 @@ Permission failure must not expose:
 
 UI visibility is advisory. Every read, write, delete, export and operations
 endpoint independently enforces its server-side ACL.
+
+See [Security](SECURITY.md) and the [FAQ](FAQ.md) for the related storage and
+Delete/Restore behavior.
+
+---
+
+## Navigation
+
+[← Back to README](../README.md) · [Previous: Configuration](CONFIGURATION.md) ·
+[Next: Security →](SECURITY.md)
+
+Related documentation: [Admin Guide](ADMIN_GUIDE.md#permission-dependent-controls) ·
+[CSV Export](CSV_EXPORT.md#permissions) · [Operational status](OPERATIONAL_STATUS.md)

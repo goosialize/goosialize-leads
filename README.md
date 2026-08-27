@@ -1,230 +1,166 @@
 # Goosialize Leads
 
-Goosialize Leads is a standalone, theme-independent Lead capture,
-storage, Admin2 reporting and notification-delivery plugin for Grav CMS 2.
+[![Grav 2](https://img.shields.io/badge/Grav-2.0-6f42c1)](https://getgrav.org/)
+[![Latest release](https://img.shields.io/github/v/release/goosialize/goosialize-leads)](https://github.com/goosialize/goosialize-leads/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![GPM approved](https://img.shields.io/badge/Grav%20GPM-approved-2ea44f)](https://github.com/getgrav/grav/issues/4238)
 
-The release supports:
+Goosialize Leads captures enquiries from Grav Forms and compatible
+integrations, stores them safely, and gives administrators a native Admin2
+workspace for reviewing, managing and exporting Leads. It is independent of
+the active frontend theme.
 
-- canonical filesystem Lead storage with atomic no-replace publication;
-- durable idempotency and exact replay protection;
-- opt-in native Grav Forms capture;
-- opt-in bounded public JSON capture;
-- a versioned plugin-to-plugin public capture capability;
-- a permission-gated native Admin2 workspace over a bounded latest-100 Lead
-  index, with native Search, Status, Source, State, Form / Resource and
-  creation-date filters;
-- dynamic Source and Form / Resource vocabularies, inline exact-ID Edit,
-  optimistic revisions, status and Active/Inactive changes, reversible Delete
-  and Restore;
-- bounded native Admin2 CSV export;
-- a durable notification outbox;
-- bounded manual and scheduled notification delivery;
-- durable retry, dead-letter and duplicate-risk state;
-- revision-safe operator reconciliation;
-- bounded human-readable and JSON operational status.
-
-Optional capture, Admin2, CSV, notification and scheduling facilities are
-disabled by default and must be configured explicitly. Grav GPM metadata
-declares API, Admin2 and Email as required plugin dependencies.
-
-## Release status
-
-Version 1.0.2 is published as a stable GitHub Release and remains unchanged.
 See [GitHub Releases](https://github.com/goosialize/goosialize-leads/releases)
-for the authoritative list of published versions and assets. Source version
-metadata identifies the maintenance package being prepared; it does not by
-itself indicate that a release has been published.
+for the latest stable version and release package.
 
-The Admin2 workspace is capability-aware. Read access exposes the bounded Lead
-index and filters; write access adds inline Edit, status changes,
-Active/Inactive transitions and Restore; delete permission adds reversible
-Delete; and export requires its separate permission. Every endpoint enforces
-its server-side ACL independently of UI visibility.
+**Grav GPM status:** version 1.0.3 is approved and pending the next catalogue
+update. Until it appears in your configured catalogue, use the stable GitHub
+release package.
 
-Captured primary Lead records remain immutable. Admin operations update only
-validated metadata sidecars containing workflow status, state and optimistic
-revision data. Delete is a reversible metadata state and never removes the
-captured primary record.
+## Compatibility and dependencies
 
-## Compatibility target
+- Grav CMS `>=2.0.12`
+- PHP `>=8.3` with `ext-intl`
+- Grav API plugin
+- Grav Admin2 plugin
+- Grav Email plugin
 
-- Grav CMS `>=2.0.12`.
-- Native Grav Admin2 components and official Admin2 extension mechanisms.
-- No dependency on the Goosialize theme or any specific frontend theme.
+The native Grav Form plugin is also needed when capturing Leads from Grav
+Forms. API, Admin2 and Email are declared package dependencies. Email delivery
+remains optional until notifications are enabled.
 
-## Development principles
+## Install
 
-- Do not modify Grav core, patch the API plugin, or replace compiled Admin2 files.
-- Keep all plugin behavior and assets within plugin-owned boundaries.
-- Prioritize security, permissions, data integrity, and upgrade safety.
-- Preserve lead data through plugin upgrades.
-- Keep installation, upgrade, and removal clean and isolated.
-- Verify lifecycle and API assumptions against official Grav 2.0 documentation and Grav 2.0.12 source.
+When Goosialize Leads is available in your configured GPM catalogue, install
+it from the Grav root:
+
+```bash
+php bin/gpm install goosialize-leads
+```
+
+Alternatively, download a stable `goosialize-leads-<version>.zip` from
+[GitHub Releases](https://github.com/goosialize/goosialize-leads/releases)
+and install it directly:
+
+```bash
+php bin/gpm direct-install -y /absolute/path/goosialize-leads-<version>.zip
+```
+
+The installed plugin folder is `user/plugins/goosialize-leads`. See the
+[Installation guide](docs/INSTALLATION.md) for dependency and clean-install
+checks.
+
+## Capture your first Lead
+
+The quickest supported route is a native Grav Form:
+
+1. Open **Plugins > Goosialize Leads** in Admin2.
+2. On the **Forms** tab, enable Forms capture and select your form.
+3. Add `goosialize_leads_capture: true` to the form's `process` section.
+4. Submit the form, then open **Leads** in the Admin2 sidebar.
+
+The [Quick Start](docs/QUICK_START.md) contains a complete copy/paste form and
+the expected result.
+
+## Admin2 overview
+
+The **Leads** workspace provides Search; Status, Source, State and
+Form / Resource filters; Created from/to filters; sorting; page-size controls;
+inline editing; Active/Inactive workflow; reversible Delete and Restore; and
+CSV Export when enabled.
+
+The backend collection is deliberately bounded to the latest 100 Lead records.
+The [Admin Guide](docs/ADMIN_GUIDE.md) explains the workspace in plain
+language, including what **View: All** means.
+
+![Goosialize Leads workspace in Grav Admin2](docs/images/admin2-leads-workspace.png)
+
+*The native Admin2 workspace with synthetic Leads, bounded table controls,
+row actions and footer totals.*
+
+## Core features
+
+- Theme-independent native Grav Forms capture.
+- Canonical Lead storage with immutable primary records.
+- Permission-aware Admin2 management using separate workflow metadata.
+- Search and filters over a bounded latest-100 collection.
+- Inline status and Active/Inactive management.
+- Reversible Delete and Restore.
+- Bounded CSV Export with spreadsheet-formula protection.
+- Lead data retention across plugin upgrades and ordinary package removal.
+
+## Advanced integrations
+
+Optional advanced facilities include:
+
+- a public, anonymous JSON capture endpoint protected by an exact Origin
+  allowlist, idempotency, rate limiting and a configured key ring;
+- a versioned PHP capability for compatible local Grav plugins;
+- a durable notification outbox and Grav Email delivery;
+- scheduled delivery, bounded Retries, Dead letter state and revision-safe
+  operator reconciliation.
+
+These facilities are disabled by default and must be configured explicitly.
 
 ## Documentation
 
-### Getting started
+### Recommended reading order
 
-- [Installation](docs/INSTALLATION.md)
-- [Configuration](docs/CONFIGURATION.md)
+1. [Quick Start](docs/QUICK_START.md)
+2. [Installation](docs/INSTALLATION.md)
+3. [Admin Guide](docs/ADMIN_GUIDE.md)
+4. [Grav Forms integration](docs/FORMS_INTEGRATION.md)
+5. [CSV Export](docs/CSV_EXPORT.md)
+6. [FAQ](docs/FAQ.md)
+7. [Configuration](docs/CONFIGURATION.md)
+8. [Permissions](docs/PERMISSIONS.md)
+9. [Security](docs/SECURITY.md)
+10. [Public JSON API](docs/JSON_API_INTEGRATION.md)
+11. [Notification delivery](docs/NOTIFICATION_DELIVERY.md)
+12. [Operational status](docs/OPERATIONAL_STATUS.md)
+13. [Troubleshooting](docs/TROUBLESHOOTING.md)
+
+### Advanced operations and integration
+
+- [Scheduler](docs/SCHEDULER.md)
+- [Retry and Dead Letter](docs/RETRY_DEAD_LETTER.md)
+- [Reconciliation](docs/RECONCILIATION.md)
+- [CLI reference](docs/CLI_REFERENCE.md)
+- [Public plugin integration contract](docs/PUBLIC_INTEGRATION_CONTRACT.md)
+- [Examples](docs/EXAMPLES.md)
 - [Upgrade](docs/UPGRADE.md)
 - [Uninstall and data retention](docs/UNINSTALL_DATA_RETENTION.md)
 
-### Capture integrations
+### Reference
 
-- [Grav Forms integration](docs/FORMS_INTEGRATION.md)
-- [Public JSON API integration](docs/JSON_API_INTEGRATION.md)
-- [Public plugin integration contract](docs/PUBLIC_INTEGRATION_CONTRACT.md)
-- [Examples](docs/EXAMPLES.md)
-
-### Admin2 and export
-
-- [Admin2 Lead index](docs/ADMIN2_LEAD_INDEX.md)
-- [CSV export](docs/CSV_EXPORT.md)
-- [Permissions](docs/PERMISSIONS.md)
-
-### Notification operations
-
-- [Notification delivery](docs/NOTIFICATION_DELIVERY.md)
-- [Scheduler](docs/SCHEDULER.md)
-- [Retry and dead-letter state](docs/RETRY_DEAD_LETTER.md)
-- [Reconciliation](docs/RECONCILIATION.md)
-- [Operational status](docs/OPERATIONAL_STATUS.md)
-- [CLI reference](docs/CLI_REFERENCE.md)
-
-### Operations and release
-
-- [Security](docs/SECURITY.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
-- [1.0.0 release notes](docs/RELEASE_NOTES_1.0.0.md)
-- [1.0.1 release notes](docs/RELEASE_NOTES_1.0.1.md)
-- [1.0.2 release notes](docs/RELEASE_NOTES_1.0.2.md)
+- [Changelog](CHANGELOG.md)
 - [1.0.3 release notes](docs/RELEASE_NOTES_1.0.3.md)
+- [Earlier release notes](docs/RELEASE_NOTES_1.0.2.md)
+- [Admin2 Lead index technical reference](docs/ADMIN2_LEAD_INDEX.md)
 
-The manual browser acceptance checklist is a development-only release gate and
-is intentionally excluded from the distributable package.
+## Security and data summary
 
-## Current repository layout
+Captured primary Lead records are immutable. Admin2 changes write only
+validated metadata for status, lifecycle state and optimistic revision.
+**Delete is reversible** and does not erase the primary record; Restore is the
+only mutation allowed while a Lead is deleted.
 
-```text
-.
-├── .gitignore
-├── AGENTS.md
-├── CHANGELOG.md
-├── README.md
-├── blueprints.yaml
-├── autoload.php
-├── classes
-│   ├── Application
-│   │   ├── CaptureCommand.php
-│   │   └── LeadPersistenceCoordinator.php
-│   ├── Domain
-│   │   ├── LeadIdGenerator.php
-│   │   └── LeadRecord.php
-│   ├── Security
-│   │   └── IdempotencyKeyRing.php
-│   ├── Storage
-│   │   ├── FilesystemLeadRepository.php
-│   │   ├── LeadRepository.php
-│   │   ├── PersistenceRequest.php
-│   │   ├── PersistenceResult.php
-│   │   └── StorageException.php
-│   └── Validation
-│       ├── LeadInputValidator.php
-│       ├── LeadNormalizer.php
-│       ├── ValidationError.php
-│       └── ValidationResult.php
-├── composer.json
-├── goosialize-leads.php
-├── goosialize-leads.yaml
-├── languages
-│   └── en.yaml
-├── packaging
-│   └── package-files.txt
-├── scripts
-│   └── build-plugin-package.sh
-├── tests
-│   ├── integration
-│       ├── clean-grav-plugin-load.sh
-│       ├── installable-plugin-package.sh
-│       ├── phase-2d-entry-points.sh
-│       └── phase-3b-secure-storage.sh
-│   └── unit
-│       ├── phase-3a-lead-data-validation.php
-│       └── phase-3b-secure-persistence.php
-└── docs
-    ├── ARCHITECTURE_PRINCIPLES.md
-    ├── CLEAN_GRAV_PLUGIN_LOAD_TEST.md
-    ├── DECOUPLING_PLAN.md
-    ├── DEPENDENCY_MAP.md
-    ├── INSTALLABLE_PLUGIN_PACKAGE_TEST.md
-    ├── OFFICIAL_VERIFICATION_LOG.md
-    ├── PHASE_2D_ENTRY_POINT_TEST.md
-    ├── PROJECT_SCOPE.md
-    ├── PUBLIC_INTEGRATION_CONTRACT.md
-    ├── REFERENCE_IMPLEMENTATION_AUDIT.md
-    ├── REUSE_MATRIX.md
-    └── ROADMAP.md
-```
+Every private Admin2/API operation enforces its own server-side permission.
+Secrets are password-protected and redacted from configuration responses.
+Runtime Lead and notification data stays under
+`user/data/goosialize-leads/v1` and is not automatically removed with the
+plugin package.
 
-## Local package build and clean-install test
+Read [Security](docs/SECURITY.md), [Permissions](docs/PERMISSIONS.md) and the
+[FAQ](docs/FAQ.md) before enabling public capture or notification delivery.
 
-```bash
-scripts/build-plugin-package.sh /tmp/goosialize-leads-package
-GRAV_TEST_IMAGE=lscr.io/linuxserver/grav:2.0.12 tests/integration/installable-plugin-package.sh
-GRAV_TEST_IMAGE=lscr.io/linuxserver/grav:2.0.12 tests/integration/phase-2d-entry-points.sh
-GRAV_TEST_IMAGE=lscr.io/linuxserver/grav:2.0.12 tests/integration/phase-8-public-capture-capability.sh
-```
+## Development and technical reference
 
-The manifest is `packaging/package-files.txt`; the complete isolation and safety contract is documented in `docs/INSTALLABLE_PLUGIN_PACKAGE_TEST.md`. Build output must remain outside this repository.
+The deterministic package manifest is `packaging/package-files.txt` and the
+package builder is `scripts/build-plugin-package.sh`. Development tests and
+release acceptance material remain outside the installable package.
 
-## Native Admin2 Lead Index
-
-Set `admin2_index.enabled: true` and grant `api.goosialize_leads.read` to an
-authenticated API/Admin2 user. The workspace displays and filters the bounded
-latest-100 index. `write` adds Edit and Active/Inactive controls; `delete` adds
-reversible Delete. Deleted Leads can only be restored by a write-capable user.
-Primary records remain immutable: workflow status, state and optimistic
-revision are stored in separate metadata sidecars. Exact-ID Edit and mutation
-remain available for valid Leads older than the latest-100 index.
-
-The native filters cover Search, Status, Source, State, Form / Resource,
-Created from and Created to. Source and Form / Resource vocabularies are
-derived dynamically from the bounded loaded dataset. CSV export remains
-bounded and uses the server-generated
-`goosialize-leads-YYYY-MM-DD-HHmm.csv` filename.
-
-## Public JSON capture
-
-Phase 3C.2 adds an opt-in public capture endpoint when the required API plugin
-is installed and `public_api.enabled` is true. Its
-`/goosialize-leads/capture` suffix is resolved under the API plugin's configured
-route and version prefix (by default,
-`POST /api/v1/goosialize-leads/capture`). It requires JSON, an exact allowed
-Origin, a mandatory `Idempotency-Key`, and uses the shared validation and secure
-persistence pipeline. It is disabled by default.
-
-## Public plugin integration contract
-
-The normative version 1 plugin-to-plugin Lead capture contract is documented
-in `docs/PUBLIC_INTEGRATION_CONTRACT.md`.
-
-Compatible local Grav plugins detect the exact
-`goosialize-leads.capture` capability at contract version `1` through the
-`goosialize-leads.public-capture.v1` container service. The integration uses
-published request, trusted-context and result types over the same validation,
-idempotency and secure persistence pipeline as supported capture entry points.
-
-The version 1 runtime capability is registered under
-`goosialize-leads.public-capture.v1`. Consumers must detect the published
-interface, capability identifier and exact contract version before capture.
-
-The capability reuses the same canonical validation, idempotency, persistence
-and optional post-persistence notification pipeline as the supported Forms and
-public JSON entry points. It returns only the published outcomes and validation
-error map; it does not expose Lead IDs, storage paths, repositories,
-notification state or internal exceptions.
-
-Consumers must treat a missing, unavailable or incompatible capability as a
-non-fatal integration state and must not access internal repositories, storage
-services or controllers.
+The public plugin-to-plugin contract is
+[`docs/PUBLIC_INTEGRATION_CONTRACT.md`](docs/PUBLIC_INTEGRATION_CONTRACT.md).
+Contributors should also consult the repository development instructions and
+the development-only architecture, verification and acceptance documents.

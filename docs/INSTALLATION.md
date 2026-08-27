@@ -1,83 +1,100 @@
 # Installation
 
-## Supported releases
+> **Audience:** Grav administrators installing Goosialize Leads or verifying a
+> clean installation.
 
-Download the latest stable package from
+For a guided first Lead after installation, continue with the
+[Quick Start](QUICK_START.md).
+
+## Requirements
+
+- Grav CMS `>=2.0.12`
+- PHP `>=8.3` with `ext-intl`
+- Grav API plugin
+- Grav Admin2 plugin
+- Grav Email plugin
+
+The package metadata declares API, Admin2 and Email as dependencies. The native
+Grav Form plugin is additionally required only when using Grav Forms capture.
+
+## Install from GPM
+
+When Goosialize Leads is available in your configured GPM catalogue, run this
+from the Grav root:
+
+```bash
+php bin/gpm install goosialize-leads
+```
+
+GPM resolves the package and its declared dependencies. Review any dependency
+or compatibility prompt before accepting it.
+
+## Install a GitHub release ZIP
+
+If the catalogue update is not yet available, download the latest stable
+package from
 [GitHub Releases](https://github.com/goosialize/goosialize-leads/releases).
-The release ZIP naming contract is:
+Release archives follow this naming contract:
 
 ```text
 goosialize-leads-<version>.zip
 ```
 
-Verified compatibility:
-
-- Grav CMS `>=2.0.12`;
-- required Grav plugins: API, Admin2 and Email;
-- PHP `^8.3`;
-- observed verification runtime PHP `8.5.8`.
-
-## Package installation
-
-The archive root is:
-
-```text
-grav-plugin-goosialize-leads/
-```
-
-Install through Grav GPM using a local archive:
+Install the complete archive rather than copying selected files:
 
 ```bash
 php bin/gpm direct-install -y /absolute/path/goosialize-leads-<version>.zip
 ```
 
-The resolved plugin destination is:
+Both installation routes resolve the plugin to:
 
 ```text
 user/plugins/goosialize-leads
 ```
 
+Do not rename the folder or merge the archive into an older plugin tree.
+
 ## Initial state
 
-The plugin is enabled by default, but optional facilities remain disabled until
-configured:
+The shipped configuration has:
 
-- Grav Forms capture;
-- public JSON capture;
-- Admin2 Lead index;
-- Admin2 CSV export;
-- notification outbox;
-- manual notification delivery;
-- durable retries;
-- scheduled delivery.
+- the plugin enabled;
+- the Admin2 Lead index enabled;
+- Forms capture disabled;
+- public JSON capture disabled;
+- Downloads integration disabled;
+- CSV Export disabled;
+- notification outbox and delivery disabled;
+- retry processing and scheduling disabled.
 
-Runtime data is created lazily after an enabled operation requires it.
+The **Leads** sidebar item still requires a signed-in user with
+`api.goosialize_leads.read`. Other controls require their corresponding
+permissions. See [Permissions](PERMISSIONS.md).
 
-## Required dependencies
+Runtime data is created lazily under `user/data/goosialize-leads/v1` after an
+enabled operation needs it. No Lead data or idempotency secret is shipped in
+the package.
 
-The GPM metadata declares API, Admin2 and Email as required dependencies. GPM
-can therefore discover them before the plugin is loaded. Notification delivery
-still requires:
+## Clean-install checks
 
-- Grav Email installed and enabled;
-- valid recipients;
-- a valid sender address;
-- delivery explicitly enabled.
+1. Confirm `user/plugins/goosialize-leads` exists.
+2. Confirm API, Admin2 and Email are installed and enabled.
+3. Sign in to Admin2 and open **Plugins > Goosialize Leads**.
+4. Confirm the native configuration tabs render.
+5. Grant a test administrator `api.goosialize_leads.read` and confirm **Leads**
+   appears in the sidebar.
+6. If using Forms capture, install/enable Form and follow the
+   [Quick Start](QUICK_START.md).
 
-On a clean installation, Forms capture works without an idempotency key. Public
-JSON and public capability capture require a per-installation idempotency key;
-see `docs/CONFIGURATION.md`. No key is generated into or shipped with the
-package.
+For operational command syntax, use the [CLI reference](CLI_REFERENCE.md).
+For failures, see [Troubleshooting](TROUBLESHOOTING.md).
 
-## Verification
+---
 
-After installation, run:
+## Navigation
 
-```bash
-php bin/plugin goosialize-leads notification-status
-```
+[← Back to README](../README.md) · [Previous: Quick Start](QUICK_START.md) ·
+[Next: Admin Guide →](ADMIN_GUIDE.md)
 
-Then verify plugin discovery and native configuration rendering in Admin2.
-
-Manual browser acceptance remains a mandatory release gate and is recorded in
-the development-only manual browser checklist.
+Related documentation: [Configuration](CONFIGURATION.md) ·
+[Upgrade](UPGRADE.md) · [Troubleshooting](TROUBLESHOOTING.md)

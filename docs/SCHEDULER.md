@@ -3,6 +3,9 @@
 The notification scheduler registers a bounded Grav scheduler job for delivering
 pending notifications.
 
+> **Audience:** Advanced operators automating bounded delivery after manual
+> delivery has been tested.
+
 ## Requirements
 
 Scheduled delivery requires:
@@ -25,7 +28,7 @@ notifications:
     timeout_seconds: 300
 ```
 
-Version 1.0.0 enforces:
+The current public contract enforces:
 
 - a frequency of 5 minutes;
 - a batch limit between 1 and 50;
@@ -39,13 +42,9 @@ The job name is:
 goosialize-leads-notification-delivery
 ```
 
-The registered command is:
-
-```bash
-bin/plugin goosialize-leads deliver-notifications --limit=10
-```
-
-The configured `batch_limit` is projected into the `--limit` argument.
+The job invokes bounded Notification delivery and projects `batch_limit` into
+the delivery limit. Exact manual command syntax belongs to the
+[CLI reference](CLI_REFERENCE.md#deliver-notifications).
 
 ## Execution behaviour
 
@@ -56,7 +55,7 @@ The job does not bypass:
 - delivery enablement;
 - retry eligibility;
 - maximum attempt bounds;
-- dead-letter state;
+- Dead letter state;
 - duplicate-risk reconciliation requirements.
 
 ## Disablement
@@ -69,14 +68,20 @@ Disabling the scheduler does not delete:
 - notification outbox events;
 - delivery state;
 - retry state;
-- dead-letter state.
+- Dead letter state.
 
 ## Operational check
 
-Inspect notification state with:
+Inspect Notification state through [Operational status](OPERATIONAL_STATUS.md),
+then confirm that the Grav scheduler runner is active in the host environment.
 
-```bash
-php bin/plugin goosialize-leads notification-status
-```
+---
 
-Then confirm that the Grav scheduler runner is active in the host environment.
+## Navigation
+
+[← Back to README](../README.md) ·
+[Previous: Operational status](OPERATIONAL_STATUS.md) ·
+[Next: Retry and Dead Letter →](RETRY_DEAD_LETTER.md)
+
+Related documentation: [Notification delivery](NOTIFICATION_DELIVERY.md) ·
+[CLI reference](CLI_REFERENCE.md) · [Troubleshooting](TROUBLESHOOTING.md)

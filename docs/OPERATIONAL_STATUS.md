@@ -1,26 +1,15 @@
 # Operational status
 
-Goosialize Leads 1.0.0 provides bounded read-only operational visibility for notification delivery state.
+Goosialize Leads provides bounded read-only operational visibility for
+notification delivery state.
+
+> **Audience:** Advanced operators inspecting bounded Notification state.
 
 ## Command
 
-Inspect notification state with:
-
-```bash
-php bin/plugin goosialize-leads notification-status
-```
-
-Apply a result limit:
-
-```bash
-php bin/plugin goosialize-leads notification-status --limit=10
-```
-
-Request machine-readable output:
-
-```bash
-php bin/plugin goosialize-leads notification-status --limit=10 --json
-```
+Use the read-only `notification-status` command. The
+[CLI reference](CLI_REFERENCE.md#inspect-notification-status) owns its exact
+syntax, result limit and machine-readable option.
 
 ## Permission
 
@@ -39,7 +28,7 @@ The status report summarizes bounded notification state, including:
 - pending events;
 - retry-eligible events;
 - delivered events;
-- dead-lettered events;
+- events in Dead letter state;
 - duplicate-risk events requiring operator review.
 
 The report does not mutate notification state.
@@ -85,7 +74,7 @@ A delivered event has confirmed durable delivery state and must not be sent agai
 
 ### Dead letter
 
-A dead-lettered event reached a terminal state and requires operator review before any further action.
+An event in Dead letter state reached a terminal condition and requires operator review before any further action.
 
 ### Duplicate risk
 
@@ -95,17 +84,9 @@ It must not be redelivered automatically. The operator must inspect the current 
 
 ## Reconciliation workflow
 
-Inspect current state first:
-
-```bash
-php bin/plugin goosialize-leads notification-status --limit=10 --json
-```
-
-Then use the exact event identifier and current revision with one supported action:
-
-```bash
-php bin/plugin goosialize-leads reconcile-notification EVENT_ID REVISION ACTION --yes
-```
+Inspect current state first. Then use the exact event identifier and current
+revision with one supported action. Exact command syntax belongs to the
+[CLI reference](CLI_REFERENCE.md#reconcile-notification-state).
 
 Supported actions are:
 
@@ -128,3 +109,15 @@ The status command is suitable for:
 - controlled automation that consumes JSON output.
 
 It is not a substitute for external mail-provider delivery logs or independent confirmation when duplicate-risk reconciliation is required.
+
+---
+
+## Navigation
+
+[← Back to README](../README.md) ·
+[Previous: Notification delivery](NOTIFICATION_DELIVERY.md) ·
+[Next: Troubleshooting →](TROUBLESHOOTING.md)
+
+Related documentation: [Scheduler](SCHEDULER.md) ·
+[Retry and Dead Letter](RETRY_DEAD_LETTER.md) ·
+[Reconciliation](RECONCILIATION.md) · [CLI reference](CLI_REFERENCE.md)

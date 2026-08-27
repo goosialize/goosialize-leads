@@ -1,6 +1,11 @@
-# CSV export
+# CSV Export
 
-CSV export is an optional native Admin2 action.
+CSV Export is an optional native Admin2 action.
+
+> **Audience:** Administrators who download bounded Lead data for authorised
+> business use.
+
+For the administrator workflow, see the [Admin Guide](ADMIN_GUIDE.md#export-csv).
 
 ## Enablement
 
@@ -61,3 +66,16 @@ CSV output must not expose:
 - notification routing configuration;
 - SMTP or provider credentials;
 - raw exceptions.
+
+If the action is missing or output is incomplete, see
+[Troubleshooting](TROUBLESHOOTING.md#csv-export-is-unavailable).
+
+---
+
+## Navigation
+
+[← Back to README](../README.md) ·
+[Previous: Grav Forms integration](FORMS_INTEGRATION.md) · [Next: FAQ →](FAQ.md)
+
+Related documentation: [Admin Guide](ADMIN_GUIDE.md#export-csv) ·
+[Permissions](PERMISSIONS.md#export-permission) · [Security](SECURITY.md#csv-safety)

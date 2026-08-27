@@ -1,6 +1,12 @@
 # Security
 
-Goosialize Leads 1.0.0 uses fail-closed, bounded and secret-aware contracts across capture, storage, Admin2, CSV export and notification delivery.
+Goosialize Leads uses fail-closed, bounded and secret-aware contracts across
+capture, storage, Admin2, CSV Export and Notification delivery. New
+administrators can start with [Quick Start](QUICK_START.md) and the
+[Admin Guide](ADMIN_GUIDE.md).
+
+> **Audience:** Administrators and security reviewers assessing trust,
+> permissions, data containment and operational boundaries.
 
 ## Security boundary
 
@@ -49,7 +55,7 @@ logs only a non-sensitive migration error code.
 
 ## Idempotency
 
-Keyed public API and public capability capture require:
+Keyed Public JSON API and public capability capture require:
 
 - an active positive key version;
 - a matching secret key;
@@ -61,7 +67,7 @@ Reusing the same idempotency key with a conflicting payload fails closed.
 
 ## Public JSON API
 
-The public API is disabled by default and exposes only:
+The Public JSON API is disabled by default and exposes only:
 
 ```http
 POST <configured API route>/<configured version prefix>/goosialize-leads/capture
@@ -106,7 +112,7 @@ Symlinks, unsafe paths, unexpected file types and identity mismatches must fail 
 
 ## Admin2 and ACL
 
-The version 1.0.0 permissions are:
+The public permissions are:
 
 ```text
 api.goosialize_leads.read
@@ -118,7 +124,7 @@ api.goosialize_leads.operations
 
 Permissions must be granted according to least privilege.
 
-CSV export requires both read and export.
+CSV Export requires both read and export.
 
 Write permits Edit, status, Active/Inactive and Restore. Delete is separately
 gated. The operations permission implies none of those capabilities.
@@ -153,7 +159,7 @@ Retry processing respects:
 - maximum attempts;
 - durable state validation;
 - duplicate-risk protection;
-- dead-letter state;
+- Dead letter state;
 - explicit reconciliation requirements.
 
 Reconciliation requires:
@@ -202,3 +208,17 @@ Security reports should include:
 - the observed failure category.
 
 Do not include real Lead data, secrets, credentials, recipient lists or filesystem paths in a security report.
+
+For plain-language answers about secrets, Delete and data retention, see the
+[FAQ](FAQ.md).
+
+---
+
+## Navigation
+
+[← Back to README](../README.md) · [Previous: Permissions](PERMISSIONS.md) ·
+[Next: Public JSON API →](JSON_API_INTEGRATION.md)
+
+Related documentation: [Configuration](CONFIGURATION.md) ·
+[CSV Export](CSV_EXPORT.md#security) ·
+[Uninstall and data retention](UNINSTALL_DATA_RETENTION.md)

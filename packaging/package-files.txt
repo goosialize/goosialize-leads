@@ -86,10 +86,12 @@ cli/NotificationStatusCommand.php
 cli/ReconcileNotificationCommand.php
 composer.json
 docs/ADMIN2_LEAD_INDEX.md
+docs/ADMIN_GUIDE.md
 docs/CLI_REFERENCE.md
 docs/CONFIGURATION.md
 docs/CSV_EXPORT.md
 docs/EXAMPLES.md
+docs/FAQ.md
 docs/FORMS_INTEGRATION.md
 docs/INSTALLATION.md
 docs/JSON_API_INTEGRATION.md
@@ -97,6 +99,7 @@ docs/NOTIFICATION_DELIVERY.md
 docs/OPERATIONAL_STATUS.md
 docs/PERMISSIONS.md
 docs/PUBLIC_INTEGRATION_CONTRACT.md
+docs/QUICK_START.md
 docs/RECONCILIATION.md
 docs/RELEASE_NOTES_1.0.0.md
 docs/RELEASE_NOTES_1.0.1.md
@@ -108,6 +111,12 @@ docs/SECURITY.md
 docs/TROUBLESHOOTING.md
 docs/UNINSTALL_DATA_RETENTION.md
 docs/UPGRADE.md
+docs/images/admin2-csv-export.png
+docs/images/admin2-delete-restore.png
+docs/images/admin2-lead-edit.png
+docs/images/admin2-leads-filters.png
+docs/images/admin2-leads-workspace.png
+docs/images/plugin-configuration.png
 goosialize-leads.php
 goosialize-leads.yaml
 languages/en.yaml

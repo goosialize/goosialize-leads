@@ -1,85 +1,55 @@
 # Examples
 
-These examples use synthetic data and apply to Goosialize Leads 1.0.0.
+These examples use synthetic data. Canonical guides contain the complete
+contracts and should be preferred over copying isolated fragments from this
+page.
 
 ## Grav Forms capture
 
-Enable the approved form:
-
-```yaml
-forms:
-  enabled: true
-  forms:
-    - contact
-  source: website
-  locale: en
-  consent_version: privacy-v1
-  success_redirect: /thank-you
-```
-
-Add the process action to the form:
+Use the complete native form and allowlist configuration in
+[Forms integration](FORMS_INTEGRATION.md). The required custom action is:
 
 ```yaml
 process:
   goosialize_leads_capture: true
 ```
 
-Only explicitly listed forms are accepted.
+Trusted Forms capture supports the shipped empty idempotency key ring.
 
 ## Public JSON capture
 
-Enable one canonical Origin:
+The request consent member is a nested object, never a scalar boolean:
 
-```yaml
-public_api:
-  enabled: true
-  allowed_origins:
-    - https://www.example.com
-  locale: en
-  consent_version: privacy-v1
-  body_max_bytes: 16384
-  json_max_depth: 4
-  rate_limit_count: 10
-  rate_limit_window_seconds: 60
+```json
+{
+  "full_name": "Example Person",
+  "email": "person@example.com",
+  "message": "Synthetic documentation request",
+  "consent": {
+    "granted": true
+  }
+}
 ```
 
-Send a synthetic request:
+For the **default API configuration**, a request can target
+`/api/v1/goosialize-leads/capture`. That path is not universal; derive the
+actual endpoint from the API plugin's configured route and version prefix.
+Use the complete headers, curl command, field reference and response examples
+in [Public JSON API](JSON_API_INTEGRATION.md).
 
-```bash
-curl   --request POST   --header 'Content-Type: application/json'   --header 'Accept: application/json'   --header 'Origin: https://www.example.com'   --header 'Idempotency-Key: demo-lead-0001'   --data '{
-    "name": "Example Person",
-    "email": "example.person@example.com",
-    "message": "Synthetic release verification request",
-    "consent": true
-  }'   https://www.example.com/api/v1/goosialize-leads/capture
-```
+## Admin2 Lead management
 
-Exact replay with the same canonical payload and idempotency key returns the existing Lead. Reusing the key with a conflicting payload returns an idempotency conflict.
-
-## Admin2 Lead index
-
-Enable the Lead workspace:
-
-```yaml
-admin2_index:
-  enabled: true
-  timezone: UTC
-```
-
-Grant:
+The shipped configuration enables the bounded Lead index. Grant read access:
 
 ```text
 api.goosialize_leads.read
 ```
 
-Grant `api.goosialize_leads.write` for Edit, status, Active/Inactive and
-Restore. Grant `api.goosialize_leads.delete` for reversible Delete. Read-only
-users see no mutation controls. Workflow changes update metadata sidecars;
-primary Lead records remain immutable.
+Add write for inline Edit, Status, Active/Inactive and Restore. Add delete for
+reversible Delete. See the [Admin Guide](ADMIN_GUIDE.md) and
+[Permissions](PERMISSIONS.md).
 
 ## CSV export
-
-Enable bounded CSV export:
 
 ```yaml
 admin2_csv_export:
@@ -87,139 +57,42 @@ admin2_csv_export:
   max_response_bytes: 131072
 ```
 
-Grant both permissions:
-
-```text
-api.goosialize_leads.read
-api.goosialize_leads.export
-```
-
-The native filename is:
-
-```text
-goosialize-leads-YYYY-MM-DD-HHmm.csv
-```
+Grant both `api.goosialize_leads.read` and
+`api.goosialize_leads.export`. See [CSV export](CSV_EXPORT.md).
 
 ## Notification delivery
 
-Enable the outbox and manual delivery:
-
-```yaml
-notifications:
-  outbox:
-    enabled: true
-    max_event_bytes: 512
-  delivery:
-    enabled: true
-    recipients:
-      - leads@example.com
-    sender_address: notifications@example.com
-    sender_name: Goosialize Leads
-    default_limit: 10
-```
-
-Run a bounded delivery batch:
+After completing [Notification delivery](NOTIFICATION_DELIVERY.md), process a
+bounded manual batch:
 
 ```bash
 php bin/plugin goosialize-leads deliver-notifications --limit=10
 ```
 
-## Retry-only delivery
-
-Enable durable retry state:
-
-```yaml
-notifications:
-  delivery_retry:
-    enabled: true
-    maximum_attempts: 5
-    delays_seconds: []
-    processing_limit: 10
-    state_max_bytes: 1024
-```
-
-Process retry-eligible events:
-
-```bash
-php bin/plugin goosialize-leads deliver-notifications --retries-only --limit=10
-```
-
-## Scheduled delivery
-
-Enable scheduler registration:
-
-```yaml
-notifications:
-  scheduling:
-    enabled: true
-    frequency_minutes: 5
-    batch_limit: 10
-    timeout_seconds: 300
-```
-
-The registered job is:
-
-```text
-goosialize-leads-notification-delivery
-```
-
-Its command includes:
-
-```bash
-bin/plugin goosialize-leads deliver-notifications --limit=10
-```
-
-## Operational status
-
-Inspect bounded human-readable state:
+Inspect state before retry or reconciliation:
 
 ```bash
 php bin/plugin goosialize-leads notification-status --limit=10
-```
-
-Inspect machine-readable state:
-
-```bash
 php bin/plugin goosialize-leads notification-status --limit=10 --json
 ```
 
-## Reconciliation
+Advanced command and state references:
 
-After independently confirming the current event state and revision, use one explicit action:
+- [Scheduler](SCHEDULER.md)
+- [Retry and dead-letter state](RETRY_DEAD_LETTER.md)
+- [Reconciliation](RECONCILIATION.md)
+- [CLI reference](CLI_REFERENCE.md)
 
-```bash
-php bin/plugin goosialize-leads reconcile-notification event-123 4 confirm-delivered --yes
-php bin/plugin goosialize-leads reconcile-notification event-123 4 retry-duplicate-risk --yes
-php bin/plugin goosialize-leads reconcile-notification event-123 4 dead-letter --yes
-```
+## Public plugin capability
 
-A stale revision fails closed and does not mutate durable state.
-
-## Public capability integration
-
-Discover the public service:
-
-```text
-goosialize-leads.public-capture.v1
-```
-
-Request capability:
-
-```text
-goosialize-leads.capture
-```
-
-The integration must request contract version `1` and use only the public contract. It must not bind to internal classes, Admin2 implementation details or runtime filesystem paths.
+Compatible local Grav plugins discover service
+`goosialize-leads.public-capture.v1`, request capability
+`goosialize-leads.capture`, and require contract version `1`. They must use
+only the published DTOs and outcomes. See the
+[Public Integration Contract](PUBLIC_INTEGRATION_CONTRACT.md).
 
 ## Safety
 
-Use only synthetic Lead data in development, testing, documentation and support material.
-
-Never include:
-
-- production Lead data;
-- idempotency secrets;
-- SMTP or provider credentials;
-- configured recipient lists;
-- filesystem paths from production;
-- raw exception traces.
+Use only synthetic Lead data in development, documentation and support
+material. Never include production Lead values, idempotency secrets, mail
+credentials, recipient lists, production filesystem paths or raw exceptions.

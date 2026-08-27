@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Phase 5C.1 closes the 75-file, 62-type, two-command package inventory.
+# The installable package inventory is independently allowlisted below.
 
 readonly EXPECTED_IMAGE_ID='sha256:702d936e25513805b57c9d009f7ff466217273415b2e55f539f3366e6377d351'
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -137,10 +137,12 @@ required = [
     'cli/ReconcileNotificationCommand.php',
     'composer.json',
     'docs/ADMIN2_LEAD_INDEX.md',
+    'docs/ADMIN_GUIDE.md',
     'docs/CLI_REFERENCE.md',
     'docs/CONFIGURATION.md',
     'docs/CSV_EXPORT.md',
     'docs/EXAMPLES.md',
+    'docs/FAQ.md',
     'docs/FORMS_INTEGRATION.md',
     'docs/INSTALLATION.md',
     'docs/JSON_API_INTEGRATION.md',
@@ -148,6 +150,7 @@ required = [
     'docs/OPERATIONAL_STATUS.md',
     'docs/PERMISSIONS.md',
     'docs/PUBLIC_INTEGRATION_CONTRACT.md',
+    'docs/QUICK_START.md',
     'docs/RECONCILIATION.md',
     'docs/RELEASE_NOTES_1.0.0.md',
     'docs/RELEASE_NOTES_1.0.1.md',
@@ -159,6 +162,12 @@ required = [
     'docs/TROUBLESHOOTING.md',
     'docs/UNINSTALL_DATA_RETENTION.md',
     'docs/UPGRADE.md',
+    'docs/images/admin2-csv-export.png',
+    'docs/images/admin2-delete-restore.png',
+    'docs/images/admin2-lead-edit.png',
+    'docs/images/admin2-leads-filters.png',
+    'docs/images/admin2-leads-workspace.png',
+    'docs/images/plugin-configuration.png',
     'goosialize-leads.php',
     'goosialize-leads.yaml',
     'languages/en.yaml',
@@ -167,7 +176,7 @@ required = [
 ]
 if files != sorted(required): raise SystemExit("manifest does not match the independent runtime allowlist")
 expected = {root + "/", root + "/languages/"} | {f"{root}/{name}" for name in files}
-expected |= {root + "/admin-next/", root + "/admin-next/fields/", root + "/docs/", root + "/templates/"}
+expected |= {root + "/admin-next/", root + "/admin-next/fields/", root + "/docs/", root + "/docs/images/", root + "/templates/"}
 expected |= {root + "/admin/", root + "/admin/blueprints/", root + "/classes/", root + "/classes/Admin/", root + "/classes/Application/", root + "/classes/Domain/", root + "/classes/Http/", root + "/classes/Integration/", root + "/classes/Notification/", root + "/classes/Security/", root + "/classes/Storage/", root + "/classes/Validation/", root + "/cli/"}
 with zipfile.ZipFile(archive_path) as archive:
     infos = archive.infolist(); names = [item.filename for item in infos]

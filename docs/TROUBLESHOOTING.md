@@ -1,262 +1,333 @@
 # Troubleshooting
 
-This guide covers common operational failures in Goosialize Leads 1.0.0.
+> **Audience:** Administrators resolving visible symptoms. Advanced operators
+> should follow the linked operational guides and exact [CLI reference](CLI_REFERENCE.md).
+
+This guide owns symptom-to-action resolution. The [FAQ](FAQ.md) owns conceptual
+answers; feature guides own normative configuration and command details.
 
 ## Plugin is not discovered
 
-Verify:
+### Likely cause
 
-- the plugin directory is `user/plugins/goosialize-leads`;
-- blueprints and plugin entry points are present;
-- the configuration file is valid YAML;
-- `enabled: true` is set;
-- the host uses a supported Grav and PHP version.
+The folder name, package contents, effective YAML or platform requirements are
+incorrect.
 
-Do not rename the plugin directory or the main plugin file.
+### Check
 
-## Admin2 page is unavailable
+Confirm the directory is exactly `user/plugins/goosialize-leads`, the three
+root plugin files exist, `enabled: true` is effective, and Grav/PHP meet the
+[Installation](INSTALLATION.md) requirements.
 
-Verify:
+### Fix
 
-- the plugin is enabled;
-- the relevant facility is enabled;
-- the user has the required ACL permission;
-- Admin2 is version `2.0.15`;
-- the authenticated user has the capability required by the missing control.
+Install the complete stable package through a supported installation method.
+Do not rename the directory or combine files from different releases.
 
-The read-only Lead index requires:
+## Leads menu is missing
 
-```text
-api.goosialize_leads.read
-```
+### Likely cause
 
-CSV export also requires:
+The Lead index or a dependency is disabled, or the account lacks read access.
 
-```text
-api.goosialize_leads.export
-```
+### Check
 
-Edit, status, Active/Inactive and Restore require
-`api.goosialize_leads.write`. Delete requires
-`api.goosialize_leads.delete`. If a Lead is Deleted, restore it before editing;
-direct deleted-state mutations intentionally return a conflict. A revision
-conflict means another update won and the workspace must reload before retry.
+Confirm `admin2_index.enabled` is true, API and Admin2 are enabled, and the
+signed-in account has API access plus `api.goosialize_leads.read`.
 
-Leads outside the latest-100 display are still addressable through a valid
-exact ID. A 404 for such an ID indicates no validated immutable record exists;
-a storage error indicates containment, permissions, size or canonical-record
-validation failed closed.
+### Fix
 
-## Grav Form does not capture a Lead
+Correct configuration or the role, then start a fresh Admin2 session. See
+[Admin Guide](ADMIN_GUIDE.md) and [Permissions](PERMISSIONS.md).
 
-Verify:
+## API dependency is missing
 
-- `forms.enabled` true;
-- the exact form name is listed in `forms.forms`;
-- the form uses the exact process action:
+### Likely cause
 
-```yaml
-process:
-  goosialize_leads_capture: true
-```
+The declared API plugin dependency was not installed or enabled.
 
-- idempotency is configured;
-- required fields and consent values are valid;
-- the runtime-data directory is writable.
+### Check
 
-Invalid configuration, idempotency conflict or storage failure must fail closed.
+Review the installed plugin list and dependency status.
 
-## Public JSON capture returns 403
+### Fix
 
-Verify:
+Install or enable API through the supported GPM workflow, then reload Admin2.
+Do not patch API plugin files.
 
-- `public_api.enabled` is true;
-- the request contains an `Origin` header;
-- the Origin exactly matches one `allowed_origins` entry;
-- the Origin is canonical and does not use a wildcard;
-- the request is sent to the exact capture endpoint.
+## Admin2 dependency is missing
 
-Endpoint:
+### Likely cause
 
-```http
-POST <configured API route>/<configured version prefix>/goosialize-leads/capture
-```
+The declared Admin2 dependency is unavailable or disabled.
 
-## Public JSON capture returns 400
+### Check
 
-Verify:
+Verify compatible Admin2 is installed and enabled.
 
-- `Content-Type: application/json`;
-- the raw body is valid JSON;
-- the body is no larger than 16,384 bytes;
-- JSON depth does not exceed 4;
-- exactly one valid `Idempotency-Key` header is present;
-- required fields and consent values are valid.
+### Fix
 
-## Public JSON capture returns 409
+Install or enable Admin2 and sign in again. The Public JSON API is not a
+replacement for Admin2 administration.
 
-The idempotency key was previously used with a different canonical payload.
+## Email dependency is missing
 
-Use a new unique key for a new payload. Do not delete or mutate the existing Lead record to bypass the conflict.
+### Likely cause
 
-## Public JSON capture returns 429
+Grav Email is unavailable or not provider-configured.
 
-The rate limit was exceeded.
+### Check
 
-Respect the positive `retry_after` value before sending another request.
+Review the Email plugin state and its provider configuration.
 
-Verify only one request path is submitting the capture and that client retry logic does not ignore the rate-limit response.
+### Fix
 
-## Public JSON capture returns 503
+Install and configure Email before enabling Notification delivery. Lead
+capture remains independent of delivery; see [Notification delivery](NOTIFICATION_DELIVERY.md).
 
-Verify:
+## Form submits but no Lead appears
 
-- idempotency configuration has an active key version;
-- the matching secret key exists;
-- the runtime-data directory is writable;
-- resolved paths remain contained;
-- there is no symlink, file-identity or storage-format mismatch.
+### Likely cause
 
-Do not expose secrets, filesystem paths or raw exceptions in client diagnostics.
+Forms capture is disabled, the form name is not allowlisted, the exact process
+action is absent, the submission uses XHR, or required data is invalid.
 
-## CSV export is forbidden
+### Check
 
-Verify the user has both:
+Compare the form and plugin settings with the copy/paste-safe
+[Grav Forms integration](FORMS_INTEGRATION.md). Confirm the exact action is
+`goosialize_leads_capture`, consent is nested, and `xhr_submit` is false or
+omitted.
 
-```text
-api.goosialize_leads.read
-api.goosialize_leads.export
-```
+### Fix
 
-Also verify `admin2_csv_export.enabled` true.
+Correct the eligible form or submitted fields, use synthetic data, submit
+again, and inspect the latest bounded Admin2 collection.
 
-## CSV export is empty or incomplete
+## Permission denied
 
-Verify:
+### Likely cause
 
-- canonical Lead records exist;
-- the records pass format and containment validation;
-- the output is not truncated by `max_response_bytes`;
-- the requested records are within the bounded index scope.
+The account lacks the permission for the requested control.
 
-Idempotency sidecars and notification state are not Lead records.
+### Check
 
-## Notifications are not delivered
+Compare the action with the [permission catalogue](PERMISSIONS.md): read for
+the workspace, write for Edit/Status/State/Restore, delete for Delete, read plus
+export for CSV Export, and operations for Notification operations.
 
-Verify:
+### Fix
 
-- Grav Email is installed and enabled;
-- `notifications.outbox.enabled` is true;
-- `notifications.delivery.enabled` is true;
-- between one and five unique valid recipients are configured;
-- a valid sender address is configured;
-- the mail provider is operational.
+Grant only the required permission and refresh the Admin2 session. Every API
+route rechecks the ACL server-side.
 
-Run:
+## CSV Export is unavailable
 
-```bash
-php bin/plugin goosialize-leads notification-status --limit=10
-```
+### Likely cause
 
-Then test a bounded manual delivery:
+CSV Export is disabled, permissions are incomplete, no validated Lead is in the
+latest-100 boundary, or the response-size bound was reached.
 
-```bash
-php bin/plugin goosialize-leads deliver-notifications --limit=10
-```
+### Check
 
-## Retries are not processed
+Confirm the [CSV Export](CSV_EXPORT.md) enablement and both read/export
+permissions.
 
-Verify:
+### Fix
 
-- `delivery_retry.enabled` true;
-- the event is retry-eligible;
-- the maximum attempt count has not been reached;
-- the event is not dead-lettered;
-- the event is not blocked by duplicate-risk state.
+Enable the feature, correct the role, then retry with an appropriate bounded
+collection. Changing View does not widen the backend boundary.
 
-Run:
+## Source or Form / Resource is blank
 
-```bash
-php bin/plugin goosialize-leads deliver-notifications --retries-only --limit=10
-```
+### Likely cause
 
-## Scheduled delivery does not run
+The validated projection contains no value for that context field.
 
-Verify:
+### Check
 
-- `notifications.scheduling.enabled` is true;
-- outbox and delivery are also enabled;
-- Grav Email is available;
-- the registered job is `goosialize-leads-notification-delivery`;
-- the host Grav scheduler runner is active.
+Identify the capture entry point and its trusted Source/form/resource mapping.
 
-The registered command should include:
+### Fix
 
-```bash
-bin/plugin goosialize-leads deliver-notifications --limit=10
-```
+Correct future capture configuration. Do not edit immutable primary Lead
+records directly.
 
-## Dead-letter event keeps reappearing
+## Source or Form / Resource options seem incomplete
 
-Dead-lettered events are not automatically retried.
+### Likely cause
 
-Verify that no unsupported script is mutating durable state or resetting attempt counts.
+Dropdown choices come from distinct non-empty values in the latest 100 valid
+primary Leads, not all historical storage.
 
-Inspect the current revision before any operator action:
+### Check
 
-```bash
-php bin/plugin goosialize-leads notification-status --limit=10 --json
-```
+Reset filters and reload the workspace.
 
-## Reconciliation fails with a revision conflict
+### Fix
 
-The provided revision is stale or incorrect.
+Use available bounded values. Older-only values cannot appear until a future
+server-side history/index feature exists; see the [FAQ](FAQ.md).
 
-Inspect the event again and use the exact current revision.
+## Public JSON API key configuration is missing
 
-Do not bypass the revision check or directly mutate the durable state file.
+### Likely cause
 
-## Notification status command fails
+The anonymous endpoint has no valid active key version and matching nested
+32-byte Base64 secret.
 
-Verify:
+### Check
 
-- the plugin is enabled;
-- runtime data is contained in `user/data/goosialize-leads/v1`;
-- the requested limit is valid;
-- state files pass format, size, containment and identity validation.
+Review the [Idempotency key-ring configuration](CONFIGURATION.md#idempotency-key-ring),
+Public JSON API enablement and exact Origin allowlist. A masked password field
+may represent a stored redacted secret.
 
-For machine-readable output, use:
+### Fix
 
-```bash
-php bin/plugin goosialize-leads notification-status --limit=10 --json
-```
+Supply the security-sensitive key configuration through the deployment's
+secret process. Do not overwrite a masked value without a rotation plan.
 
-## Not supported in version 1.0.0
+## Custom API route mismatch
 
-The following are not troubleshooting targets because they are intentionally absent from version 1.0.0:
+### Likely cause
 
-- native Admin2 Lead detail;
-- Lead status mutation;
-- reversible Lead delete and restore.
+The client assumes `/api/v1` while the API plugin uses a custom route or
+version prefix.
 
-These features remain blocked by the Admin2 2.0.15 native contract.
+### Check
 
-## Safe support bundle
+Read the effective API plugin `route` and `version_prefix`.
 
-When creating a support report, include:
+### Fix
 
-- plugin version;
-- Grav, Admin2 and PHP versions;
-- a redacted reproduction procedure;
-- the affected command or entry point;
-- the stable error category;
-- bounded, redacted operational output.
+Build the URL as documented in [endpoint construction](JSON_API_INTEGRATION.md#endpoint-construction),
+then append `/goosialize-leads/capture`. Preserve the exact allowed Origin.
 
-Do not include:
+## Public JSON request is rejected
 
-- real Lead data;
-- idempotency keys;
-- SMTP or provider credentials;
-- recipient lists;
-- filesystem paths;
-- raw exception traces.
+### Likely cause
+
+Headers, Origin, JSON, Idempotency, validation, size or rate limits failed.
+
+### Check
+
+Use the [status code table](JSON_API_INTEGRATION.md#status-code-reference) and
+stable response code. Do not expect an Admin2 token to fix an anonymous
+endpoint request.
+
+### Fix
+
+Correct only the indicated client contract: JSON headers/body, exact Origin,
+one valid Idempotency key, accepted fields, body size, or Retry-After delay.
+
+## Duplicate and Idempotency behavior
+
+### Likely cause
+
+An Idempotency key was replayed with the same or a conflicting canonical
+payload.
+
+### Check
+
+An exact replay returns the existing Lead; conflicting reuse returns `409`.
+
+### Fix
+
+Reuse a key only for the same logical submission. Generate a new opaque key for
+a new submission; see [Public JSON API Idempotency](JSON_API_INTEGRATION.md#idempotency).
+
+## Legacy flat secret upgrade or migration fails
+
+### Likely cause
+
+The PHP/web user cannot persist the legacy scalar key in the secure nested
+password form.
+
+### Check
+
+Verify write access to the base and any existing environment-specific plugin
+configuration. Review only the non-sensitive migration error code.
+
+### Fix
+
+Repair ownership/permissions and let the idempotent migration retry. Do not
+rotate or re-enter the key unless an explicit rotation is planned; see
+[Upgrade](UPGRADE.md).
+
+## Notification is not delivered
+
+### Likely cause
+
+Email, outbox, delivery, recipient/sender configuration or eligible state is
+incomplete.
+
+### Check
+
+Follow [Notification delivery](NOTIFICATION_DELIVERY.md), inspect bounded
+[Operational status](OPERATIONAL_STATUS.md), and consult provider logs.
+
+### Fix
+
+Correct setup, then run a small bounded manual delivery using the exact
+[CLI reference](CLI_REFERENCE.md#deliver-notifications). Successful capture
+does not itself guarantee delivery.
+
+## Retries or scheduled delivery do not run
+
+### Likely cause
+
+Retry eligibility, attempt bounds, Scheduler gates or the host runner prevent
+execution.
+
+### Check
+
+Inspect [Retry and Dead Letter](RETRY_DEAD_LETTER.md) state. For automation,
+verify the job is registered and the host Grav scheduler runner is active.
+
+### Fix
+
+Correct the relevant enablement/state; do not bypass Dead letter or
+duplicate-risk protection. Follow [Scheduler](SCHEDULER.md).
+
+## Revision conflict or duplicate-risk state
+
+### Likely cause
+
+Another Lead update won, or a Notification attempt ended ambiguously.
+
+### Check
+
+For a Lead, reload and review current Status/State. For a Notification, inspect
+the exact event and revision through [Operational status](OPERATIONAL_STATUS.md).
+
+### Fix
+
+Retry a still-appropriate Lead edit. Treat duplicate risk as advanced/high-risk
+and follow [Reconciliation](RECONCILIATION.md); stale revisions correctly fail
+closed.
+
+## Safe support information
+
+### Likely cause
+
+Support cannot reproduce the symptom from a safe, bounded report.
+
+### Check
+
+Collect plugin, Grav, Admin2 and PHP versions, a redacted reproduction, the
+affected entry point, and the stable error category.
+
+### Fix
+
+Share only that bounded material. Never include real Lead data, secrets, mail
+credentials, recipients, production paths or raw exception traces.
+
+---
+
+## Navigation
+
+[← Back to README](../README.md) ·
+[Previous: Operational status](OPERATIONAL_STATUS.md) · [Next: README →](../README.md)
+
+Related documentation: [FAQ](FAQ.md) · [Configuration](CONFIGURATION.md) ·
+[Permissions](PERMISSIONS.md) · [CLI reference](CLI_REFERENCE.md)

@@ -1,6 +1,9 @@
 # Uninstall and data retention
 
-Goosialize Leads 1.0.0 separates plugin code, configuration and runtime data so an uninstall can be performed without silently destroying Lead or notification records.
+Goosialize Leads separates plugin code, configuration and runtime data so an
+uninstall can be performed without silently destroying Lead or notification
+records. See the [FAQ](FAQ.md#does-uninstalling-delete-lead-data) for the short
+answer.
 
 ## Relevant paths
 
@@ -40,7 +43,7 @@ Removing or replacing the plugin package must not automatically delete:
 user/data/goosialize-leads/
 ```
 
-This is the version 1.0.0 default data-retention contract.
+This is the default data-retention contract.
 
 Disabling the plugin also does not delete configuration or runtime data.
 
@@ -116,7 +119,7 @@ Before deleting runtime data:
 4. record the approved deletion scope;
 5. perform the deletion as a separate operation.
 
-The plugin does not provide an automatic purge command in version 1.0.0.
+The plugin does not provide an automatic purge command.
 
 ## Reinstall
 
@@ -144,3 +147,6 @@ Uninstall and retention operations must not expose:
 ## Manual acceptance
 
 A production uninstall or reinstall procedure requires environment-specific manual verification. Package removal alone is not evidence that scheduled jobs, integrations or retained data have been handled correctly.
+
+For replacement without data loss, also see [Upgrade](UPGRADE.md) and
+[Security](SECURITY.md).

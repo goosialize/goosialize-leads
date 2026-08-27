@@ -28,5 +28,7 @@ narrow runtime fixes for clean-install Forms capture and configured API routes.
   earlier configurations; no manual key re-entry or rotation is required.
 
 The immutable `1.0.0`, `1.0.1` and `1.0.2` tags and their published release
-assets are not modified by this release. Grav GPM acceptance or submission
-completion is not claimed.
+assets were not modified by this release.
+
+Post-release status: version 1.0.3 was subsequently accepted for inclusion in
+Grav GPM.

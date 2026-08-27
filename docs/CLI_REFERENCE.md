@@ -1,7 +1,10 @@
 # CLI reference
 
-Goosialize Leads 1.0.0 provides bounded operational commands through the Grav
-plugin CLI.
+Goosialize Leads provides bounded operational commands through the Grav plugin
+CLI.
+
+> **Audience:** Advanced operators who need the exact supported commands and
+> options. Run them under the deployment's normal shell controls.
 
 ## Deliver notifications
 
@@ -30,7 +33,7 @@ php bin/plugin goosialize-leads deliver-notifications --retries-only --limit=10
 ```
 
 The command respects delivery enablement, retry eligibility, maximum attempts,
-dead-letter state and duplicate-risk reconciliation requirements.
+Dead letter state and duplicate-risk Reconciliation requirements.
 
 ## Inspect notification status
 
@@ -94,3 +97,13 @@ Command output must not expose:
 - filesystem paths;
 - unbounded Lead payloads;
 - raw exception traces.
+
+---
+
+## Navigation
+
+[← Back to README](../README.md) · [Previous: Reconciliation](RECONCILIATION.md) ·
+[Next: Troubleshooting →](TROUBLESHOOTING.md)
+
+Related documentation: [Operational status](OPERATIONAL_STATUS.md) ·
+[Scheduler](SCHEDULER.md) · [Retry and Dead Letter](RETRY_DEAD_LETTER.md)

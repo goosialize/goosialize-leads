@@ -1,5 +1,8 @@
 # Admin2 Lead index
 
+> This is a technical behavior and storage reference. For normal administrator
+> usage, see the [Admin Guide](ADMIN_GUIDE.md).
+
 Goosialize Leads provides a native Admin2 Lead workspace over a bounded
 latest-100 index.
 
