@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/goosialize/goosialize-leads#readme
+    about: Read the installation, configuration, and troubleshooting documentation before opening an issue.
