@@ -1,0 +1,95 @@
+name: Bug report
+description: Report a reproducible problem with Goosialize Leads
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Goosialize Leads. Please do not include passwords, API keys, personal data, customer data, or production secrets.
+  - type: input
+    id: plugin_version
+    attributes:
+      label: Plugin version
+      description: The installed Goosialize Leads version.
+      placeholder: e.g. 1.0.3
+    validations:
+      required: true
+  - type: input
+    id: grav_version
+    attributes:
+      label: Grav version
+      placeholder: e.g. 2.0.12
+    validations:
+      required: true
+  - type: input
+    id: php_version
+    attributes:
+      label: PHP version
+      placeholder: e.g. 8.3.12
+    validations:
+      required: true
+  - type: input
+    id: admin2_version
+    attributes:
+      label: Admin2 version
+      description: Required when the issue affects the administrator interface.
+      placeholder: e.g. 2.x
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Installation / upgrade
+        - Admin2
+        - Frontend
+        - API / integration
+        - Configuration
+        - Performance
+        - Security / privacy
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: browser_os
+    attributes:
+      label: Browser / operating system
+      description: Required for Admin2 or frontend UI problems.
+      placeholder: e.g. Chrome / Windows 11
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Give the smallest reliable sequence that reproduces the problem.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or screenshots
+      description: Remove secrets, tokens, personal data, customer data, and private URLs before posting.
+      render: shell
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed credentials, secrets, personal data, and customer data from this report.
+          required: true
+        - label: I searched existing issues for the same problem.
+          required: true
