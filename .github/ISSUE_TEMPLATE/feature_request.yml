@@ -1,0 +1,41 @@
+name: Feature request
+description: Suggest an improvement for Goosialize Leads
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement. Describe the user problem first so the proposal can be evaluated independently of one implementation.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to achieve, and what is difficult today?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe the behavior you would like to see.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional workarounds or other approaches you have tried.
+  - type: input
+    id: plugin_version
+    attributes:
+      label: Current plugin version
+      placeholder: e.g. 1.0.3
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues for a similar request.
+          required: true
